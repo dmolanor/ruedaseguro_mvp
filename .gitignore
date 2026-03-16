@@ -1,0 +1,6 @@
+venv/
+.env
+.env.local
+research_docs/
+MVP_ARCHITECTURE.md
+SPRINT_ISSUES.md
