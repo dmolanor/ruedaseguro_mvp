@@ -1,6 +1,68 @@
-venv/
+# ============================================================
+# RuedaSeguro Monorepo .gitignore
+# ============================================================
+
+# --- Environment & Secrets ---
 .env
-.env.local
+.env.*
+!.env.example
+*.jks
+*.keystore
+key.properties
+
+# --- Python ---
+venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# --- Flutter / Dart ---
+mobile/.dart_tool/
+mobile/build/
+mobile/.packages
+mobile/.flutter-plugins
+mobile/.flutter-plugins-dependencies
+mobile/.pub-cache/
+mobile/pubspec.lock
+*.iml
+
+# --- Android ---
+mobile/android/.gradle/
+mobile/android/app/debug/
+mobile/android/app/profile/
+mobile/android/app/release/
+mobile/android/local.properties
+
+# --- iOS ---
+mobile/ios/Pods/
+mobile/ios/.symlinks/
+mobile/ios/Flutter/Flutter.framework
+mobile/ios/Flutter/Flutter.podspec
+mobile/ios/Flutter/Generated.xcconfig
+mobile/ios/Flutter/app.flx
+mobile/ios/Flutter/engine/
+mobile/ios/ServiceDefinitions.json
+
+# --- Next.js / Node ---
+admin-portal/node_modules/
+admin-portal/.next/
+admin-portal/out/
+admin-portal/.vercel/
+
+# --- Supabase ---
+supabase/.temp/
+
+# --- IDE ---
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# --- Research docs (large files, tracked separately) ---
 research_docs/
-MVP_ARCHITECTURE.md
-SPRINT_ISSUES.md
+
+# --- Claude ---
+.claude/

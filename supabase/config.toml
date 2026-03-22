@@ -1,0 +1,27 @@
+# RuedaSeguro — Supabase Local Dev Configuration
+# See: https://supabase.com/docs/guides/cli/config
+
+[project]
+id = "your-project-ref"
+
+[api]
+port = 54321
+schemas = ["public", "storage"]
+
+[db]
+port = 54322
+
+[studio]
+port = 54323
+
+[auth]
+site_url = "http://localhost:3000"
+additional_redirect_urls = ["http://localhost:3000"]
+
+[auth.sms]
+enable_signup = true
+enable_confirmations = true
+
+[auth.sms.test_otp]
+# For local testing: phone → OTP
+# "4120001234" = "123456"
