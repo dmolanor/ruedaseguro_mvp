@@ -29,10 +29,11 @@ android {
 
     defaultConfig {
         applicationId = "com.ruedaseguro.app"
-        minSdk = 23
-        targetSdk = 34
+        minSdk = flutter.minSdkVersion
+        targetSdk = 35
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        multiDexEnabled = true
     }
 
     signingConfigs {

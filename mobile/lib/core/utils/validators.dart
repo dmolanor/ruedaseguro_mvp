@@ -2,7 +2,10 @@ class Validators {
   Validators._();
 
   static final _cedulaRegex = RegExp(r'^[VEJPG]-?\d{6,9}$', caseSensitive: false);
-  static final _phoneRegex = RegExp(r'^(\+58\s?)?0?4[0-9]{2}[\s-]?\d{7}$');
+  static final _phoneRegex = RegExp(
+    r'^(\+58\s?)?0?4[0-9]{2}[\s-]?\d{7}$' // Venezuela: 04XX-XXXXXXX
+    r'|^(\+57\s?)?3\d{9}$', // Colombia: 3XX XXXXXXX
+  );
   static final _plateRegex = RegExp(r'^[A-Z]{2,3}\d{2,3}[A-Z]{2,3}$', caseSensitive: false);
   static final _referenceRegex = RegExp(r'^\d{8,20}$');
   static final _bankCodeRegex = RegExp(r'^\d{4}$');

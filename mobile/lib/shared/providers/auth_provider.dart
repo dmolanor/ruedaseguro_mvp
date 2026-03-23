@@ -1,71 +1,100 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:ruedaseguro/core/services/supabase_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' as supa;
 
-class AuthState {
-  final bool isAuthenticated;
-  final User? user;
-  final Session? session;
+import 'package:ruedaseguro/features/auth/data/auth_repository.dart';
 
-  const AuthState({
-    this.isAuthenticated = false,
+enum AuthStatus { initial, loading, authenticated, authenticatedWithProfile, unauthenticated }
+
+class RSAuthState {
+  final AuthStatus status;
+  final supa.User? user;
+  final supa.Session? session;
+  final String? errorMessage;
+
+  const RSAuthState({
+    this.status = AuthStatus.initial,
     this.user,
     this.session,
+    this.errorMessage,
   });
 
-  AuthState copyWith({
-    bool? isAuthenticated,
-    User? user,
-    Session? session,
+  bool get isAuthenticated =>
+      status == AuthStatus.authenticated ||
+      status == AuthStatus.authenticatedWithProfile;
+
+  bool get hasProfile => status == AuthStatus.authenticatedWithProfile;
+
+  RSAuthState copyWith({
+    AuthStatus? status,
+    supa.User? user,
+    supa.Session? session,
+    String? errorMessage,
   }) {
-    return AuthState(
-      isAuthenticated: isAuthenticated ?? this.isAuthenticated,
+    return RSAuthState(
+      status: status ?? this.status,
       user: user ?? this.user,
       session: session ?? this.session,
+      errorMessage: errorMessage ?? this.errorMessage,
     );
   }
 }
 
-class AuthNotifier extends StateNotifier<AuthState> {
-  StreamSubscription<AuthState>? _subscription;
+class AuthNotifier extends Notifier<RSAuthState> {
+  StreamSubscription<supa.AuthState>? _subscription;
 
-  AuthNotifier() : super(const AuthState()) {
+  @override
+  RSAuthState build() {
+    ref.onDispose(() => _subscription?.cancel());
     _init();
+    return const RSAuthState(status: AuthStatus.initial);
   }
 
-  void _init() {
-    // Check current session
-    final session = SupabaseService.auth.currentSession;
+  Future<void> _init() async {
+    final repo = AuthRepository.instance;
+    final session = repo.getCurrentSession();
     if (session != null) {
-      state = AuthState(
-        isAuthenticated: true,
+      final hasProfile = await repo.profileExists();
+      state = RSAuthState(
+        status: hasProfile
+            ? AuthStatus.authenticatedWithProfile
+            : AuthStatus.authenticated,
         user: session.user,
         session: session,
       );
+    } else {
+      state = const RSAuthState(status: AuthStatus.unauthenticated);
     }
 
-    // Listen to auth state changes
-    _subscription = SupabaseService.auth.onAuthStateChange.map((data) {
-      final session = data.session;
-      return AuthState(
-        isAuthenticated: session != null,
-        user: session?.user,
-        session: session,
-      );
-    }).listen((authState) {
-      state = authState;
+    _subscription = repo.onAuthStateChange.listen((authState) async {
+      final session = authState.session;
+      if (session != null) {
+        final hasProfile = await repo.profileExists();
+        state = RSAuthState(
+          status: hasProfile
+              ? AuthStatus.authenticatedWithProfile
+              : AuthStatus.authenticated,
+          user: session.user,
+          session: session,
+        );
+      } else {
+        state = const RSAuthState(status: AuthStatus.unauthenticated);
+      }
     });
   }
 
-  @override
-  void dispose() {
-    _subscription?.cancel();
-    super.dispose();
+  /// Called after profile is created during onboarding.
+  void markProfileCreated() {
+    if (state.isAuthenticated) {
+      state = state.copyWith(status: AuthStatus.authenticatedWithProfile);
+    }
+  }
+
+  Future<void> signOut() async {
+    await AuthRepository.instance.signOut();
+    state = const RSAuthState(status: AuthStatus.unauthenticated);
   }
 }
 
-final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
-  return AuthNotifier();
-});
+final authProvider = NotifierProvider<AuthNotifier, RSAuthState>(AuthNotifier.new);

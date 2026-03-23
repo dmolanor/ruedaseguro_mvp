@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:ruedaseguro/core/theme/colors.dart';
 import 'package:ruedaseguro/core/theme/spacing.dart';
 import 'package:ruedaseguro/core/theme/typography.dart';
@@ -16,6 +17,12 @@ class RSTextField extends StatelessWidget {
     this.readOnly = false,
     this.keyboardType,
     this.isAmberHighlight = false,
+    this.borderColor,
+    this.onTap,
+    this.textCapitalization = TextCapitalization.none,
+    this.inputFormatters,
+    this.maxLength,
+    this.onChanged,
   });
 
   final String? label;
@@ -28,13 +35,19 @@ class RSTextField extends StatelessWidget {
   final bool readOnly;
   final TextInputType? keyboardType;
   final bool isAmberHighlight;
+  final Color? borderColor;
+  final VoidCallback? onTap;
+  final TextCapitalization textCapitalization;
+  final List<TextInputFormatter>? inputFormatters;
+  final int? maxLength;
+  final ValueChanged<String>? onChanged;
 
   @override
   Widget build(BuildContext context) {
-    final borderColor =
-        isAmberHighlight ? RSColors.warning : RSColors.border;
+    final effectiveBorderColor =
+        borderColor ?? (isAmberHighlight ? RSColors.warning : RSColors.border);
     final focusBorderColor =
-        isAmberHighlight ? RSColors.warning : RSColors.borderFocus;
+        borderColor ?? (isAmberHighlight ? RSColors.warning : RSColors.borderFocus);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -56,6 +69,11 @@ class RSTextField extends StatelessWidget {
           obscureText: obscureText,
           readOnly: readOnly,
           keyboardType: keyboardType,
+          textCapitalization: textCapitalization,
+          maxLength: maxLength,
+          onTap: onTap,
+          onChanged: onChanged,
+          inputFormatters: inputFormatters,
           style: RSTypography.bodyLarge.copyWith(
             color: RSColors.textPrimary,
           ),
@@ -74,13 +92,13 @@ class RSTextField extends StatelessWidget {
             ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(RSRadius.md),
-              borderSide: BorderSide(color: borderColor),
+              borderSide: BorderSide(color: effectiveBorderColor),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(RSRadius.md),
               borderSide: BorderSide(
-                color: borderColor,
-                width: isAmberHighlight ? 2.0 : 1.0,
+                color: effectiveBorderColor,
+                width: (isAmberHighlight || borderColor != null) ? 2.0 : 1.0,
               ),
             ),
             focusedBorder: OutlineInputBorder(
@@ -90,6 +108,7 @@ class RSTextField extends StatelessWidget {
                 width: 2.0,
               ),
             ),
+            counterText: '',
             errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(RSRadius.md),
               borderSide: const BorderSide(

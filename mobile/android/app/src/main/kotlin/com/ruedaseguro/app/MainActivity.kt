@@ -1,4 +1,4 @@
-package com.ruedaseguro.ruedaseguro
+package com.ruedaseguro.app
 
 import io.flutter.embedding.android.FlutterActivity
 

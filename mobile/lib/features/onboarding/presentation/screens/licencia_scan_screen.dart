@@ -10,19 +10,19 @@ import 'package:ruedaseguro/core/theme/colors.dart';
 import 'package:ruedaseguro/core/theme/spacing.dart';
 import 'package:ruedaseguro/core/theme/typography.dart';
 import 'package:ruedaseguro/features/onboarding/data/ocr_repository.dart';
-import 'package:ruedaseguro/features/onboarding/domain/cedula_parser.dart';
 import 'package:ruedaseguro/features/onboarding/domain/image_validator.dart';
+import 'package:ruedaseguro/features/onboarding/domain/licencia_parser.dart';
 import 'package:ruedaseguro/features/onboarding/domain/onboarding_state.dart';
 import 'package:ruedaseguro/shared/widgets/document_scanner.dart';
 
-class CedulaScanScreen extends ConsumerStatefulWidget {
-  const CedulaScanScreen({super.key});
+class LicenciaScanScreen extends ConsumerStatefulWidget {
+  const LicenciaScanScreen({super.key});
 
   @override
-  ConsumerState<CedulaScanScreen> createState() => _CedulaScanScreenState();
+  ConsumerState<LicenciaScanScreen> createState() => _LicenciaScanScreenState();
 }
 
-class _CedulaScanScreenState extends ConsumerState<CedulaScanScreen> {
+class _LicenciaScanScreenState extends ConsumerState<LicenciaScanScreen> {
   bool _isProcessing = false;
   String? _errorMessage;
 
@@ -52,21 +52,22 @@ class _CedulaScanScreenState extends ConsumerState<CedulaScanScreen> {
       if (mounted) {
         setState(() {
           _isProcessing = false;
-          _errorMessage = 'No pudimos leer tu cédula. Intenta con mejor iluminación.';
+          _errorMessage =
+              'No pudimos leer la licencia. Intenta con mejor iluminación.';
         });
       }
       return;
     }
 
     // 3. Parse
-    final parsed = CedulaParser.parse(ocr.rawText, ocr.textBlocks);
+    final parsed = LicenciaParser.parse(ocr.rawText, ocr.textBlocks);
 
-    // 4. Save to onboarding state and navigate
-    ref.read(onboardingProvider.notifier).updateCedula(parsed, file);
+    // 4. Save and navigate
+    ref.read(onboardingProvider.notifier).updateLicencia(parsed, file);
 
     if (mounted) {
       setState(() => _isProcessing = false);
-      unawaited(context.push('/onboarding/cedula/confirm'));
+      unawaited(context.push('/onboarding/licencia/confirm'));
     }
   }
 
@@ -75,28 +76,25 @@ class _CedulaScanScreenState extends ConsumerState<CedulaScanScreen> {
     return Stack(
       children: [
         DocumentScanner(
-          instruction:
-              'Coloca el frente de tu cédula dentro del recuadro\nBuena iluminación, sin reflejos, bordes completos',
+          instruction: 'Coloca tu licencia de conducir dentro del recuadro',
           onCapture: _handleCapture,
           onCancel: () => context.pop(),
         ),
 
-        // Progress indicator overlay
         SafeArea(
           child: Align(
             alignment: Alignment.topCenter,
             child: Padding(
               padding: const EdgeInsets.only(top: 72),
               child: _StepIndicator(
-                currentStep: 1,
+                currentStep: 2,
                 totalSteps: 4,
-                label: 'Cédula de identidad',
+                label: 'Licencia de conducir',
               ),
             ),
           ),
         ),
 
-        // Processing overlay
         if (_isProcessing)
           Container(
             color: Colors.black54,
@@ -107,12 +105,12 @@ class _CedulaScanScreenState extends ConsumerState<CedulaScanScreen> {
                   Shimmer.fromColors(
                     baseColor: Colors.white24,
                     highlightColor: Colors.white54,
-                    child: const Icon(Icons.document_scanner,
+                    child: const Icon(Icons.badge_outlined,
                         color: Colors.white, size: 64),
                   ),
                   const SizedBox(height: RSSpacing.lg),
                   Text(
-                    'Leyendo documento...',
+                    'Leyendo licencia...',
                     style: RSTypography.titleMedium.copyWith(color: Colors.white),
                   ),
                 ],
@@ -120,7 +118,6 @@ class _CedulaScanScreenState extends ConsumerState<CedulaScanScreen> {
             ),
           ),
 
-        // Error banner
         if (_errorMessage != null && !_isProcessing)
           SafeArea(
             child: Align(
@@ -155,7 +152,6 @@ class _CedulaScanScreenState extends ConsumerState<CedulaScanScreen> {
   }
 }
 
-// Reusable scan step indicator — also used by carnet/vehicle screens
 class _StepIndicator extends StatelessWidget {
   const _StepIndicator({
     required this.currentStep,
@@ -171,9 +167,7 @@ class _StepIndicator extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(
-        horizontal: RSSpacing.md,
-        vertical: RSSpacing.sm,
-      ),
+          horizontal: RSSpacing.md, vertical: RSSpacing.sm),
       decoration: BoxDecoration(
         color: Colors.black54,
         borderRadius: BorderRadius.circular(RSRadius.xl),
@@ -194,10 +188,8 @@ class _StepIndicator extends StatelessWidget {
             );
           }),
           const SizedBox(width: 8),
-          Text(
-            '$currentStep/$totalSteps — $label',
-            style: RSTypography.caption.copyWith(color: Colors.white),
-          ),
+          Text('$currentStep/$totalSteps — $label',
+              style: RSTypography.caption.copyWith(color: Colors.white)),
         ],
       ),
     );
