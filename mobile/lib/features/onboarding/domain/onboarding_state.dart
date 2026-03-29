@@ -338,12 +338,16 @@ class OnboardingNotifier extends Notifier<OnboardingData> {
     bool? antifraude,
     bool? privacidad,
   }) {
-    state = state.copyWith(
+    final updated = state.copyWith(
       consentRcv: rcv ?? state.consentRcv,
       consentVeracidad: veracidad ?? state.consentVeracidad,
       consentAntifraude: antifraude ?? state.consentAntifraude,
       consentPrivacidad: privacidad ?? state.consentPrivacidad,
     );
+    // Stamp timestamp the moment all four consents are given.
+    state = updated.allConsentsGiven && state.consentTimestamp == null
+        ? updated.copyWith(consentTimestamp: DateTime.now().toUtc())
+        : updated;
   }
 
   void reset() => state = const OnboardingData();

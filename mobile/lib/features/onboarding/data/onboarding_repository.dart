@@ -19,6 +19,7 @@ class OnboardingRepository {
     if (user == null) throw Exception('No authenticated user');
 
     final userId = user.id;
+    final phone = user.phone ?? '';
 
     // Upload documents first (fail fast if storage is down)
     String? cedulaUrl;
@@ -58,14 +59,15 @@ class OnboardingRepository {
       );
     }
 
-    // Create profile (upsert — safe to retry)
+    // Upsert profile
     await SupabaseService.client.from(SupabaseConstants.profiles).upsert({
       'id': userId,
+      'phone': phone,
       'id_type': data.idType ?? 'V',
       'id_number': data.idNumber,
       'first_name': data.firstName,
       'last_name': data.lastName,
-      'date_of_birth': data.dateOfBirth?.toIso8601String(),
+      'date_of_birth': data.dateOfBirth?.toIso8601String().split('T').first,
       'nationality': data.nationality,
       'sex': data.sex,
       'urbanizacion': data.urbanizacion,
@@ -73,9 +75,9 @@ class OnboardingRepository {
       'municipio': data.municipio,
       'estado': data.estado,
       'codigo_postal': data.codigoPostal,
-      'emergency_contact_name': data.emergencyContactName,
-      'emergency_contact_phone': data.emergencyContactPhone,
-      'emergency_contact_relation': data.emergencyContactRelation,
+      'emergency_name': data.emergencyContactName,
+      'emergency_phone': data.emergencyContactPhone,
+      'emergency_relation': data.emergencyContactRelation,
       'licencia_number': data.licenciaNumber,
       'licencia_categories': data.licenciaCategories,
       'licencia_expiry': data.licenciaExpiry?.toIso8601String().split('T').first,
@@ -88,25 +90,16 @@ class OnboardingRepository {
           DateTime.now().toUtc().toIso8601String(),
     });
 
-    // Create vehicle
-    final vehicleId = _uuid.v4();
-    await SupabaseService.client.from(SupabaseConstants.vehicles).upsert({
-      'id': vehicleId,
-      'profile_id': userId,
-      'plate': data.plate,
-      'brand': data.brand,
-      'model': data.model,
-      'year': data.year,
-      'color': data.color,
-      'vehicle_use': data.vehicleUse ?? 'particular',
-      'serial_motor': data.serialMotor,
-      'serial_carroceria': data.serialCarroceria,
-      'rear_photo_url': vehiclePhotoUrl,
-    });
+    // Insert or update vehicle (check first to avoid duplicates on retry)
+    final vehicleId = await _upsertVehicle(
+      userId: userId,
+      data: data,
+      vehiclePhotoUrl: vehiclePhotoUrl,
+    );
 
-    // Insert document records
+    // Insert document records (only if not already uploaded for this user)
     if (cedulaUrl != null) {
-      await _insertDocumentRecord(
+      await _upsertDocumentRecord(
         userId: userId,
         vehicleId: vehicleId,
         url: cedulaUrl,
@@ -118,11 +111,12 @@ class OnboardingRepository {
           'firstName': data.firstName,
           'lastName': data.lastName,
         },
+        ocrConfidence: data.cedulaOcr?.confidence,
       );
     }
 
     if (licenciaUrl != null) {
-      await _insertDocumentRecord(
+      await _upsertDocumentRecord(
         userId: userId,
         vehicleId: vehicleId,
         url: licenciaUrl,
@@ -134,11 +128,12 @@ class OnboardingRepository {
           'expiryDate': data.licenciaExpiry?.toIso8601String(),
           'bloodType': data.bloodType,
         },
+        ocrConfidence: data.licenciaOcr?.confidence,
       );
     }
 
     if (carnetUrl != null) {
-      await _insertDocumentRecord(
+      await _upsertDocumentRecord(
         userId: userId,
         vehicleId: vehicleId,
         url: carnetUrl,
@@ -150,18 +145,61 @@ class OnboardingRepository {
           'model': data.model,
           'year': data.year,
         },
+        ocrConfidence: data.carnetOcr?.confidence,
       );
     }
 
     if (vehiclePhotoUrl != null) {
-      await _insertDocumentRecord(
+      await _upsertDocumentRecord(
         userId: userId,
         vehicleId: vehicleId,
         url: vehiclePhotoUrl,
         docType: 'vehicle_photo',
         file: data.vehiclePhoto!,
         ocrData: {},
+        ocrConfidence: null,
       );
+    }
+  }
+
+  /// Inserts a new vehicle or updates the existing one for this user.
+  Future<String> _upsertVehicle({
+    required String userId,
+    required OnboardingData data,
+    String? vehiclePhotoUrl,
+  }) async {
+    final existing = await SupabaseService.client
+        .from(SupabaseConstants.vehicles)
+        .select('id')
+        .eq('owner_id', userId)
+        .maybeSingle();
+
+    final payload = {
+      'owner_id': userId,
+      'plate': data.plate,
+      'brand': data.brand,
+      'model': data.model,
+      'year': data.year,
+      'color': data.color,
+      'vehicle_use': data.vehicleUse ?? 'particular',
+      'serial_motor': data.serialMotor,
+      'serial_carroceria': data.serialCarroceria,
+      if (vehiclePhotoUrl != null) 'rear_photo_url': vehiclePhotoUrl,
+    };
+
+    if (existing != null) {
+      final vehicleId = existing['id'] as String;
+      await SupabaseService.client
+          .from(SupabaseConstants.vehicles)
+          .update(payload)
+          .eq('id', vehicleId);
+      return vehicleId;
+    } else {
+      final vehicleId = _uuid.v4();
+      await SupabaseService.client
+          .from(SupabaseConstants.vehicles)
+          .insert({...payload, 'id': vehicleId});
+      return vehicleId;
     }
   }
 
@@ -170,37 +208,50 @@ class OnboardingRepository {
     required String userId,
     required String docType,
   }) async {
-    final ext = 'jpg';
-    final path = '$userId/${docType}_${_uuid.v4()}.$ext';
+    final path = '$userId/${docType}_${_uuid.v4()}.jpg';
     await SupabaseService.storage.from(SupabaseConstants.bucketDocuments).upload(
       path,
       file,
       fileOptions: const FileOptions(contentType: 'image/jpeg', upsert: false),
     );
-    final signedUrl = await SupabaseService.storage
+    return await SupabaseService.storage
         .from(SupabaseConstants.bucketDocuments)
         .createSignedUrl(path, 60 * 60 * 24 * 365); // 1 year
-    return signedUrl;
   }
 
-  Future<void> _insertDocumentRecord({
+  /// Inserts a document record, skipping if one with the same hash already
+  /// exists for this user+docType (safe retry on network failure).
+  Future<void> _upsertDocumentRecord({
     required String userId,
     required String vehicleId,
     required String url,
     required String docType,
     required File file,
     required Map<String, dynamic> ocrData,
+    double? ocrConfidence,
   }) async {
     final hash = await HashUtils.sha256HashFile(file);
+
+    // Check for existing record with same hash to prevent duplicates on retry.
+    final existing = await SupabaseService.client
+        .from(SupabaseConstants.documents)
+        .select('id')
+        .eq('profile_id', userId)
+        .eq('doc_type', docType)
+        .eq('file_hash', hash)
+        .maybeSingle();
+
+    if (existing != null) return; // Already uploaded — skip.
+
     await SupabaseService.client.from(SupabaseConstants.documents).insert({
       'id': _uuid.v4(),
       'profile_id': userId,
       'vehicle_id': vehicleId,
-      'document_type': docType,
-      'storage_url': url,
-      'sha256_hash': hash,
-      'ocr_data': ocrData,
-      'uploaded_at': DateTime.now().toUtc().toIso8601String(),
+      'doc_type': docType,
+      'file_url': url,
+      'file_hash': hash,
+      'ocr_extracted': ocrData,
+      if (ocrConfidence != null) 'ocr_confidence': ocrConfidence,
     });
   }
 

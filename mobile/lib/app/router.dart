@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:ruedaseguro/shared/providers/auth_provider.dart';
+import 'package:ruedaseguro/core/data/mock_data.dart';
+
 import 'package:ruedaseguro/features/auth/presentation/screens/splash_screen.dart';
 import 'package:ruedaseguro/features/auth/presentation/screens/welcome_screen.dart';
 import 'package:ruedaseguro/features/auth/presentation/screens/login_screen.dart';
@@ -20,11 +22,13 @@ import 'package:ruedaseguro/features/onboarding/presentation/screens/consent_scr
 import 'package:ruedaseguro/features/policy/presentation/screens/product_selection_screen.dart';
 import 'package:ruedaseguro/features/policy/presentation/screens/quote_summary_screen.dart';
 import 'package:ruedaseguro/features/policy/presentation/screens/policy_detail_screen.dart';
+import 'package:ruedaseguro/features/policy/presentation/screens/emission_screen.dart';
 import 'package:ruedaseguro/features/payment/presentation/screens/payment_method_screen.dart';
+import 'package:ruedaseguro/features/payment/presentation/screens/payment_success_screen.dart';
 import 'package:ruedaseguro/features/claims/presentation/screens/new_claim_screen.dart';
-import 'package:ruedaseguro/features/profile/presentation/screens/profile_screen.dart';
+import 'package:ruedaseguro/features/emergency/presentation/screens/emergency_screen.dart';
 
-// Routes that don't require auth (splash is NOT public — it's a transient gate)
+// Routes that don't require auth
 const _publicRoutes = ['/welcome', '/login', '/otp'];
 
 // Routes that require auth but no profile (onboarding in progress)
@@ -41,7 +45,6 @@ const _onboardingRoutes = [
 ];
 
 final routerProvider = Provider<GoRouter>((ref) {
-  // Fires GoRouter redirect whenever the auth state changes.
   final listenable = _RouterRefreshListenable();
   ref.listen<RSAuthState>(authProvider, (_, __) => listenable.notify());
   ref.onDispose(listenable.dispose);
@@ -52,6 +55,9 @@ final routerProvider = Provider<GoRouter>((ref) {
     redirect: (context, state) {
       final authState = ref.read(authProvider);
       final location = state.matchedLocation;
+
+      // Emergency and profile routes don't need auth redirect in debug/demo
+      if (kDebugMode && location == '/emergency') return null;
 
       // While still checking session, stay on splash
       if (authState.status == AuthStatus.initial) {
@@ -64,11 +70,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         return '/welcome';
       }
 
-      // Authenticated but no profile: must complete onboarding
+      // Authenticated but no profile: welcome or onboarding
       if (authState.status == AuthStatus.authenticated) {
         if (_onboardingRoutes.contains(location)) return null;
-        if (_publicRoutes.contains(location)) return '/onboarding/cedula';
-        return '/onboarding/cedula';
+        if (_publicRoutes.contains(location)) return null;
+        return '/welcome';
       }
 
       // Fully authenticated with profile
@@ -100,18 +106,31 @@ final routerProvider = Provider<GoRouter>((ref) {
           return OtpScreen(phone: phone);
         },
       ),
+
+      // ── Main app shell (with bottom nav) ─────────────────────
       GoRoute(
         path: '/home',
         builder: (context, state) => const HomeScreen(),
       ),
-      // Policy
+
+      // ── Policy ───────────────────────────────────────────────
       GoRoute(
         path: '/policy/select',
         builder: (context, state) => const ProductSelectionScreen(),
       ),
       GoRoute(
         path: '/policy/quote',
-        builder: (context, state) => const QuoteSummaryScreen(),
+        builder: (context, state) {
+          final plan = state.extra as InsurancePlan?;
+          return QuoteSummaryScreen(plan: plan);
+        },
+      ),
+      GoRoute(
+        path: '/policy/emission',
+        builder: (context, state) {
+          final payload = state.extra as Map<String, dynamic>?;
+          return EmissionScreen(payload: payload);
+        },
       ),
       GoRoute(
         path: '/policy/:id',
@@ -119,7 +138,8 @@ final routerProvider = Provider<GoRouter>((ref) {
           policyId: state.pathParameters['id']!,
         ),
       ),
-      // Onboarding
+
+      // ── Onboarding ───────────────────────────────────────────
       GoRoute(
         path: '/onboarding/cedula',
         builder: (context, state) => const CedulaScanScreen(),
@@ -162,20 +182,33 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/onboarding/consent',
         builder: (context, state) => const ConsentScreen(),
       ),
-      // Payment
+
+      // ── Payment ──────────────────────────────────────────────
       GoRoute(
         path: '/payment/method',
-        builder: (context, state) => const PaymentMethodScreen(),
+        builder: (context, state) {
+          final plan = state.extra as InsurancePlan?;
+          return PaymentMethodScreen(plan: plan);
+        },
       ),
-      // Claims
+      GoRoute(
+        path: '/payment/success',
+        builder: (context, state) {
+          final plan = state.extra as InsurancePlan?;
+          return PaymentSuccessScreen(plan: plan);
+        },
+      ),
+
+      // ── Claims ───────────────────────────────────────────────
       GoRoute(
         path: '/claims/new',
         builder: (context, state) => const NewClaimScreen(),
       ),
-      // Profile
+
+      // ── Emergency ────────────────────────────────────────────
       GoRoute(
-        path: '/profile',
-        builder: (context, state) => const ProfileScreen(),
+        path: '/emergency',
+        builder: (context, state) => const EmergencyScreen(),
       ),
     ],
   );

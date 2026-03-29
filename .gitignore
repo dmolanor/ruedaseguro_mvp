@@ -68,3 +68,5 @@ research_docs/
 .claude/
 
 mobile/lib/core/config/env_config.dart
+
+mbird_codes.txt

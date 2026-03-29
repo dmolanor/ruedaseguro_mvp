@@ -6,8 +6,11 @@ class AuthRepository {
   AuthRepository._();
   static final instance = AuthRepository._();
 
-  Future<void> signInWithOtp(String phone) async {
-    await SupabaseService.auth.signInWithOtp(phone: phone);
+  Future<void> signInWithOtp(String phone, {String? captchaToken}) async {
+    await SupabaseService.auth.signInWithOtp(
+      phone: phone,
+      captchaToken: captchaToken,
+    );
   }
 
   Future<Session?> verifyOtp(String phone, String token) async {

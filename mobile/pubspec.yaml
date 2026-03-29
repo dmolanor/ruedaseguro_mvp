@@ -9,6 +9,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
 
   cupertino_icons: ^1.0.8
 
@@ -31,6 +33,7 @@ dependencies:
   local_auth: ^3.0.1
   flutter_secure_storage: ^10.0.0
   crypto: ^3.0.6
+  cloudflare_turnstile: ^1.1.0
 
   # Connectivity & Network
   connectivity_plus: ^7.0.0

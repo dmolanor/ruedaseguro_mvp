@@ -26,6 +26,21 @@ class CarnetScanScreen extends ConsumerStatefulWidget {
 class _CarnetScanScreenState extends ConsumerState<CarnetScanScreen> {
   bool _isProcessing = false;
   String? _errorMessage;
+  Timer? _errorTimer;
+
+  @override
+  void dispose() {
+    _errorTimer?.cancel();
+    super.dispose();
+  }
+
+  void _showError(String message) {
+    _errorTimer?.cancel();
+    setState(() => _errorMessage = message);
+    _errorTimer = Timer(const Duration(seconds: 4), () {
+      if (mounted) setState(() => _errorMessage = null);
+    });
+  }
 
   Future<void> _handleCapture(File file) async {
     setState(() {
@@ -37,11 +52,9 @@ class _CarnetScanScreenState extends ConsumerState<CarnetScanScreen> {
     final quality = await ImageValidator.validate(file);
     if (!quality.overallPass) {
       if (mounted) {
-        setState(() {
-          _isProcessing = false;
-          _errorMessage = quality.failureReason ??
-              'La foto no es legible. Asegúrate de buena iluminación y sin reflejos.';
-        });
+        setState(() => _isProcessing = false);
+        _showError(quality.failureReason ??
+            'La foto no es legible. Asegúrate de buena iluminación y sin reflejos.');
       }
       return;
     }
@@ -51,11 +64,8 @@ class _CarnetScanScreenState extends ConsumerState<CarnetScanScreen> {
 
     if (ocr.isEmpty || ocr.confidence < 0.3) {
       if (mounted) {
-        setState(() {
-          _isProcessing = false;
-          _errorMessage =
-              'No pudimos leer el certificado. Intenta con mejor iluminación.';
-        });
+        setState(() => _isProcessing = false);
+        _showError('No pudimos leer el certificado. Intenta con mejor iluminación.');
       }
       return;
     }
@@ -140,30 +150,31 @@ class _CarnetScanScreenState extends ConsumerState<CarnetScanScreen> {
           ),
 
         if (_errorMessage != null && !_isProcessing)
-          SafeArea(
-            child: Align(
-              alignment: Alignment.bottomCenter,
-              child: Padding(
-                padding: const EdgeInsets.all(RSSpacing.lg),
-                child: Container(
-                  padding: const EdgeInsets.all(RSSpacing.md),
-                  decoration: BoxDecoration(
-                    color: RSColors.error,
-                    borderRadius: BorderRadius.circular(RSRadius.md),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.error_outline, color: Colors.white),
-                      const SizedBox(width: RSSpacing.sm),
-                      Expanded(
-                        child: Text(
-                          _errorMessage!,
-                          style: RSTypography.bodyMedium
-                              .copyWith(color: Colors.white),
-                        ),
+          Positioned(
+            bottom: 180,
+            left: RSSpacing.lg,
+            right: RSSpacing.lg,
+            child: GestureDetector(
+              onTap: () => setState(() => _errorMessage = null),
+              child: Container(
+                padding: const EdgeInsets.all(RSSpacing.md),
+                decoration: BoxDecoration(
+                  color: RSColors.error,
+                  borderRadius: BorderRadius.circular(RSRadius.md),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.error_outline, color: Colors.white),
+                    const SizedBox(width: RSSpacing.sm),
+                    Expanded(
+                      child: Text(
+                        _errorMessage!,
+                        style: RSTypography.bodyMedium
+                            .copyWith(color: Colors.white),
                       ),
-                    ],
-                  ),
+                    ),
+                    const Icon(Icons.close, color: Colors.white70, size: 18),
+                  ],
                 ),
               ),
             ),

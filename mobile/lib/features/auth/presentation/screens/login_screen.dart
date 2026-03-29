@@ -6,6 +6,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:cloudflare_turnstile/cloudflare_turnstile.dart';
+
+import 'package:ruedaseguro/core/config/env_config.dart';
 import 'package:ruedaseguro/core/theme/colors.dart';
 import 'package:ruedaseguro/core/theme/spacing.dart';
 import 'package:ruedaseguro/core/theme/typography.dart';
@@ -62,14 +65,17 @@ class LoginScreen extends ConsumerStatefulWidget {
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _controller = TextEditingController();
   final _focusNode = FocusNode();
+  final _turnstileController = TurnstileController();
   bool _isLoading = false;
   String? _errorMessage;
+  String? _captchaToken;
   _Country _country = _venezuela;
 
   @override
   void dispose() {
     _controller.dispose();
     _focusNode.dispose();
+    _turnstileController.dispose();
     super.dispose();
   }
 
@@ -79,13 +85,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   Future<void> _submit() async {
     if (!_isValid || _isLoading) return;
+    // If Turnstile is enabled but hasn't resolved yet, ask the user to wait.
+    if (EnvConfig.turnstileSiteKey.isNotEmpty && _captchaToken == null) {
+      setState(() => _errorMessage = 'Verificación de seguridad en curso. Intenta de nuevo en un momento.');
+      return;
+    }
     setState(() {
       _isLoading = true;
       _errorMessage = null;
     });
     try {
       final fullPhone = '${_country.dialCode}$_rawPhone';
-      await AuthRepository.instance.signInWithOtp(fullPhone);
+      await AuthRepository.instance.signInWithOtp(
+        fullPhone,
+        captchaToken: _captchaToken,
+      );
       if (mounted) unawaited(context.push('/otp', extra: fullPhone));
     } on Exception catch (e) {
       final msg = e.toString().toLowerCase();
@@ -94,12 +108,24 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         userMsg = 'Has excedido el límite de intentos. Intenta en unos minutos.';
       } else if (msg.contains('network') || msg.contains('socket')) {
         userMsg = 'Sin conexión a internet. Verifica tu conexión.';
+      } else if (msg.contains('captcha') || msg.contains('turnstile')) {
+        userMsg = 'Verificación de seguridad fallida. Intenta de nuevo.';
       } else {
         userMsg = kDebugMode
             ? '[dev] ${e.toString()}'
             : 'Error al enviar el código. Intenta de nuevo.';
       }
-      if (mounted) setState(() => _errorMessage = userMsg);
+      // Reset the Turnstile token so a fresh challenge is issued on retry.
+      // Guard against web controller not yet initialized (LateInitializationError).
+      try {
+        if (EnvConfig.turnstileSiteKey.isNotEmpty) {
+          _turnstileController.refreshToken();
+        }
+      } catch (_) {}
+      if (mounted) setState(() {
+        _errorMessage = userMsg;
+        _captchaToken = null;
+      });
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -263,6 +289,27 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               ],
 
               const Spacer(),
+
+              // Invisible Turnstile — resolves silently in background.
+              // Offstage keeps it in the render tree so the web JS bridge
+              // initializes, while keeping it fully hidden from the user.
+              if (EnvConfig.turnstileSiteKey.isNotEmpty)
+                Offstage(
+                  child: CloudFlareTurnstile(
+                    siteKey: EnvConfig.turnstileSiteKey,
+                    options: TurnstileOptions(
+                      mode: TurnstileMode.invisible,
+                      theme: TurnstileTheme.dark,
+                    ),
+                    controller: _turnstileController,
+                    onTokenRecived: (token) {
+                      setState(() => _captchaToken = token);
+                    },
+                    onTokenExpired: () {
+                      setState(() => _captchaToken = null);
+                    },
+                  ),
+                ),
 
               RSButton(
                 label: 'Continuar',

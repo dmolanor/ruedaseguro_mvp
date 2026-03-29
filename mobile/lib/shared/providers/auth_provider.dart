@@ -91,8 +91,19 @@ class AuthNotifier extends Notifier<RSAuthState> {
     }
   }
 
+  /// Enter demo mode — skip auth entirely, jump to full app experience.
+  void enterDemoMode() {
+    state = const RSAuthState(
+      status: AuthStatus.authenticatedWithProfile,
+    );
+  }
+
   Future<void> signOut() async {
-    await AuthRepository.instance.signOut();
+    try {
+      await AuthRepository.instance.signOut();
+    } catch (_) {
+      // In demo mode there's no real session — ignore errors.
+    }
     state = const RSAuthState(status: AuthStatus.unauthenticated);
   }
 }

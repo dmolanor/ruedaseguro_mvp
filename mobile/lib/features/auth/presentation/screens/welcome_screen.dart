@@ -1,17 +1,22 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:ruedaseguro/core/theme/colors.dart';
 import 'package:ruedaseguro/core/theme/spacing.dart';
 import 'package:ruedaseguro/core/theme/typography.dart';
+import 'package:ruedaseguro/shared/providers/auth_provider.dart';
 import 'package:ruedaseguro/shared/widgets/rs_button.dart';
 
-class WelcomeScreen extends StatelessWidget {
+class WelcomeScreen extends ConsumerWidget {
   const WelcomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isLoggedIn = ref.watch(authProvider).status == AuthStatus.authenticated;
+
     return Scaffold(
       backgroundColor: RSColors.background,
       body: SafeArea(
@@ -88,26 +93,68 @@ class WelcomeScreen extends StatelessWidget {
               const Spacer(flex: 1),
 
               // CTAs
-              RSButton(
-                label: 'Crear cuenta',
-                onPressed: () => context.push('/login'),
-              ).animate(delay: 800.ms).fadeIn(duration: 400.ms).slideY(begin: 0.2),
+              if (isLoggedIn) ...[
+                RSButton(
+                  label: 'Continuar registro',
+                  onPressed: () => context.push('/onboarding/cedula'),
+                ).animate(delay: 800.ms).fadeIn(duration: 400.ms).slideY(begin: 0.2),
 
-              const SizedBox(height: RSSpacing.md),
+                const SizedBox(height: RSSpacing.md),
 
-              Center(
-                child: TextButton(
-                  onPressed: () => context.push('/login'),
-                  child: Text(
-                    'Ya tengo cuenta — Ingresar',
-                    style: RSTypography.bodyMedium.copyWith(
-                      color: RSColors.primary,
-                      decoration: TextDecoration.underline,
-                      decorationColor: RSColors.primary,
+                Center(
+                  child: TextButton(
+                    onPressed: () => ref.read(authProvider.notifier).signOut(),
+                    child: Text(
+                      'Cerrar sesión',
+                      style: RSTypography.bodyMedium.copyWith(
+                        color: RSColors.textSecondary,
+                      ),
                     ),
                   ),
-                ),
-              ).animate(delay: 900.ms).fadeIn(duration: 400.ms),
+                ).animate(delay: 900.ms).fadeIn(duration: 400.ms),
+              ] else ...[
+                RSButton(
+                  label: 'Crear cuenta',
+                  onPressed: () => context.push('/login'),
+                ).animate(delay: 800.ms).fadeIn(duration: 400.ms).slideY(begin: 0.2),
+
+                const SizedBox(height: RSSpacing.md),
+
+                Center(
+                  child: TextButton(
+                    onPressed: () => context.push('/login'),
+                    child: Text(
+                      'Ya tengo cuenta — Ingresar',
+                      style: RSTypography.bodyMedium.copyWith(
+                        color: RSColors.primary,
+                        decoration: TextDecoration.underline,
+                        decorationColor: RSColors.primary,
+                      ),
+                    ),
+                  ),
+                ).animate(delay: 900.ms).fadeIn(duration: 400.ms),
+              ],
+
+              // Demo mode button (debug builds)
+              if (kDebugMode) ...[
+                const SizedBox(height: RSSpacing.sm),
+                Center(
+                  child: TextButton.icon(
+                    onPressed: () {
+                      ref.read(authProvider.notifier).enterDemoMode();
+                      context.go('/home');
+                    },
+                    icon: const Icon(Icons.play_circle_filled_rounded, size: 18),
+                    label: Text(
+                      'Ver demo completo',
+                      style: RSTypography.caption.copyWith(
+                        color: RSColors.accent,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ).animate(delay: 1000.ms).fadeIn(duration: 400.ms),
+              ],
 
               const SizedBox(height: RSSpacing.xl),
             ],
