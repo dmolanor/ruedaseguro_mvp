@@ -153,6 +153,15 @@ class _PolicyDetailBody extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            if (policy != null && policy!.isProvisional)
+              _ProvisionalBanner(policyId: policy!.id)
+                  .animate()
+                  .fadeIn(duration: 400.ms)
+                  .slideY(begin: -0.1),
+
+            if (policy != null && policy!.isProvisional)
+              const SizedBox(height: RSSpacing.md),
+
             _DigitalPolicyCard(policy: policy)
                 .animate()
                 .fadeIn(duration: 600.ms)
@@ -785,6 +794,61 @@ class _HashCard extends StatelessWidget {
                   style: RSTypography.mono.copyWith(
                     fontSize: 11,
                     color: RSColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Provisional Banner (RS-064) ──────────────────────────────────
+class _ProvisionalBanner extends StatelessWidget {
+  const _ProvisionalBanner({required this.policyId});
+  final String policyId;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(
+          horizontal: RSSpacing.md, vertical: RSSpacing.sm + 2),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF3E0),
+        borderRadius: BorderRadius.circular(RSRadius.md),
+        border: Border.all(color: const Color(0xFFFFB300), width: 1.5),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Padding(
+            padding: EdgeInsets.only(top: 1),
+            child: Icon(Icons.hourglass_top_rounded,
+                color: Color(0xFFE65100), size: 18),
+          ),
+          const SizedBox(width: RSSpacing.sm),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Póliza provisional · Pago en verificación',
+                  style: RSTypography.bodyMedium.copyWith(
+                    color: const Color(0xFFE65100),
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Tu pago Pago Móvil está siendo verificado. '
+                  'La póliza se activa en ≤ 24 h. '
+                  'Tu cobertura RCV inicia una vez confirmada.',
+                  style: RSTypography.caption.copyWith(
+                    color: const Color(0xFFBF360C),
+                    height: 1.4,
                   ),
                 ),
               ],

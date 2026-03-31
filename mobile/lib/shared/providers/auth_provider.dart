@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as supa;
 
@@ -52,25 +53,69 @@ class AuthNotifier extends Notifier<RSAuthState> {
   }
 
   Future<void> _init() async {
+    debugPrint('[AuthNotifier] _init start');
     final repo = AuthRepository.instance;
-    final session = repo.getCurrentSession();
-    if (session != null) {
-      final hasProfile = await repo.profileExists();
-      state = RSAuthState(
-        status: hasProfile
-            ? AuthStatus.authenticatedWithProfile
-            : AuthStatus.authenticated,
-        user: session.user,
-        session: session,
-      );
-    } else {
-      state = const RSAuthState(status: AuthStatus.unauthenticated);
+
+    // Hard safety net — state can NEVER remain `initial` beyond this point.
+    // Runs in parallel; cancelled implicitly once the try block sets state first.
+    Future.delayed(const Duration(seconds: 12)).then((_) {
+      if (state.status == AuthStatus.initial) {
+        debugPrint('[AuthNotifier] hard timeout fired — forcing unauthenticated');
+        final s = repo.getCurrentSession();
+        state = s != null
+            ? RSAuthState(
+                status: AuthStatus.authenticatedWithProfile,
+                user: s.user,
+                session: s,
+              )
+            : const RSAuthState(status: AuthStatus.unauthenticated);
+      }
+    });
+
+    try {
+      final session = repo.getCurrentSession();
+      debugPrint('[AuthNotifier] currentSession: ${session != null}');
+      if (session != null) {
+        debugPrint('[AuthNotifier] calling profileExists...');
+        final hasProfile = await Future.any([
+          repo.profileExists().catchError((_) => true),
+          Future.delayed(const Duration(seconds: 5), () => true),
+        ]);
+        debugPrint('[AuthNotifier] hasProfile: $hasProfile');
+        state = RSAuthState(
+          status: hasProfile
+              ? AuthStatus.authenticatedWithProfile
+              : AuthStatus.authenticated,
+          user: session.user,
+          session: session,
+        );
+      } else {
+        debugPrint('[AuthNotifier] no session — unauthenticated');
+        state = const RSAuthState(status: AuthStatus.unauthenticated);
+      }
+    } catch (e) {
+      debugPrint('[AuthNotifier] _init error: $e');
+      // Network error — recover based on cached session
+      final session = repo.getCurrentSession();
+      state = session != null
+          ? RSAuthState(
+              status: AuthStatus.authenticatedWithProfile,
+              user: session.user,
+              session: session,
+            )
+          : const RSAuthState(status: AuthStatus.unauthenticated);
     }
 
+    debugPrint('[AuthNotifier] state after init: ${state.status}');
+
     _subscription = repo.onAuthStateChange.listen((authState) async {
+      debugPrint('[AuthNotifier] stream event: ${authState.event}');
       final session = authState.session;
       if (session != null) {
-        final hasProfile = await repo.profileExists();
+        final hasProfile = await Future.any([
+          repo.profileExists().catchError((_) => true),
+          Future.delayed(const Duration(seconds: 5), () => true),
+        ]);
         state = RSAuthState(
           status: hasProfile
               ? AuthStatus.authenticatedWithProfile

@@ -2,18 +2,26 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
 import 'package:ruedaseguro/core/theme/colors.dart';
 import 'package:ruedaseguro/core/theme/spacing.dart';
 import 'package:ruedaseguro/core/theme/typography.dart';
 import 'package:ruedaseguro/core/data/mock_data.dart';
+import 'package:ruedaseguro/features/policy/providers/policy_providers.dart';
 import 'package:ruedaseguro/shared/providers/auth_provider.dart';
+import 'package:ruedaseguro/shared/providers/profile_provider.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final profileAsync = ref.watch(profileProvider);
+    final vehicleAsync = ref.watch(vehicleProvider);
+    final profile = profileAsync.asData?.value;
+    final vehicle = vehicleAsync.asData?.value;
+
     return SafeArea(
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(RSSpacing.lg),
@@ -22,73 +30,43 @@ class ProfileScreen extends ConsumerWidget {
           children: [
             const SizedBox(height: RSSpacing.sm),
 
-            // Avatar + name header
-            _ProfileHeader()
+            _ProfileHeader(profile: profile)
                 .animate()
                 .fadeIn(duration: 500.ms)
                 .slideY(begin: -0.05),
 
             const SizedBox(height: RSSpacing.lg),
 
-            // Active policy card
             _ActivePolicySummary()
                 .animate(delay: 150.ms)
                 .fadeIn(duration: 400.ms),
 
             const SizedBox(height: RSSpacing.lg),
 
-            // Personal info
             _SectionHeader(title: 'Datos personales'),
             const SizedBox(height: RSSpacing.sm),
-            _InfoSection(
-              items: [
-                _InfoItem(Icons.person_rounded, 'Nombre', MockRider.fullName),
-                _InfoItem(Icons.badge_rounded, 'Cédula',
-                    '${MockRider.idType}-${MockRider.idNumber}'),
-                _InfoItem(Icons.phone_rounded, 'Teléfono', MockRider.phone),
-                _InfoItem(Icons.cake_rounded, 'Nacimiento',
-                    '${MockRider.dateOfBirth} (${MockRider.age} años)'),
-                _InfoItem(Icons.location_on_rounded, 'Ciudad',
-                    '${MockRider.city}, ${MockRider.state}'),
-              ],
-            ).animate(delay: 200.ms).fadeIn(duration: 400.ms),
+            _PersonalInfoSection(profile: profile)
+                .animate(delay: 200.ms)
+                .fadeIn(duration: 400.ms),
 
             const SizedBox(height: RSSpacing.lg),
 
-            // Vehicle info
             _SectionHeader(title: 'Mi vehículo'),
             const SizedBox(height: RSSpacing.sm),
-            _InfoSection(
-              items: [
-                _InfoItem(Icons.two_wheeler_rounded, 'Marca / Modelo',
-                    '${MockVehicle.brand} ${MockVehicle.model}'),
-                _InfoItem(
-                    Icons.calendar_today_rounded, 'Año', '${MockVehicle.year}'),
-                _InfoItem(Icons.pin_rounded, 'Placa', MockVehicle.plate),
-                _InfoItem(Icons.color_lens_rounded, 'Color', MockVehicle.color),
-                _InfoItem(Icons.confirmation_number_rounded, 'N° Motor',
-                    MockVehicle.serialMotor),
-              ],
-            ).animate(delay: 300.ms).fadeIn(duration: 400.ms),
+            _VehicleSection(vehicle: vehicle)
+                .animate(delay: 300.ms)
+                .fadeIn(duration: 400.ms),
 
             const SizedBox(height: RSSpacing.lg),
 
-            // Emergency contact
             _SectionHeader(title: 'Contacto de emergencia'),
             const SizedBox(height: RSSpacing.sm),
-            _InfoSection(
-              items: [
-                _InfoItem(Icons.people_rounded, 'Nombre',
-                    MockRider.emergencyContact),
-                _InfoItem(Icons.phone_rounded, 'Teléfono', MockRider.emergencyPhone),
-                _InfoItem(Icons.family_restroom_rounded, 'Relación',
-                    MockRider.emergencyRelation),
-              ],
-            ).animate(delay: 400.ms).fadeIn(duration: 400.ms),
+            _EmergencySection(profile: profile)
+                .animate(delay: 400.ms)
+                .fadeIn(duration: 400.ms),
 
             const SizedBox(height: RSSpacing.lg),
 
-            // Payment history
             _SectionHeader(title: 'Historial de pagos'),
             const SizedBox(height: RSSpacing.sm),
             _PaymentHistory()
@@ -97,7 +75,6 @@ class ProfileScreen extends ConsumerWidget {
 
             const SizedBox(height: RSSpacing.lg),
 
-            // Settings
             _SectionHeader(title: 'Configuración'),
             const SizedBox(height: RSSpacing.sm),
             _SettingsSection()
@@ -106,7 +83,6 @@ class ProfileScreen extends ConsumerWidget {
 
             const SizedBox(height: RSSpacing.xl),
 
-            // Sign out
             _SignOutButton(ref: ref)
                 .animate(delay: 700.ms)
                 .fadeIn(duration: 400.ms),
@@ -131,10 +107,15 @@ class ProfileScreen extends ConsumerWidget {
 
 // ─── Profile Header ──────────────────────────────────────────────
 class _ProfileHeader extends StatelessWidget {
-  const _ProfileHeader();
+  const _ProfileHeader({required this.profile});
+  final ProfileSummary? profile;
 
   @override
   Widget build(BuildContext context) {
+    final initials = profile?.initials ?? 'RS';
+    final fullName = profile?.fullName ?? '...';
+    final phone = profile?.phone ?? '';
+
     return Row(
       children: [
         Stack(
@@ -159,7 +140,7 @@ class _ProfileHeader extends StatelessWidget {
               ),
               child: Center(
                 child: Text(
-                  'JC',
+                  initials,
                   style: RSTypography.displayMedium.copyWith(
                     color: Colors.white,
                     fontWeight: FontWeight.w800,
@@ -188,18 +169,20 @@ class _ProfileHeader extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(MockRider.fullName,
+              Text(fullName,
                   style: RSTypography.displayMedium.copyWith(
                     color: RSColors.textPrimary,
                     fontWeight: FontWeight.w700,
                   )),
-              Text(MockRider.phone,
-                  style: RSTypography.bodyMedium.copyWith(
-                    color: RSColors.textSecondary,
-                  )),
+              if (phone.isNotEmpty)
+                Text(phone,
+                    style: RSTypography.bodyMedium.copyWith(
+                      color: RSColors.textSecondary,
+                    )),
               const SizedBox(height: 6),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
                 decoration: BoxDecoration(
                   color: RSColors.success.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
@@ -237,11 +220,18 @@ class _ProfileHeader extends StatelessWidget {
 }
 
 // ─── Active Policy Summary ────────────────────────────────────────
-class _ActivePolicySummary extends StatelessWidget {
+class _ActivePolicySummary extends ConsumerWidget {
   const _ActivePolicySummary();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final policyAsync = ref.watch(activePolicySummaryProvider);
+    final policy = policyAsync.asData?.value;
+
+    final planName = policy?.planName ?? MockPolicy.type;
+    final displayNumber = policy?.displayNumber ?? MockPolicy.number;
+    final expiryLabel = policy?.formattedEndDate ?? MockPolicy.expiryDate;
+
     return Container(
       padding: const EdgeInsets.all(RSSpacing.md),
       decoration: BoxDecoration(
@@ -258,38 +248,133 @@ class _ActivePolicySummary extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const Icon(Icons.verified_user_rounded, color: RSColors.primary, size: 24),
+          const Icon(Icons.verified_user_rounded,
+              color: RSColors.primary, size: 24),
           const SizedBox(width: RSSpacing.md),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(MockPolicy.type,
+                Text(planName,
                     style: RSTypography.titleMedium.copyWith(
                       color: RSColors.primary,
                       fontWeight: FontWeight.w700,
                     )),
                 Text(
-                  '${MockPolicy.number} · Vence ${MockPolicy.expiryDate}',
-                  style: RSTypography.caption.copyWith(color: RSColors.textSecondary),
+                  '$displayNumber · Vence $expiryLabel',
+                  style: RSTypography.caption
+                      .copyWith(color: RSColors.textSecondary),
                 ),
               ],
             ),
           ),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
               color: RSColors.success,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Text('Activa',
-                style: RSTypography.caption.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                )),
+            child: Text(
+              policy?.isProvisional == true ? 'Provisional' : 'Activa',
+              style: RSTypography.caption.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
           ),
         ],
       ),
+    );
+  }
+}
+
+// ─── Personal Info Section ────────────────────────────────────────
+class _PersonalInfoSection extends StatelessWidget {
+  const _PersonalInfoSection({required this.profile});
+  final ProfileSummary? profile;
+
+  static String _formatDob(String? dob) {
+    if (dob == null) return '';
+    try {
+      final dt = DateTime.parse(dob);
+      final age = DateTime.now().year - dt.year;
+      return '${DateFormat('dd/MM/yyyy').format(dt)} ($age años)';
+    } catch (_) {
+      return dob;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final p = profile;
+    return _InfoSection(
+      items: [
+        _InfoItem(Icons.person_rounded, 'Nombre',
+            p?.fullName ?? MockRider.fullName),
+        _InfoItem(Icons.badge_rounded, 'Cédula',
+            p != null
+                ? '${p.idType}-${p.idNumber}'
+                : '${MockRider.idType}-${MockRider.idNumber}'),
+        _InfoItem(Icons.phone_rounded, 'Teléfono',
+            p?.phone ?? MockRider.phone),
+        _InfoItem(Icons.cake_rounded, 'Nacimiento',
+            p?.dateOfBirth != null
+                ? _formatDob(p!.dateOfBirth)
+                : '${MockRider.dateOfBirth} (${MockRider.age} años)'),
+        _InfoItem(Icons.location_on_rounded, 'Ciudad',
+            p?.ciudad != null
+                ? '${p!.ciudad}${p.estado != null ? ', ${p.estado}' : ''}'
+                : '${MockRider.city}, ${MockRider.state}'),
+      ],
+    );
+  }
+}
+
+// ─── Vehicle Section ─────────────────────────────────────────────
+class _VehicleSection extends StatelessWidget {
+  const _VehicleSection({required this.vehicle});
+  final VehicleSummary? vehicle;
+
+  @override
+  Widget build(BuildContext context) {
+    final v = vehicle;
+    return _InfoSection(
+      items: [
+        _InfoItem(Icons.two_wheeler_rounded, 'Marca / Modelo',
+            v != null
+                ? '${v.brand} ${v.model}'
+                : '${MockVehicle.brand} ${MockVehicle.model}'),
+        _InfoItem(Icons.calendar_today_rounded, 'Año',
+            v != null ? '${v.year}' : '${MockVehicle.year}'),
+        _InfoItem(Icons.pin_rounded, 'Placa',
+            v?.plate ?? MockVehicle.plate),
+        _InfoItem(Icons.color_lens_rounded, 'Color',
+            v?.color ?? MockVehicle.color),
+        _InfoItem(Icons.confirmation_number_rounded, 'N° Motor',
+            v?.serialMotor ?? MockVehicle.serialMotor),
+      ],
+    );
+  }
+}
+
+// ─── Emergency Section ───────────────────────────────────────────
+class _EmergencySection extends StatelessWidget {
+  const _EmergencySection({required this.profile});
+  final ProfileSummary? profile;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = profile;
+    return _InfoSection(
+      items: [
+        _InfoItem(Icons.people_rounded, 'Nombre',
+            p?.emergencyName ?? MockRider.emergencyContact),
+        _InfoItem(Icons.phone_rounded, 'Teléfono',
+            p?.emergencyPhone ?? MockRider.emergencyPhone),
+        _InfoItem(Icons.family_restroom_rounded, 'Relación',
+            p?.emergencyRelation ?? MockRider.emergencyRelation),
+      ],
     );
   }
 }
@@ -367,8 +452,43 @@ class _InfoSection extends StatelessWidget {
 }
 
 // ─── Payment History ─────────────────────────────────────────────
-class _PaymentHistory extends StatelessWidget {
+class _PaymentHistory extends ConsumerWidget {
   const _PaymentHistory();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isDemoMode = ref.watch(authProvider).user == null;
+
+    if (isDemoMode) {
+      return _PaymentHistoryList(payments: MockPayments.history);
+    }
+
+    // Real mode: payments table is empty for now — show empty state
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(RSSpacing.lg),
+      decoration: BoxDecoration(
+        color: RSColors.surface,
+        borderRadius: BorderRadius.circular(RSRadius.md),
+        border: Border.all(color: RSColors.border, width: 0.5),
+      ),
+      child: Column(
+        children: [
+          const Icon(Icons.receipt_long_outlined,
+              color: RSColors.textSecondary, size: 32),
+          const SizedBox(height: RSSpacing.sm),
+          Text('Sin pagos registrados',
+              style: RSTypography.bodyMedium
+                  .copyWith(color: RSColors.textSecondary)),
+        ],
+      ),
+    );
+  }
+}
+
+class _PaymentHistoryList extends StatelessWidget {
+  const _PaymentHistoryList({required this.payments});
+  final List<dynamic> payments;
 
   @override
   Widget build(BuildContext context) {
@@ -379,9 +499,9 @@ class _PaymentHistory extends StatelessWidget {
         border: Border.all(color: RSColors.border, width: 0.5),
       ),
       child: Column(
-        children: MockPayments.history.asMap().entries.map((e) {
+        children: payments.asMap().entries.map((e) {
           final payment = e.value;
-          final isLast = e.key == MockPayments.history.length - 1;
+          final isLast = e.key == payments.length - 1;
           return Column(
             children: [
               Padding(
@@ -538,7 +658,8 @@ class _SwitchItem extends StatelessWidget {
 }
 
 class _TapItem extends StatelessWidget {
-  const _TapItem({required this.icon, required this.label, required this.onTap});
+  const _TapItem(
+      {required this.icon, required this.label, required this.onTap});
   final IconData icon;
   final String label;
   final VoidCallback onTap;
@@ -548,8 +669,8 @@ class _TapItem extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       child: Padding(
-        padding:
-            const EdgeInsets.symmetric(horizontal: RSSpacing.md, vertical: 14),
+        padding: const EdgeInsets.symmetric(
+            horizontal: RSSpacing.md, vertical: 14),
         child: Row(
           children: [
             Icon(icon, color: RSColors.primary, size: 18),
@@ -580,8 +701,7 @@ class _SignOutButton extends StatelessWidget {
         final confirmed = await showDialog<bool>(
           context: context,
           builder: (_) => AlertDialog(
-            title: Text('Cerrar sesión',
-                style: RSTypography.titleLarge),
+            title: Text('Cerrar sesión', style: RSTypography.titleLarge),
             content: Text(
               '¿Estás seguro que deseas cerrar sesión?',
               style: RSTypography.bodyMedium,
@@ -615,8 +735,8 @@ class _SignOutButton extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.logout_rounded, color: RSColors.error, size: 20),
-            const SizedBox(width: RSSpacing.md),
+            Icon(Icons.logout_rounded, color: RSColors.error, size: 20),
+            const SizedBox(width: RSSpacing.sm),
             Text('Cerrar sesión',
                 style: RSTypography.titleMedium.copyWith(
                   color: RSColors.error,

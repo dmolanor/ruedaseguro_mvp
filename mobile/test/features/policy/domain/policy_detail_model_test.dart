@@ -7,8 +7,8 @@ void main() {
     String id = 'aabbccdd-1234-5678-abcd-000000000001',
     String status = 'pending_emission',
     String issuanceStatus = 'provisional',
-    String startDate = '2026-03-29',
-    String endDate = '2027-03-29',
+    String startDate = '2026-03-29T00:00:00.000Z',
+    String endDate = '2027-03-29T00:00:00.000Z',
     double premiumUsd = 31.0,
     double premiumVes = 2480.0,
     double exchangeRate = 80.0,
@@ -18,10 +18,10 @@ void main() {
         'id': id,
         'status': status,
         'issuance_status': issuanceStatus,
-        'start_date': startDate,
-        'end_date': endDate,
-        'premium_usd': premiumUsd,
-        'premium_ves': premiumVes,
+        'coverage_start': startDate,
+        'coverage_end': endDate,
+        'price_usd': premiumUsd,
+        'price_ves': premiumVes,
         'exchange_rate': exchangeRate,
         'carrier_policy_number': carrierPolicyNumber,
         'profiles': {
@@ -144,10 +144,10 @@ void main() {
     });
 
     test('formattedStartDate produces human-readable Spanish date', () {
-      final m = PolicyDetailModel.fromMap(fixture(startDate: '2026-03-29'));
+      final m = PolicyDetailModel.fromMap(fixture(startDate: '2026-03-29T00:00:00.000Z'));
       // Should be something like "29 mar 2026" (locale-dependent)
       expect(m.formattedStartDate, isNotEmpty);
-      expect(m.formattedStartDate, isNot('2026-03-29'));
+      expect(m.formattedStartDate, isNot('2026-03-29T00:00:00.000Z'));
     });
 
     test('daysRemaining is non-negative', () {

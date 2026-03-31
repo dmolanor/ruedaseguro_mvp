@@ -29,8 +29,8 @@ SELECT
   )                                                  AS policies_confirmed,
 
   -- Revenue (USD)
-  COALESCE(SUM(p.premium_usd), 0)                   AS revenue_usd,
-  COALESCE(AVG(p.premium_usd), 0)                   AS avg_premium_usd,
+  COALESCE(SUM(p.price_usd), 0)                     AS revenue_usd,
+  COALESCE(AVG(p.price_usd), 0)                     AS avg_premium_usd,
 
   -- Tier breakdown
   COUNT(p.id) FILTER (

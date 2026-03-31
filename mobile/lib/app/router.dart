@@ -27,6 +27,7 @@ import 'package:ruedaseguro/features/payment/presentation/screens/payment_method
 import 'package:ruedaseguro/features/payment/presentation/screens/payment_success_screen.dart';
 import 'package:ruedaseguro/features/claims/presentation/screens/new_claim_screen.dart';
 import 'package:ruedaseguro/features/emergency/presentation/screens/emergency_screen.dart';
+import 'package:ruedaseguro/features/support/presentation/screens/create_ticket_screen.dart';
 
 // Routes that don't require auth
 const _publicRoutes = ['/welcome', '/login', '/otp'];
@@ -203,6 +204,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/claims/new',
         builder: (context, state) => const NewClaimScreen(),
+      ),
+
+      // ── Support ──────────────────────────────────────────────
+      GoRoute(
+        path: '/support/new-ticket',
+        builder: (context, state) => const CreateTicketScreen(),
       ),
 
       // ── Emergency ────────────────────────────────────────────

@@ -290,25 +290,24 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
               const Spacer(),
 
-              // Invisible Turnstile — resolves silently in background.
-              // Offstage keeps it in the render tree so the web JS bridge
-              // initializes, while keeping it fully hidden from the user.
+              // Invisible Turnstile — no wrapper needed.
+              // On web the widget renders as a 0.01×0.01px iframe; any
+              // display:none wrapper (Offstage/Visibility) blocks the
+              // Cloudflare JS challenge from running.
               if (EnvConfig.turnstileSiteKey.isNotEmpty)
-                Offstage(
-                  child: CloudFlareTurnstile(
-                    siteKey: EnvConfig.turnstileSiteKey,
-                    options: TurnstileOptions(
-                      mode: TurnstileMode.invisible,
-                      theme: TurnstileTheme.dark,
-                    ),
-                    controller: _turnstileController,
-                    onTokenRecived: (token) {
-                      setState(() => _captchaToken = token);
-                    },
-                    onTokenExpired: () {
-                      setState(() => _captchaToken = null);
-                    },
+                CloudFlareTurnstile(
+                  siteKey: EnvConfig.turnstileSiteKey,
+                  options: TurnstileOptions(
+                    mode: TurnstileMode.invisible,
+                    theme: TurnstileTheme.dark,
                   ),
+                  controller: _turnstileController,
+                  onTokenRecived: (token) {
+                    setState(() => _captchaToken = token);
+                  },
+                  onTokenExpired: () {
+                    setState(() => _captchaToken = null);
+                  },
                 ),
 
               RSButton(

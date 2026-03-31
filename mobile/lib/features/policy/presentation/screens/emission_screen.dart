@@ -9,10 +9,12 @@ import 'package:ruedaseguro/core/theme/spacing.dart';
 import 'package:ruedaseguro/core/theme/typography.dart';
 import 'package:ruedaseguro/features/audit/data/audit_repository.dart';
 import 'package:ruedaseguro/features/payment/data/payment_repository.dart';
+import 'package:ruedaseguro/features/policy/data/carrier_api_client.dart';
+import 'package:ruedaseguro/features/policy/data/policy_issuance_service.dart';
 import 'package:ruedaseguro/features/policy/data/policy_repository.dart';
 import 'package:ruedaseguro/shared/widgets/rs_button.dart';
 
-enum _EmissionState { loading, success, observed, rejected }
+enum _EmissionState { loading, success, confirmed, observed, rejected }
 
 class EmissionScreen extends StatefulWidget {
   const EmissionScreen({super.key, this.payload});
@@ -75,6 +77,8 @@ class _EmissionScreenState extends State<EmissionScreen> {
       final vehicleId =
           await PolicyRepository.instance.fetchVehicleId(profileId);
       if (vehicleId == null) throw Exception('Vehículo no registrado');
+      final vehiclePlate =
+          await PolicyRepository.instance.fetchVehiclePlate(vehicleId) ?? '';
 
       // Determine carrier — use plan.carrierId or fallback to seed carrier
       final carrierId = _plan.carrierId ??
@@ -124,10 +128,40 @@ class _EmissionScreenState extends State<EmissionScreen> {
         },
       );
 
+      // RS-061: Attempt carrier API issuance (15 s budget; stays provisional on failure)
+      final issuancePayload = CarrierSubmissionPayload(
+        policyId: policyId,
+        riderCedula: profileId, // real cedula fetched by service in Phase 1.5
+        riderIdType: 'V',
+        riderFullName: '',
+        riderPhone: '',
+        vehiclePlate: vehiclePlate,
+        vehicleBrand: '',
+        vehicleModel: '',
+        vehicleYear: DateTime.now().year,
+        startDate: DateTime.now(),
+        endDate: DateTime.now().add(const Duration(days: 365)),
+        premiumUsd: amountUsd,
+        productCode: _plan.tier,
+      );
+
+      final issuance = await PolicyIssuanceService.instance
+          .attemptIssuance(
+            policyId: policyId,
+            profileId: profileId,
+            payload: issuancePayload,
+          )
+          .timeout(
+            const Duration(seconds: 15),
+            onTimeout: () => IssuanceResult.provisional(reason: 'timeout'),
+          );
+
       if (mounted) {
         setState(() {
           _policyId = policyId;
-          _state = _EmissionState.success;
+          _state = issuance.isConfirmed
+              ? _EmissionState.confirmed
+              : _EmissionState.success;
         });
       }
     } catch (e) {
@@ -157,13 +191,16 @@ class _EmissionScreenState extends State<EmissionScreen> {
                     )
                   : null,
               title: Text(
-                _state == _EmissionState.success
-                    ? 'Póliza registrada'
-                    : _state == _EmissionState.observed
-                        ? 'Requiere corrección'
-                        : 'Error de emisión',
+                _state == _EmissionState.confirmed
+                    ? 'Póliza confirmada'
+                    : _state == _EmissionState.success
+                        ? 'Póliza registrada'
+                        : _state == _EmissionState.observed
+                            ? 'Requiere corrección'
+                            : 'Error de emisión',
                 style: RSTypography.titleLarge.copyWith(
-                  color: _state == _EmissionState.success
+                  color: (_state == _EmissionState.success ||
+                          _state == _EmissionState.confirmed)
                       ? RSColors.success
                       : _state == _EmissionState.observed
                           ? const Color(0xFFE65100)
@@ -176,10 +213,17 @@ class _EmissionScreenState extends State<EmissionScreen> {
         child: switch (_state) {
           _EmissionState.loading =>
             _LoadingView(key: const ValueKey('loading'), plan: _plan),
+          _EmissionState.confirmed => _SuccessView(
+              key: const ValueKey('confirmed'),
+              plan: _plan,
+              policyId: _policyId,
+              isConfirmed: true,
+            ),
           _EmissionState.success => _SuccessView(
               key: const ValueKey('success'),
               plan: _plan,
               policyId: _policyId,
+              isConfirmed: false,
             ),
           _EmissionState.observed =>
             _ObservedView(key: const ValueKey('observed')),
@@ -255,6 +299,7 @@ class _LoadingView extends StatelessWidget {
               'Verificando datos del vehículo',
               'Registrando póliza provisional',
               'Guardando referencia de pago',
+              'Contactando a la aseguradora...',
             ]
                 .asMap()
                 .entries
@@ -307,9 +352,11 @@ class _SuccessView extends StatelessWidget {
     super.key,
     required this.plan,
     required this.policyId,
+    this.isConfirmed = false,
   });
   final InsurancePlan plan;
   final String? policyId;
+  final bool isConfirmed;
 
   @override
   Widget build(BuildContext context) {
@@ -351,7 +398,7 @@ class _SuccessView extends StatelessWidget {
           const SizedBox(height: RSSpacing.lg),
 
           Text(
-            '¡Solicitud registrada!',
+            isConfirmed ? '¡Póliza confirmada!' : '¡Solicitud registrada!',
             style: RSTypography.displayLarge.copyWith(
               color: RSColors.textPrimary,
               fontWeight: FontWeight.w800,
@@ -362,7 +409,9 @@ class _SuccessView extends StatelessWidget {
           const SizedBox(height: RSSpacing.sm),
 
           Text(
-            'Tu póliza provisional está registrada.\nVerificaremos tu pago en menos de 24 horas y la activaremos.',
+            isConfirmed
+                ? 'Tu póliza fue registrada y confirmada por la aseguradora.\nYa tienes cobertura RCV activa.'
+                : 'Tu póliza provisional está registrada.\nVerificaremos tu pago en menos de 24 horas y la activaremos.',
             style: RSTypography.bodyLarge.copyWith(
               color: RSColors.textSecondary,
               height: 1.5,

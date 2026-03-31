@@ -56,7 +56,9 @@ class _ConsentScreenState extends ConsumerState<ConsentScreen> {
         );
         context.go('/home');
       }
-    } on Exception catch (_) {
+    } catch (e, st) {
+      debugPrint('❌ saveOnboardingData failed: $e');
+      debugPrint('$st');
       if (mounted) {
         setState(() {
           _isSaving = false;

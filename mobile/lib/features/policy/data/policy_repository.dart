@@ -41,20 +41,19 @@ class PolicyRepository {
 
     await SupabaseService.client.from(SupabaseConstants.policies).insert({
       'id': policyId,
+      'policy_number': 'RS-${now.year}-${policyId.substring(0, 8).toUpperCase()}',
       'profile_id': profileId,
       'vehicle_id': vehicleId,
       'carrier_id': carrierId,
       'policy_type_id': policyTypeId,
       'status': 'pending_emission',
       'issuance_status': 'provisional',
-      'start_date': now.toIso8601String().split('T').first,
-      'end_date': now
-          .add(const Duration(days: 365))
-          .toIso8601String()
-          .split('T').first,
-      'premium_usd': priceUsd,
-      'premium_ves': priceVes,
+      'coverage_start': now.toIso8601String(),
+      'coverage_end': now.add(const Duration(days: 365)).toIso8601String(),
+      'price_usd': priceUsd,
+      'price_ves': priceVes,
       'exchange_rate': exchangeRate,
+      'rate_timestamp': now.toIso8601String(),
     });
 
     return policyId;
@@ -83,6 +82,16 @@ class PolicyRepository {
     return row?['id'] as String?;
   }
 
+  /// Fetches the plate string for a known vehicle UUID.
+  Future<String?> fetchVehiclePlate(String vehicleId) async {
+    final row = await SupabaseService.client
+        .from(SupabaseConstants.vehicles)
+        .select('plate')
+        .eq('id', vehicleId)
+        .maybeSingle();
+    return row?['plate'] as String?;
+  }
+
   /// Fetches full policy detail with joins on profiles, vehicles,
   /// policy_types and carriers. Returns null if the policy doesn't exist.
   Future<PolicyDetailModel?> fetchPolicyDetail(String policyId) async {
@@ -90,7 +99,7 @@ class PolicyRepository {
         .from(SupabaseConstants.policies)
         .select(
           '*,'
-          'profiles!profile_id(full_name,id_type,id_number),'
+          'profiles!profile_id(first_name,last_name,id_type,id_number),'
           'vehicles!vehicle_id(brand,model,year,plate,color),'
           'policy_types!policy_type_id(name,tier),'
           'carriers!carrier_id(name)',

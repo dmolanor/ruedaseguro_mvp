@@ -24,6 +24,14 @@ class SupabaseConstants {
   static const String bucketReceipts = 'receipts';
   static const String bucketPublic = 'public';
 
+  // Sprint 3 tables
+  static const String tickets = 'tickets';
+  static const String ticketComments = 'ticket_comments';
+  static const String telemetryEvents = 'telemetry_events';
+  static const String carrierApiConfig = 'carrier_api_config';
+
   // Edge functions
   static const String fnBcvRate = 'bcv-rate';
+  static const String fnPolicyRetry = 'policy-retry';
+  static const String fnRenewalReminder = 'renewal-reminder';
 }
