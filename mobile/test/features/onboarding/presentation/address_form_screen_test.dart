@@ -27,9 +27,17 @@ void main() {
 
       expect(find.text('Tu dirección'), findsOneWidget);
       expect(find.text('Urbanización / Sector'), findsOneWidget);
-      expect(find.text('Ciudad'), findsOneWidget);
-      expect(find.text('Municipio'), findsOneWidget);
       expect(find.text('Estado'), findsOneWidget);
+      expect(find.text('Municipio'), findsOneWidget);
+    });
+
+    testWidgets('shows GPS detect button', (tester) async {
+      await tester.pumpWidget(
+        buildTestableWidget(const AddressFormScreen()),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Detectar mi ubicación'), findsOneWidget);
     });
 
     testWidgets('shows validation errors when submitting empty form',
@@ -41,12 +49,12 @@ void main() {
 
       await _tapContinuar(tester);
 
-      expect(find.text('Requerido'), findsNWidgets(3));
       expect(find.text('Selecciona un estado'), findsOneWidget);
+      expect(find.text('Selecciona un municipio'), findsOneWidget);
+      expect(find.text('Requerido'), findsOneWidget); // urbanización
     });
 
     testWidgets('valid form navigates to consent screen', (tester) async {
-      // Use larger surface so dropdown has room for its popup
       await tester.binding.setSurfaceSize(const Size(411, 900));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -55,15 +63,20 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      final textFields = find.byType(TextFormField);
-      await tester.enterText(textFields.at(0), 'El Paraíso');
-      await tester.enterText(textFields.at(1), 'Caracas');
-      await tester.enterText(textFields.at(2), 'Libertador');
+      // Enter urbanización
+      await tester.enterText(find.byType(TextFormField).first, 'El Paraíso');
 
-      // Tap dropdown to open and select a state
-      await tester.tap(find.byType(DropdownButtonFormField<String>));
+      // Select Estado
+      final dropdowns = find.byType(DropdownButtonFormField<String>);
+      await tester.tap(dropdowns.first);
       await tester.pumpAndSettle();
       await tester.tap(find.text('Distrito Capital').last);
+      await tester.pumpAndSettle();
+
+      // Select Municipio (now enabled after estado selected)
+      await tester.tap(dropdowns.last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Libertador').last);
       await tester.pumpAndSettle();
 
       await _tapContinuar(tester);
@@ -71,13 +84,12 @@ void main() {
       expect(find.text('NAVIGATED_TO_consent'), findsOneWidget);
     });
 
-    testWidgets('pre-fills fields from existing state', (tester) async {
+    testWidgets('pre-fills urbanización from existing state', (tester) async {
       await tester.pumpWidget(
         buildTestableWidget(
           const AddressFormScreen(),
           initialData: const OnboardingData(
             urbanizacion: 'La Candelaria',
-            ciudad: 'Caracas',
             municipio: 'Libertador',
             estado: 'Distrito Capital',
             codigoPostal: '1010',
@@ -87,19 +99,15 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('La Candelaria'), findsOneWidget);
-      expect(find.text('Caracas'), findsOneWidget);
-      expect(find.text('Libertador'), findsOneWidget);
-      expect(find.text('Distrito Capital'), findsOneWidget);
     });
 
-    testWidgets('estado dropdown is present with hint', (tester) async {
+    testWidgets('estado and municipio dropdowns are present', (tester) async {
       await tester.pumpWidget(
         buildTestableWidget(const AddressFormScreen()),
       );
       await tester.pumpAndSettle();
 
-      // Dropdown renders with its hint text
-      expect(find.byType(DropdownButtonFormField<String>), findsOneWidget);
+      expect(find.byType(DropdownButtonFormField<String>), findsNWidgets(2));
       expect(find.text('Selecciona tu estado'), findsOneWidget);
     });
 
@@ -112,18 +120,23 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      final textFields = find.byType(TextFormField);
-      await tester.enterText(textFields.at(0), 'Centro');
-      await tester.enterText(textFields.at(1), 'Caracas');
-      await tester.enterText(textFields.at(2), 'Libertador');
+      // Enter urbanización only (no postal code)
+      await tester.enterText(find.byType(TextFormField).first, 'Centro');
 
-      // Tap dropdown to open and select a state
-      await tester.tap(find.byType(DropdownButtonFormField<String>));
+      // Select Estado
+      final dropdowns = find.byType(DropdownButtonFormField<String>);
+      await tester.tap(dropdowns.first);
       await tester.pumpAndSettle();
       await tester.tap(find.text('Distrito Capital').last);
       await tester.pumpAndSettle();
 
-      // Leave postal code empty
+      // Select Municipio
+      await tester.tap(dropdowns.last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Libertador').last);
+      await tester.pumpAndSettle();
+
+      // Leave postal code empty and submit
       await _tapContinuar(tester);
 
       expect(find.text('NAVIGATED_TO_consent'), findsOneWidget);

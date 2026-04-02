@@ -10,15 +10,15 @@ import 'package:ruedaseguro/features/auth/presentation/screens/welcome_screen.da
 import 'package:ruedaseguro/features/auth/presentation/screens/login_screen.dart';
 import 'package:ruedaseguro/features/auth/presentation/screens/otp_screen.dart';
 import 'package:ruedaseguro/features/home/presentation/screens/home_screen.dart';
+
+// Onboarding — Sprint 4A: 2-scan flow (Cédula → Certificado → Dirección → Consentimiento)
 import 'package:ruedaseguro/features/onboarding/presentation/screens/cedula_scan_screen.dart';
 import 'package:ruedaseguro/features/onboarding/presentation/screens/cedula_confirm_screen.dart';
-import 'package:ruedaseguro/features/onboarding/presentation/screens/licencia_scan_screen.dart';
-import 'package:ruedaseguro/features/onboarding/presentation/screens/licencia_confirm_screen.dart';
-import 'package:ruedaseguro/features/onboarding/presentation/screens/carnet_scan_screen.dart';
-import 'package:ruedaseguro/features/onboarding/presentation/screens/vehicle_photo_screen.dart';
-import 'package:ruedaseguro/features/onboarding/presentation/screens/vehicle_confirm_screen.dart';
+import 'package:ruedaseguro/features/onboarding/presentation/screens/certificado_scan_screen.dart';
+import 'package:ruedaseguro/features/onboarding/presentation/screens/certificado_confirm_screen.dart';
 import 'package:ruedaseguro/features/onboarding/presentation/screens/address_form_screen.dart';
 import 'package:ruedaseguro/features/onboarding/presentation/screens/consent_screen.dart';
+
 import 'package:ruedaseguro/features/policy/presentation/screens/product_selection_screen.dart';
 import 'package:ruedaseguro/features/policy/presentation/screens/quote_summary_screen.dart';
 import 'package:ruedaseguro/features/policy/presentation/screens/policy_detail_screen.dart';
@@ -33,14 +33,12 @@ import 'package:ruedaseguro/features/support/presentation/screens/create_ticket_
 const _publicRoutes = ['/welcome', '/login', '/otp'];
 
 // Routes that require auth but no profile (onboarding in progress)
+// Sprint 4A: Cédula → Certificado → Dirección → Consentimiento
 const _onboardingRoutes = [
   '/onboarding/cedula',
   '/onboarding/cedula/confirm',
-  '/onboarding/licencia',
-  '/onboarding/licencia/confirm',
-  '/onboarding/registro',
-  '/onboarding/vehicle-photo',
-  '/onboarding/vehicle/confirm',
+  '/onboarding/certificado',
+  '/onboarding/certificado/confirm',
   '/onboarding/address',
   '/onboarding/consent',
 ];
@@ -57,28 +55,23 @@ final routerProvider = Provider<GoRouter>((ref) {
       final authState = ref.read(authProvider);
       final location = state.matchedLocation;
 
-      // Emergency and profile routes don't need auth redirect in debug/demo
       if (kDebugMode && location == '/emergency') return null;
 
-      // While still checking session, stay on splash
       if (authState.status == AuthStatus.initial) {
         return location == '/splash' ? null : '/splash';
       }
 
-      // Unauthenticated: must go to public routes
       if (authState.status == AuthStatus.unauthenticated) {
         if (_publicRoutes.contains(location)) return null;
         return '/welcome';
       }
 
-      // Authenticated but no profile: welcome or onboarding
       if (authState.status == AuthStatus.authenticated) {
         if (_onboardingRoutes.contains(location)) return null;
         if (_publicRoutes.contains(location)) return null;
         return '/welcome';
       }
 
-      // Fully authenticated with profile
       if (authState.status == AuthStatus.authenticatedWithProfile) {
         if (_publicRoutes.contains(location)) return '/home';
         if (_onboardingRoutes.contains(location)) return '/home';
@@ -108,7 +101,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         },
       ),
 
-      // ── Main app shell (with bottom nav) ─────────────────────
+      // ── Main app shell ────────────────────────────────────────
       GoRoute(
         path: '/home',
         builder: (context, state) => const HomeScreen(),
@@ -140,7 +133,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         ),
       ),
 
-      // ── Onboarding ───────────────────────────────────────────
+      // ── Onboarding — Sprint 4A (2-scan flow) ─────────────────
       GoRoute(
         path: '/onboarding/cedula',
         builder: (context, state) => const CedulaScanScreen(),
@@ -153,26 +146,14 @@ final routerProvider = Provider<GoRouter>((ref) {
         },
       ),
       GoRoute(
-        path: '/onboarding/licencia',
-        builder: (context, state) => const LicenciaScanScreen(),
+        path: '/onboarding/certificado',
+        builder: (context, state) => const CertificadoScanScreen(),
       ),
       GoRoute(
-        path: '/onboarding/licencia/confirm',
-        builder: (context, state) => const LicenciaConfirmScreen(),
-      ),
-      GoRoute(
-        path: '/onboarding/registro',
-        builder: (context, state) => const CarnetScanScreen(),
-      ),
-      GoRoute(
-        path: '/onboarding/vehicle-photo',
-        builder: (context, state) => const VehiclePhotoScreen(),
-      ),
-      GoRoute(
-        path: '/onboarding/vehicle/confirm',
+        path: '/onboarding/certificado/confirm',
         builder: (context, state) {
           final args = state.extra as Map<String, dynamic>?;
-          return VehicleConfirmScreen(ocrData: args);
+          return CertificadoConfirmScreen(ocrData: args);
         },
       ),
       GoRoute(
@@ -221,7 +202,6 @@ final routerProvider = Provider<GoRouter>((ref) {
   );
 });
 
-/// Triggers GoRouter redirect whenever [notify] is called.
 class _RouterRefreshListenable extends ChangeNotifier {
   void notify() => notifyListeners();
 }

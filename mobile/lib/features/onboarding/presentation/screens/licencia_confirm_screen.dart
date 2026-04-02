@@ -40,16 +40,11 @@ class _LicenciaConfirmScreenState extends ConsumerState<LicenciaConfirmScreen> {
   @override
   void initState() {
     super.initState();
-    final data = ref.read(onboardingProvider);
-    _licNumCtrl = TextEditingController(text: data.licenciaNumber ?? '');
-    _selectedExpiry = data.licenciaExpiry;
-    _expiryCtrl = TextEditingController(
-      text: data.licenciaExpiry != null
-          ? DateFormat('dd/MM/yyyy').format(data.licenciaExpiry!)
-          : '',
-    );
-    _bloodType = data.bloodType;
-    _selectedCategories.addAll(data.licenciaCategories);
+    // DEPRECATED: licencia step removed in Sprint 4A — fields stubbed to compile
+    _licNumCtrl = TextEditingController(text: '');
+    _selectedExpiry = null;
+    _expiryCtrl = TextEditingController(text: '');
+    _bloodType = null;
   }
 
   @override
@@ -59,10 +54,7 @@ class _LicenciaConfirmScreenState extends ConsumerState<LicenciaConfirmScreen> {
     super.dispose();
   }
 
-  double _fieldConf(String field) {
-    return ref.read(onboardingProvider).licenciaOcr?.fieldConfidences[field] ??
-        0.0;
-  }
+  double _fieldConf(String field) => 0.0; // deprecated
 
   Future<void> _pickExpiry() async {
     final picked = await showDatePicker(
@@ -83,13 +75,8 @@ class _LicenciaConfirmScreenState extends ConsumerState<LicenciaConfirmScreen> {
   void _submit() {
     if (!_formKey.currentState!.validate()) return;
 
-    ref.read(onboardingProvider.notifier).confirmLicencia(
-      licenciaNumber: _licNumCtrl.text.trim(),
-      categories: _selectedCategories.toList(),
-      expiryDate: _selectedExpiry,
-      bloodType: _bloodType,
-    );
-    context.push('/onboarding/registro');
+    // Deprecated — this screen is unreachable in Sprint 4A router
+    context.push('/onboarding/certificado');
   }
 
   @override
@@ -116,26 +103,7 @@ class _LicenciaConfirmScreenState extends ConsumerState<LicenciaConfirmScreen> {
         child: ListView(
           padding: const EdgeInsets.all(RSSpacing.lg),
           children: [
-            // Scanned image thumbnail
-            if (data.licenciaImage != null)
-              GestureDetector(
-                onTap: () => showDialog(
-                  context: context,
-                  builder: (_) => Dialog(
-                    child:
-                        Image.file(data.licenciaImage!, fit: BoxFit.contain),
-                  ),
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(RSRadius.md),
-                  child: Image.file(
-                    data.licenciaImage!,
-                    height: 120,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                  ),
-                ),
-              ),
+            // Deprecated — no image in Sprint 4A licencia path
 
             const SizedBox(height: RSSpacing.lg),
             Text('Verifica la información de tu licencia',
@@ -193,7 +161,7 @@ class _LicenciaConfirmScreenState extends ConsumerState<LicenciaConfirmScreen> {
                 );
               }).toList(),
             ),
-            if (!_selectedCategories.any((c) => c.contains('1'))) ...[
+            if (_selectedCategories.isNotEmpty && !_selectedCategories.any((c) => c.contains('1'))) ...[
               const SizedBox(height: RSSpacing.sm),
               Container(
                 padding: const EdgeInsets.all(RSSpacing.sm),

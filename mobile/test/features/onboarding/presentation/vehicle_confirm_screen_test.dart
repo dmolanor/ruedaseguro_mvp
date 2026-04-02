@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ruedaseguro/features/onboarding/domain/carnet_parser.dart';
+import 'package:ruedaseguro/features/onboarding/domain/certificado_circulacion_parser.dart';
 import 'package:ruedaseguro/features/onboarding/domain/cross_validator.dart';
 import 'package:ruedaseguro/features/onboarding/domain/onboarding_state.dart';
 import 'package:ruedaseguro/features/onboarding/presentation/screens/vehicle_confirm_screen.dart';
@@ -12,19 +12,16 @@ OnboardingData _stateWithVehicle({
   String brand = 'BERA',
   String model = 'BR150',
   int year = 2020,
-  String? color = 'AZUL',
   String vehicleUse = 'particular',
   CrossValidationResult? crossValidation,
   Map<String, double> confidences = const {},
 }) {
   return OnboardingData(
-    carnetOcr: CarnetParseResult(
+    certificadoOcr: CertificadoParseResult(
       plate: plate,
       brand: brand,
       model: model,
       year: year,
-      color: color,
-      vehicleUse: vehicleUse,
       confidence: 0.85,
       fieldConfidences: confidences,
     ),
@@ -32,7 +29,6 @@ OnboardingData _stateWithVehicle({
     brand: brand,
     model: model,
     year: year,
-    color: color,
     vehicleUse: vehicleUse,
     crossValidation: crossValidation,
   );

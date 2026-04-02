@@ -1,0 +1,124 @@
+{
+  "brands": [
+    {
+      "name": "Bera",
+      "models": ["BR 150", "BR 200", "RX 150", "Sport 150", "Cruiser 200", "Chopper 200"]
+    },
+    {
+      "name": "Bajaj",
+      "models": ["Boxer 150", "Discover 125", "Discover 150", "Pulsar NS 160", "Pulsar RS 200", "Pulsar 200 NS", "Rouser 135", "Rouser 220", "CT 100"]
+    },
+    {
+      "name": "Honda",
+      "models": ["Wave 110", "CG 125", "CB 125", "CB 150R", "CB 190R", "CB 250 Twister", "XR 150L", "XR 190", "Storm 125", "Falcon NX 400", "CB 500X", "CB 650R", "CB 750"]
+    },
+    {
+      "name": "Yamaha",
+      "models": ["YBR 125", "YBR 125Z", "FZ 150i", "FZ 250", "MT-03", "MT-07", "MT-09", "NMAX 125", "XMAX 300", "R3", "R15", "Crypton 115"]
+    },
+    {
+      "name": "Suzuki",
+      "models": ["GN 125", "GN 150", "GS 150", "EN 125", "Gixxer 150", "Gixxer SF 250", "GSX-R 150", "V-Strom 650", "Intruder 150"]
+    },
+    {
+      "name": "Kawasaki",
+      "models": ["Z 125", "Z 250", "Z 400", "Z 650", "Z 900", "Ninja 300", "Ninja 400", "Ninja 650", "KLX 150", "Versys 300"]
+    },
+    {
+      "name": "Italika",
+      "models": ["FT 150", "FT 200", "WS 150", "WS 175", "TC 200", "DM 200", "RC 150", "ST 90", "AT 110"]
+    },
+    {
+      "name": "Dayun",
+      "models": ["DY 150 GY", "DY 200 GY", "DY 110", "DY 125", "DY 150 ZH"]
+    },
+    {
+      "name": "TVS",
+      "models": ["Apache RTR 160", "Apache RTR 200", "Apache RTR 160 4V", "Star City Plus", "Radeon 110", "Ntorq 125"]
+    },
+    {
+      "name": "Hero",
+      "models": ["Hunk 150", "Ignitor 125", "Passion Pro 110", "Splendor Plus 100", "Xtreme 160R", "Xpulse 200"]
+    },
+    {
+      "name": "Lifan",
+      "models": ["LF 125 GY", "LF 150 GY", "LF 200 GY", "KPR 150", "KPS 200", "SR 200"]
+    },
+    {
+      "name": "Haojue",
+      "models": ["DR 160", "HJ 125-8", "HJ 150-2", "NK 150", "TR 150"]
+    },
+    {
+      "name": "Shineray",
+      "models": ["XY 150 GY", "XY 200 GY", "Steed 150", "Eagle 150", "Phoenix 150"]
+    },
+    {
+      "name": "Kymco",
+      "models": ["Like 125", "Agility 125", "Racing King 150", "AK 550", "X-Town 300i", "K-Pipe 125"]
+    },
+    {
+      "name": "AKT",
+      "models": ["TT 150", "TT 200", "Dynamic 125", "NKD 125", "NKD 150", "CR5 150"]
+    },
+    {
+      "name": "Keeway",
+      "models": ["RKF 125", "RKS 125", "TX 200", "TX 250 R", "K-Light 202", "Vieste 300"]
+    },
+    {
+      "name": "Benelli",
+      "models": ["TNT 150", "TNT 302", "TRK 502", "Leoncino 500", "302R", "502C"]
+    },
+    {
+      "name": "Loncin",
+      "models": ["LX 150 GY", "LX 200 GY", "GP 150", "GP 250", "CR4 249"]
+    },
+    {
+      "name": "Zongshen",
+      "models": ["ZS 150 GY", "ZS 200 GY", "Cyclone RX3", "250 GY", "Raptor 250"]
+    },
+    {
+      "name": "Empire",
+      "models": ["Sniper 150", "SR 150", "GT 150", "NKD 150"]
+    },
+    {
+      "name": "Roocat",
+      "models": ["RC 150", "RC 200", "BULLET 200", "BULL 150"]
+    },
+    {
+      "name": "Forza",
+      "models": ["FS 150", "FS 200", "FT 150 GY"]
+    },
+    {
+      "name": "CFMoto",
+      "models": ["300 NK", "300 SR", "650 NK", "650 MT", "800 MT", "CF-Moto 250 NK"]
+    },
+    {
+      "name": "Royal Enfield",
+      "models": ["Bullet 350", "Classic 350", "Meteor 350", "Thunderbird 350X", "Himalayan 411", "Interceptor 650", "Continental GT 650"]
+    },
+    {
+      "name": "KTM",
+      "models": ["Duke 125", "Duke 200", "Duke 390", "Duke 890", "RC 125", "RC 390", "Adventure 390"]
+    },
+    {
+      "name": "Vespa",
+      "models": ["Primavera 125", "Sprint 150", "GTS 300", "946"]
+    },
+    {
+      "name": "Piaggio",
+      "models": ["Beverly 350", "MP3 300", "Fly 125", "Liberty 125"]
+    },
+    {
+      "name": "Qlink",
+      "models": ["X-Moto 200 GY", "MX 200", "Scrambler 200"]
+    },
+    {
+      "name": "UM",
+      "models": ["Renegade Sport 200", "Renegade Sport S 200", "Renegade Commando 125", "DSR Adventure 300", "Xtreet R 200"]
+    },
+    {
+      "name": "Otro",
+      "models": ["Otro"]
+    }
+  ]
+}

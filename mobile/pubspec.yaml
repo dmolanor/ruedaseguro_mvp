@@ -60,10 +60,18 @@ dependencies:
   # Observability (RS-070)
   sentry_flutter: ^8.0.0
 
+  # RS-080: Document file upload alternative to camera
+  file_picker: ^8.0.0
+
+  # RS-085: GPS geolocation for address auto-fill
+  # IMPORTANT: Add permissions before flutter pub get:
+  #   Android: ACCESS_FINE_LOCATION + ACCESS_COARSE_LOCATION in android/app/src/main/AndroidManifest.xml
+  #   iOS: NSLocationWhenInUseUsageDescription in ios/Runner/Info.plist
+  geolocator: ^11.1.0
+
   # Phase 1.5 (prepared but not activated)
   # sensors_plus: ^4.0.2
   # background_fetch: ^1.3.7
-  # geolocator: ^11.1.0
   # flutter_background_service: ^5.0.12
 
 dev_dependencies:
@@ -79,3 +87,4 @@ flutter:
   assets:
     - assets/images/
     - assets/fonts/
+    - assets/data/

@@ -3,9 +3,8 @@ import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ruedaseguro/features/onboarding/domain/cedula_parser.dart';
-import 'package:ruedaseguro/features/onboarding/domain/carnet_parser.dart';
+import 'package:ruedaseguro/features/onboarding/domain/certificado_circulacion_parser.dart';
 import 'package:ruedaseguro/features/onboarding/domain/cross_validator.dart';
-import 'package:ruedaseguro/features/onboarding/domain/licencia_parser.dart';
 import 'package:ruedaseguro/features/onboarding/domain/onboarding_state.dart';
 
 void main() {
@@ -26,9 +25,8 @@ void main() {
       expect(s().idNumber, isNull);
       expect(s().firstName, isNull);
       expect(s().cedulaImage, isNull);
-      expect(s().licenciaNumber, isNull);
-      expect(s().licenciaCategories, isEmpty);
       expect(s().plate, isNull);
+      expect(s().certificadoOcr, isNull);
       expect(s().vehiclePhoto, isNull);
       expect(s().urbanizacion, isNull);
       expect(s().consentRcv, isFalse);
@@ -77,6 +75,24 @@ void main() {
       final updated = base.copyWith(idType: 'E', idNumber: '99999999');
       expect(updated.idType, 'E');
       expect(updated.idNumber, '99999999');
+    });
+
+    test('isMotorcycle returns true when vehicleType is null', () {
+      expect(const OnboardingData().isMotorcycle, isTrue);
+    });
+
+    test('isMotorcycle returns true for MOTO type', () {
+      expect(
+        const OnboardingData(vehicleType: 'MOTO PARTICULAR').isMotorcycle,
+        isTrue,
+      );
+    });
+
+    test('isMotorcycle returns false for non-motorcycle', () {
+      expect(
+        const OnboardingData(vehicleType: 'AUTOMOVIL').isMotorcycle,
+        isFalse,
+      );
     });
   });
 
@@ -165,100 +181,53 @@ void main() {
     });
   });
 
-  group('OnboardingNotifier.updateLicencia', () {
-    test('sets licencia OCR data', () {
-      const ocr = LicenciaParseResult(
-        licenciaNumber: '987654321',
-        categories: ['1°', '2°'],
-        expiryDate: null,
-        bloodType: 'A+',
-        holderCedula: 'V12345678',
-        confidence: 0.85,
-        fieldConfidences: {'licenciaNumber': 0.75, 'categories': 0.85},
-      );
-      final file = File('/tmp/licencia_test.jpg');
-
-      n().updateLicencia(ocr, file);
-
-      expect(s().licenciaOcr, ocr);
-      expect(s().licenciaImage, file);
-      expect(s().licenciaNumber, '987654321');
-      expect(s().licenciaCategories, ['1°', '2°']);
-      expect(s().bloodType, 'A+');
-    });
-
-    test('maps expiry date from OCR', () {
-      final expiry = DateTime(2030, 6, 15);
-      final ocr = LicenciaParseResult(
-        categories: const ['2°'],
-        expiryDate: expiry,
-        confidence: 0.8,
-      );
-      n().updateLicencia(ocr, File('/tmp/test.jpg'));
-      expect(s().licenciaExpiry, expiry);
-    });
-  });
-
-  group('OnboardingNotifier.confirmLicencia', () {
-    test('overrides licencia fields with user-edited values', () {
-      n().updateLicencia(
-        const LicenciaParseResult(
-          licenciaNumber: '123',
-          categories: ['1°'],
-          bloodType: 'O+',
-          confidence: 0.7,
-        ),
-        File('/tmp/test.jpg'),
-      );
-
-      n().confirmLicencia(
-        licenciaNumber: '987654321',
-        categories: ['1°', '2°', '3°'],
-        expiryDate: DateTime(2030, 12, 31),
-        bloodType: 'A-',
-      );
-
-      expect(s().licenciaNumber, '987654321');
-      expect(s().licenciaCategories, ['1°', '2°', '3°']);
-      expect(s().licenciaExpiry, DateTime(2030, 12, 31));
-      expect(s().bloodType, 'A-');
-    });
-  });
-
-  group('OnboardingNotifier.updateCarnet', () {
-    test('sets vehicle data from OCR', () {
-      const ocr = CarnetParseResult(
+  group('OnboardingNotifier.updateCertificado', () {
+    test('sets vehicle data from certificado OCR', () {
+      const ocr = CertificadoParseResult(
         plate: 'AB123CD',
         brand: 'BERA',
         model: 'BR150',
         year: 2020,
-        color: 'AZUL',
-        vehicleUse: 'particular',
+        vehicleType: 'MOTO PARTICULAR',
+        vehicleBodyType: 'DEPORTIVA',
+        serialNiv: 'LBEP4E2F1E2000001',
         serialMotor: 'SK162FMJ12345',
-        serialCarroceria: '8218MBCA1FD000647',
+        seats: 2,
         ownerName: 'JUAN PEREZ',
         ownerCedula: 'V12345678',
         confidence: 0.9,
       );
-      final file = File('/tmp/carnet_test.jpg');
+      final file = File('/tmp/certificado_test.jpg');
 
-      n().updateCarnet(ocr, file);
+      n().updateCertificado(ocr, file);
 
-      expect(s().carnetOcr, ocr);
-      expect(s().carnetImage, file);
+      expect(s().certificadoOcr, ocr);
+      expect(s().certificadoImage, file);
       expect(s().plate, 'AB123CD');
       expect(s().brand, 'BERA');
       expect(s().model, 'BR150');
       expect(s().year, 2020);
-      expect(s().color, 'AZUL');
-      expect(s().vehicleUse, 'particular');
+      expect(s().vehicleType, 'MOTO PARTICULAR');
+      expect(s().vehicleBodyType, 'DEPORTIVA');
+      expect(s().serialNiv, 'LBEP4E2F1E2000001');
       expect(s().serialMotor, 'SK162FMJ12345');
-      expect(s().serialCarroceria, '8218MBCA1FD000647');
+      expect(s().seats, 2);
+      expect(s().vehicleUse, 'particular');
     });
 
-    test('defaults vehicleUse to particular when null', () {
-      const ocr = CarnetParseResult(plate: 'AB123CD', confidence: 0.5);
-      n().updateCarnet(ocr, File('/tmp/test.jpg'));
+    test('sets vehicleUse to cargo when vehicleType contains CARGA', () {
+      const ocr = CertificadoParseResult(
+        plate: 'AB123CD',
+        vehicleType: 'MOTO CARGA',
+        confidence: 0.8,
+      );
+      n().updateCertificado(ocr, File('/tmp/test.jpg'));
+      expect(s().vehicleUse, 'cargo');
+    });
+
+    test('defaults vehicleUse to particular when vehicleType is null', () {
+      const ocr = CertificadoParseResult(plate: 'AB123CD', confidence: 0.5);
+      n().updateCertificado(ocr, File('/tmp/test.jpg'));
       expect(s().vehicleUse, 'particular');
     });
   });
@@ -276,10 +245,12 @@ void main() {
         brand: 'BERA',
         model: 'BR150',
         year: 2020,
-        color: 'AZUL',
+        vehicleType: 'MOTO PARTICULAR',
+        vehicleBodyType: 'DEPORTIVA',
         vehicleUse: 'particular',
+        serialNiv: 'LBEP4E2F1E2000001',
         serialMotor: 'MOTOR123',
-        serialCarroceria: 'CARR456',
+        seats: 2,
         crossValidation: cross,
         isLegalRepresentative: false,
       );
@@ -287,6 +258,8 @@ void main() {
       expect(s().plate, 'AB123CD');
       expect(s().brand, 'BERA');
       expect(s().year, 2020);
+      expect(s().vehicleType, 'MOTO PARTICULAR');
+      expect(s().serialNiv, 'LBEP4E2F1E2000001');
       expect(s().crossValidation?.overallMatch, isTrue);
       expect(s().isLegalRepresentative, isFalse);
     });
@@ -326,14 +299,12 @@ void main() {
     test('sets all address fields', () {
       n().updateAddress(
         urbanizacion: 'El Paraíso',
-        ciudad: 'Caracas',
         municipio: 'Libertador',
         estado: 'Distrito Capital',
         codigoPostal: '1010',
       );
 
       expect(s().urbanizacion, 'El Paraíso');
-      expect(s().ciudad, 'Caracas');
       expect(s().municipio, 'Libertador');
       expect(s().estado, 'Distrito Capital');
       expect(s().codigoPostal, '1010');
@@ -342,12 +313,26 @@ void main() {
     test('allows null codigoPostal', () {
       n().updateAddress(
         urbanizacion: 'Centro',
-        ciudad: 'Maracay',
         municipio: 'Girardot',
         estado: 'Aragua',
       );
 
       expect(s().codigoPostal, isNull);
+    });
+
+    test('stores GPS coordinates when provided', () {
+      n().updateAddress(
+        urbanizacion: 'Las Mercedes',
+        municipio: 'Baruta',
+        estado: 'Miranda',
+        latitude: 10.4922,
+        longitude: -66.8577,
+        addressFromGps: true,
+      );
+
+      expect(s().latitude, closeTo(10.4922, 0.0001));
+      expect(s().longitude, closeTo(-66.8577, 0.0001));
+      expect(s().addressFromGps, isTrue);
     });
   });
 
@@ -378,6 +363,24 @@ void main() {
       expect(s().consentRcv, isFalse);
       expect(s().allConsentsGiven, isFalse);
     });
+
+    test('sets consentTimestamp when all consents given', () {
+      final before = DateTime.now().toUtc();
+      n().updateConsents(
+        rcv: true,
+        veracidad: true,
+        antifraude: true,
+        privacidad: true,
+      );
+      final after = DateTime.now().toUtc();
+
+      expect(s().consentTimestamp, isNotNull);
+      expect(
+        s().consentTimestamp!.isAfter(before.subtract(const Duration(seconds: 1))),
+        isTrue,
+      );
+      expect(s().consentTimestamp!.isBefore(after.add(const Duration(seconds: 1))), isTrue);
+    });
   });
 
   group('OnboardingNotifier.reset', () {
@@ -393,7 +396,6 @@ void main() {
       );
       n().updateAddress(
         urbanizacion: 'Centro',
-        ciudad: 'Caracas',
         municipio: 'Libertador',
         estado: 'Distrito Capital',
       );
@@ -406,16 +408,16 @@ void main() {
 
       expect(s().idNumber, isNull);
       expect(s().firstName, isNull);
+      expect(s().certificadoOcr, isNull);
       expect(s().urbanizacion, isNull);
       expect(s().consentRcv, isFalse);
       expect(s().allConsentsGiven, isFalse);
-      expect(s().licenciaCategories, isEmpty);
     });
   });
 
-  group('Full onboarding flow', () {
-    test('completes all 6 steps in sequence', () {
-      // Step 1: Cédula
+  group('Full onboarding flow (Sprint 4A — 2-step document scan)', () {
+    test('completes all steps in sequence', () {
+      // Step 1: Cédula scan + confirm
       n().updateCedula(
         const CedulaParseResult(
           idType: 'V',
@@ -434,57 +436,54 @@ void main() {
         dateOfBirth: DateTime(1990, 5, 15),
         nationality: 'VENEZOLANO',
         sex: 'M',
+        emergencyContactName: 'Maria Perez',
+        emergencyContactPhone: '04121234567',
+        emergencyContactRelation: 'Esposo/a',
       );
 
-      // Step 2: Licencia
-      n().updateLicencia(
-        const LicenciaParseResult(
-          licenciaNumber: '987654321',
-          categories: ['1°', '2°'],
-          bloodType: 'A+',
-          confidence: 0.8,
-        ),
-        File('/tmp/licencia.jpg'),
-      );
-      n().confirmLicencia(
-        licenciaNumber: '987654321',
-        categories: ['1°', '2°'],
-        expiryDate: DateTime(2030, 6, 15),
-        bloodType: 'A+',
-      );
-
-      // Step 3: Certificado de registro
-      n().updateCarnet(
-        const CarnetParseResult(
+      // Step 2: Certificado de circulación scan + confirm
+      n().updateCertificado(
+        const CertificadoParseResult(
           plate: 'AB123CD',
           brand: 'BERA',
           model: 'BR150',
           year: 2020,
+          vehicleType: 'MOTO PARTICULAR',
+          vehicleBodyType: 'DEPORTIVA',
+          serialNiv: 'LBEP4E2F1E2000001',
+          serialMotor: 'SK162FMJ12345',
+          seats: 2,
+          ownerName: 'JUAN PEREZ',
+          ownerCedula: 'V12345678',
           confidence: 0.9,
         ),
-        File('/tmp/carnet.jpg'),
+        File('/tmp/certificado.jpg'),
       );
       n().confirmVehicle(
         plate: 'AB123CD',
         brand: 'BERA',
         model: 'BR150',
         year: 2020,
+        vehicleType: 'MOTO PARTICULAR',
+        vehicleBodyType: 'DEPORTIVA',
         vehicleUse: 'particular',
+        serialNiv: 'LBEP4E2F1E2000001',
+        serialMotor: 'SK162FMJ12345',
+        seats: 2,
       );
 
-      // Step 4: Vehicle photo
-      n().setVehiclePhoto(File('/tmp/vehicle.jpg'));
-
-      // Step 5: Address
+      // Step 3: Address with GPS
       n().updateAddress(
         urbanizacion: 'El Paraíso',
-        ciudad: 'Caracas',
         municipio: 'Libertador',
         estado: 'Distrito Capital',
         codigoPostal: '1010',
+        latitude: 10.4922,
+        longitude: -66.8577,
+        addressFromGps: true,
       );
 
-      // Step 6: Consent
+      // Step 4: Consent
       n().updateConsents(
         rcv: true,
         veracidad: true,
@@ -495,16 +494,19 @@ void main() {
       // Verify final state
       expect(s().idNumber, '12345678');
       expect(s().firstName, 'JUAN');
-      expect(s().licenciaNumber, '987654321');
-      expect(s().licenciaCategories, ['1°', '2°']);
-      expect(s().licenciaExpiry, DateTime(2030, 6, 15));
-      expect(s().bloodType, 'A+');
+      expect(s().emergencyContactName, 'Maria Perez');
       expect(s().plate, 'AB123CD');
       expect(s().brand, 'BERA');
-      expect(s().vehiclePhoto, isNotNull);
+      expect(s().vehicleType, 'MOTO PARTICULAR');
+      expect(s().serialNiv, 'LBEP4E2F1E2000001');
+      expect(s().seats, 2);
+      expect(s().certificadoImage, isNotNull);
       expect(s().urbanizacion, 'El Paraíso');
       expect(s().estado, 'Distrito Capital');
+      expect(s().latitude, closeTo(10.4922, 0.0001));
+      expect(s().addressFromGps, isTrue);
       expect(s().allConsentsGiven, isTrue);
+      expect(s().consentTimestamp, isNotNull);
     });
   });
 }

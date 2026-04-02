@@ -80,15 +80,13 @@ class _CarnetScanScreenState extends ConsumerState<CarnetScanScreen> {
       crossResult = CrossValidator.validate(cedulaData, parsed);
     }
 
-    // 5. Save and navigate
-    ref.read(onboardingProvider.notifier).updateCarnet(parsed, file);
+    // 5. Save and navigate (deprecated path — use certificado_scan_screen instead)
     if (crossResult != null) {
       ref.read(onboardingProvider.notifier).confirmVehicle(
         plate: parsed.plate ?? '',
         brand: parsed.brand ?? '',
         model: parsed.model ?? '',
         year: parsed.year ?? DateTime.now().year,
-        color: parsed.color,
         vehicleUse: parsed.vehicleUse ?? 'particular',
         serialMotor: parsed.serialMotor,
         serialCarroceria: parsed.serialCarroceria,

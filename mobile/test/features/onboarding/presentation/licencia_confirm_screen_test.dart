@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ruedaseguro/features/onboarding/domain/licencia_parser.dart';
 import 'package:ruedaseguro/features/onboarding/domain/onboarding_state.dart';
 import 'package:ruedaseguro/features/onboarding/presentation/screens/licencia_confirm_screen.dart';
 
 import 'helpers/test_helpers.dart';
 
+// LicenciaConfirmScreen is deprecated (Sprint 4A removed licencia step).
+// State fields it used (licenciaOcr, licenciaNumber, etc.) are gone.
+// Tests kept as structural smoke-tests only — screen no longer pre-fills from state.
 OnboardingData _stateWithLicencia({
   String licenciaNumber = '987654321',
   List<String> categories = const ['1°', '2°'],
@@ -13,20 +15,8 @@ OnboardingData _stateWithLicencia({
   String? bloodType = 'A+',
   Map<String, double> confidences = const {},
 }) {
-  return OnboardingData(
-    licenciaOcr: LicenciaParseResult(
-      licenciaNumber: licenciaNumber,
-      categories: categories,
-      expiryDate: expiryDate,
-      bloodType: bloodType,
-      confidence: 0.8,
-      fieldConfidences: confidences,
-    ),
-    licenciaNumber: licenciaNumber,
-    licenciaCategories: categories,
-    licenciaExpiry: expiryDate,
-    bloodType: bloodType,
-  );
+  // Sprint 4A: licencia fields removed — return empty state; screen is a dead route
+  return const OnboardingData();
 }
 
 Future<void> _tapContinuar(WidgetTester tester) async {
@@ -41,7 +31,9 @@ Future<void> _tapContinuar(WidgetTester tester) async {
 }
 
 void main() {
-  group('LicenciaConfirmScreen', () {
+  // DEPRECATED: LicenciaConfirmScreen removed from router in Sprint 4A.
+  // Screen no longer pre-fills from state. Skipped until removed.
+  group('LicenciaConfirmScreen', skip: 'Deprecated — Sprint 4A removed licencia step', () {
     testWidgets('renders all license fields', (tester) async {
       await tester.pumpWidget(
         buildTestableWidget(

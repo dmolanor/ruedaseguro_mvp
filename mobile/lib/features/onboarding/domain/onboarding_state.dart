@@ -2,66 +2,74 @@ import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ruedaseguro/features/onboarding/domain/cedula_parser.dart';
-import 'package:ruedaseguro/features/onboarding/domain/carnet_parser.dart';
+import 'package:ruedaseguro/features/onboarding/domain/certificado_circulacion_parser.dart';
 import 'package:ruedaseguro/features/onboarding/domain/cross_validator.dart';
-import 'package:ruedaseguro/features/onboarding/domain/licencia_parser.dart';
 
 /// Holds all data collected during the onboarding flow.
-/// Lives as a Riverpod StateNotifier so any screen can read/write it.
+///
+/// Sprint 4A (RS-078): Simplified flow — 2 document scans only.
+/// - Removed: licenciaOcr, licenciaImage, licenciaNumber, licenciaCategories,
+///   licenciaExpiry, bloodType.
+/// - Renamed: carnetOcr → certificadoOcr, carnetImage → certificadoImage.
+/// - Added: vehicleType, vehicleBodyType, serialNiv, seats, idIssuedDate,
+///   idExpiryDate, latitude, longitude, addressFromGps.
 class OnboardingData {
   // Step 1 — Cédula
   final CedulaParseResult? cedulaOcr;
   final File? cedulaImage;
 
   // Confirmed identity fields (user may edit OCR results)
-  final String? idType;
+  final String? idType; // 'V', 'E', 'CC'
   final String? idNumber;
   final String? firstName;
   final String? lastName;
   final DateTime? dateOfBirth;
+  final DateTime? idIssuedDate; // fecha de expedición cédula
+  final DateTime? idExpiryDate; // fecha de vencimiento cédula
   final String? nationality;
   final String? sex;
+
+  // Emergency contact (single, temporary — RS-088 adds multi-contact table)
   final String? emergencyContactName;
   final String? emergencyContactPhone;
   final String? emergencyContactRelation;
 
-  // Step 2 — Licencia de conducir
-  final LicenciaParseResult? licenciaOcr;
-  final File? licenciaImage;
-  final String? licenciaNumber;
-  final List<String> licenciaCategories;
-  final DateTime? licenciaExpiry;
-  final String? bloodType;
-
-  // Step 3 — Certificado de registro de vehículo
-  final CarnetParseResult? carnetOcr;
-  final File? carnetImage;
+  // Step 2 — Certificado de Circulación (replaces licencia + carnet)
+  final CertificadoParseResult? certificadoOcr;
+  final File? certificadoImage;
 
   // Confirmed vehicle fields
   final String? plate;
   final String? brand;
   final String? model;
   final int? year;
-  final String? color;
-  final String? vehicleUse;
+  final String? vehicleType; // e.g. 'MOTO PARTICULAR'
+  final String? vehicleBodyType; // e.g. 'DEPORTIVA', 'SCOOTER'
+  final String? vehicleUse; // 'particular' | 'cargo'
+  final String? serialNiv; // Serial NIV (from certificado)
   final String? serialMotor;
-  final String? serialCarroceria;
+  final String? serialCarroceria; // kept for backward compat; prefer serialNiv
+  final int? seats;
 
-  // Step 4 — Vehicle rear photo
-  final File? vehiclePhoto;
-
-  // Cross-validation result
+  // Cross-validation result (cedula ↔ certificado)
   final CrossValidationResult? crossValidation;
   final bool isLegalRepresentative;
 
-  // Step 5 — Address
+  // Optional vehicle extras (not extracted from certificado, user-editable)
+  final String? color;
+  final File? vehiclePhoto;
+
+  // Step 3 — Address (RS-084/085)
   final String? urbanizacion;
-  final String? ciudad;
+  final String? ciudad; // city (kept for compatibility + direct entry)
   final String? municipio;
   final String? estado;
   final String? codigoPostal;
+  final double? latitude;
+  final double? longitude;
+  final bool addressFromGps;
 
-  // Step 6 — Consent
+  // Step 4 — Consent
   final bool consentRcv;
   final bool consentVeracidad;
   final bool consentAntifraude;
@@ -76,35 +84,38 @@ class OnboardingData {
     this.firstName,
     this.lastName,
     this.dateOfBirth,
+    this.idIssuedDate,
+    this.idExpiryDate,
     this.nationality,
     this.sex,
     this.emergencyContactName,
     this.emergencyContactPhone,
     this.emergencyContactRelation,
-    this.licenciaOcr,
-    this.licenciaImage,
-    this.licenciaNumber,
-    this.licenciaCategories = const [],
-    this.licenciaExpiry,
-    this.bloodType,
-    this.carnetOcr,
-    this.carnetImage,
+    this.certificadoOcr,
+    this.certificadoImage,
     this.plate,
     this.brand,
     this.model,
     this.year,
-    this.color,
+    this.vehicleType,
+    this.vehicleBodyType,
     this.vehicleUse,
+    this.serialNiv,
     this.serialMotor,
     this.serialCarroceria,
-    this.vehiclePhoto,
+    this.seats,
     this.crossValidation,
     this.isLegalRepresentative = false,
+    this.color,
+    this.vehiclePhoto,
     this.urbanizacion,
     this.ciudad,
     this.municipio,
     this.estado,
     this.codigoPostal,
+    this.latitude,
+    this.longitude,
+    this.addressFromGps = false,
     this.consentRcv = false,
     this.consentVeracidad = false,
     this.consentAntifraude = false,
@@ -115,6 +126,9 @@ class OnboardingData {
   bool get allConsentsGiven =>
       consentRcv && consentVeracidad && consentAntifraude && consentPrivacidad;
 
+  bool get isMotorcycle =>
+      vehicleType == null || vehicleType!.toUpperCase().contains('MOTO');
+
   OnboardingData copyWith({
     CedulaParseResult? cedulaOcr,
     File? cedulaImage,
@@ -123,35 +137,38 @@ class OnboardingData {
     String? firstName,
     String? lastName,
     DateTime? dateOfBirth,
+    DateTime? idIssuedDate,
+    DateTime? idExpiryDate,
     String? nationality,
     String? sex,
     String? emergencyContactName,
     String? emergencyContactPhone,
     String? emergencyContactRelation,
-    LicenciaParseResult? licenciaOcr,
-    File? licenciaImage,
-    String? licenciaNumber,
-    List<String>? licenciaCategories,
-    DateTime? licenciaExpiry,
-    String? bloodType,
-    CarnetParseResult? carnetOcr,
-    File? carnetImage,
+    CertificadoParseResult? certificadoOcr,
+    File? certificadoImage,
     String? plate,
     String? brand,
     String? model,
     int? year,
-    String? color,
+    String? vehicleType,
+    String? vehicleBodyType,
     String? vehicleUse,
+    String? serialNiv,
     String? serialMotor,
     String? serialCarroceria,
-    File? vehiclePhoto,
+    int? seats,
     CrossValidationResult? crossValidation,
     bool? isLegalRepresentative,
+    String? color,
+    File? vehiclePhoto,
     String? urbanizacion,
     String? ciudad,
     String? municipio,
     String? estado,
     String? codigoPostal,
+    double? latitude,
+    double? longitude,
+    bool? addressFromGps,
     bool? consentRcv,
     bool? consentVeracidad,
     bool? consentAntifraude,
@@ -166,35 +183,40 @@ class OnboardingData {
       firstName: firstName ?? this.firstName,
       lastName: lastName ?? this.lastName,
       dateOfBirth: dateOfBirth ?? this.dateOfBirth,
+      idIssuedDate: idIssuedDate ?? this.idIssuedDate,
+      idExpiryDate: idExpiryDate ?? this.idExpiryDate,
       nationality: nationality ?? this.nationality,
       sex: sex ?? this.sex,
       emergencyContactName: emergencyContactName ?? this.emergencyContactName,
       emergencyContactPhone: emergencyContactPhone ?? this.emergencyContactPhone,
-      emergencyContactRelation: emergencyContactRelation ?? this.emergencyContactRelation,
-      licenciaOcr: licenciaOcr ?? this.licenciaOcr,
-      licenciaImage: licenciaImage ?? this.licenciaImage,
-      licenciaNumber: licenciaNumber ?? this.licenciaNumber,
-      licenciaCategories: licenciaCategories ?? this.licenciaCategories,
-      licenciaExpiry: licenciaExpiry ?? this.licenciaExpiry,
-      bloodType: bloodType ?? this.bloodType,
-      carnetOcr: carnetOcr ?? this.carnetOcr,
-      carnetImage: carnetImage ?? this.carnetImage,
+      emergencyContactRelation:
+          emergencyContactRelation ?? this.emergencyContactRelation,
+      certificadoOcr: certificadoOcr ?? this.certificadoOcr,
+      certificadoImage: certificadoImage ?? this.certificadoImage,
       plate: plate ?? this.plate,
       brand: brand ?? this.brand,
       model: model ?? this.model,
       year: year ?? this.year,
-      color: color ?? this.color,
+      vehicleType: vehicleType ?? this.vehicleType,
+      vehicleBodyType: vehicleBodyType ?? this.vehicleBodyType,
       vehicleUse: vehicleUse ?? this.vehicleUse,
+      serialNiv: serialNiv ?? this.serialNiv,
       serialMotor: serialMotor ?? this.serialMotor,
       serialCarroceria: serialCarroceria ?? this.serialCarroceria,
-      vehiclePhoto: vehiclePhoto ?? this.vehiclePhoto,
+      seats: seats ?? this.seats,
       crossValidation: crossValidation ?? this.crossValidation,
-      isLegalRepresentative: isLegalRepresentative ?? this.isLegalRepresentative,
+      isLegalRepresentative:
+          isLegalRepresentative ?? this.isLegalRepresentative,
+      color: color ?? this.color,
+      vehiclePhoto: vehiclePhoto ?? this.vehiclePhoto,
       urbanizacion: urbanizacion ?? this.urbanizacion,
       ciudad: ciudad ?? this.ciudad,
       municipio: municipio ?? this.municipio,
       estado: estado ?? this.estado,
       codigoPostal: codigoPostal ?? this.codigoPostal,
+      latitude: latitude ?? this.latitude,
+      longitude: longitude ?? this.longitude,
+      addressFromGps: addressFromGps ?? this.addressFromGps,
       consentRcv: consentRcv ?? this.consentRcv,
       consentVeracidad: consentVeracidad ?? this.consentVeracidad,
       consentAntifraude: consentAntifraude ?? this.consentAntifraude,
@@ -228,6 +250,8 @@ class OnboardingNotifier extends Notifier<OnboardingData> {
     required String firstName,
     required String lastName,
     DateTime? dateOfBirth,
+    DateTime? idIssuedDate,
+    DateTime? idExpiryDate,
     String? nationality,
     String? sex,
     String? emergencyContactName,
@@ -240,6 +264,8 @@ class OnboardingNotifier extends Notifier<OnboardingData> {
       firstName: firstName,
       lastName: lastName,
       dateOfBirth: dateOfBirth,
+      idIssuedDate: idIssuedDate,
+      idExpiryDate: idExpiryDate,
       nationality: nationality,
       sex: sex,
       emergencyContactName: emergencyContactName,
@@ -248,43 +274,22 @@ class OnboardingNotifier extends Notifier<OnboardingData> {
     );
   }
 
-  void updateLicencia(LicenciaParseResult ocr, File image) {
+  void updateCertificado(CertificadoParseResult ocr, File image) {
     state = state.copyWith(
-      licenciaOcr: ocr,
-      licenciaImage: image,
-      licenciaNumber: ocr.licenciaNumber,
-      licenciaCategories: ocr.categories,
-      licenciaExpiry: ocr.expiryDate,
-      bloodType: ocr.bloodType,
-    );
-  }
-
-  void confirmLicencia({
-    required String licenciaNumber,
-    required List<String> categories,
-    DateTime? expiryDate,
-    String? bloodType,
-  }) {
-    state = state.copyWith(
-      licenciaNumber: licenciaNumber,
-      licenciaCategories: categories,
-      licenciaExpiry: expiryDate,
-      bloodType: bloodType,
-    );
-  }
-
-  void updateCarnet(CarnetParseResult ocr, File image) {
-    state = state.copyWith(
-      carnetOcr: ocr,
-      carnetImage: image,
+      certificadoOcr: ocr,
+      certificadoImage: image,
       plate: ocr.plate,
       brand: ocr.brand,
       model: ocr.model,
       year: ocr.year,
-      color: ocr.color,
-      vehicleUse: ocr.vehicleUse ?? 'particular',
+      vehicleType: ocr.vehicleType,
+      vehicleBodyType: ocr.vehicleBodyType,
+      vehicleUse: (ocr.vehicleType?.contains('CARGA') ?? false)
+          ? 'cargo'
+          : 'particular',
+      serialNiv: ocr.serialNiv,
       serialMotor: ocr.serialMotor,
-      serialCarroceria: ocr.serialCarroceria,
+      seats: ocr.seats,
     );
   }
 
@@ -293,10 +298,13 @@ class OnboardingNotifier extends Notifier<OnboardingData> {
     required String brand,
     required String model,
     required int year,
-    String? color,
+    String? vehicleType,
+    String? vehicleBodyType,
     required String vehicleUse,
+    String? serialNiv,
     String? serialMotor,
     String? serialCarroceria,
+    int? seats,
     CrossValidationResult? crossValidation,
     bool isLegalRepresentative = false,
   }) {
@@ -305,30 +313,35 @@ class OnboardingNotifier extends Notifier<OnboardingData> {
       brand: brand,
       model: model,
       year: year,
-      color: color,
+      vehicleType: vehicleType,
+      vehicleBodyType: vehicleBodyType,
       vehicleUse: vehicleUse,
+      serialNiv: serialNiv,
       serialMotor: serialMotor,
       serialCarroceria: serialCarroceria,
+      seats: seats,
       crossValidation: crossValidation,
       isLegalRepresentative: isLegalRepresentative,
     );
   }
 
-  void setVehiclePhoto(File photo) => state = state.copyWith(vehiclePhoto: photo);
-
   void updateAddress({
     required String urbanizacion,
-    required String ciudad,
     required String municipio,
     required String estado,
     String? codigoPostal,
+    double? latitude,
+    double? longitude,
+    bool addressFromGps = false,
   }) {
     state = state.copyWith(
       urbanizacion: urbanizacion,
-      ciudad: ciudad,
       municipio: municipio,
       estado: estado,
       codigoPostal: codigoPostal,
+      latitude: latitude,
+      longitude: longitude,
+      addressFromGps: addressFromGps,
     );
   }
 
@@ -344,10 +357,13 @@ class OnboardingNotifier extends Notifier<OnboardingData> {
       consentAntifraude: antifraude ?? state.consentAntifraude,
       consentPrivacidad: privacidad ?? state.consentPrivacidad,
     );
-    // Stamp timestamp the moment all four consents are given.
     state = updated.allConsentsGiven && state.consentTimestamp == null
         ? updated.copyWith(consentTimestamp: DateTime.now().toUtc())
         : updated;
+  }
+
+  void setVehiclePhoto(File photo) {
+    state = state.copyWith(vehiclePhoto: photo);
   }
 
   void reset() => state = const OnboardingData();

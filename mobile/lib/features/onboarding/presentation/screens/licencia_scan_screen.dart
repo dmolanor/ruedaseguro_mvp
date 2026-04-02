@@ -72,9 +72,7 @@ class _LicenciaScanScreenState extends ConsumerState<LicenciaScanScreen> {
     // 3. Parse
     final parsed = LicenciaParser.parse(ocr.rawText, ocr.textBlocks);
 
-    // 4. Save and navigate
-    ref.read(onboardingProvider.notifier).updateLicencia(parsed, file);
-
+    // 4. Navigate (deprecated path — licencia step removed in Sprint 4A)
     if (mounted) {
       setState(() => _isProcessing = false);
       unawaited(context.push('/onboarding/licencia/confirm'));

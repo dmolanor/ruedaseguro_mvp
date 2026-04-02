@@ -105,7 +105,7 @@ class _CedulaConfirmScreenState extends ConsumerState<CedulaConfirmScreen> {
           : _emergPhoneCtrl.text.trim(),
       emergencyContactRelation: _emergRelation,
     );
-    context.push('/onboarding/licencia');
+    context.push('/onboarding/certificado');
   }
 
   @override

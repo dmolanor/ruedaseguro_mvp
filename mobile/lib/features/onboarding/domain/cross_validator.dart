@@ -1,16 +1,18 @@
 import 'package:ruedaseguro/features/onboarding/domain/cedula_parser.dart';
-import 'package:ruedaseguro/features/onboarding/domain/carnet_parser.dart';
+import 'package:ruedaseguro/features/onboarding/domain/certificado_circulacion_parser.dart';
 
 class CrossValidationResult {
   final bool nameMatch;
   final bool cedulaMatch;
+  final bool vehicleTypeOk; // true if vehicleType == MOTO PARTICULAR (or unknown)
   final bool overallMatch;
   final String? mismatchDetails;
-  final bool skipped; // true when carnet has no owner data to compare
+  final bool skipped; // true when certificado has no owner data to compare
 
   const CrossValidationResult({
     required this.nameMatch,
     required this.cedulaMatch,
+    this.vehicleTypeOk = true,
     required this.overallMatch,
     this.mismatchDetails,
     this.skipped = false,
@@ -19,48 +21,71 @@ class CrossValidationResult {
   factory CrossValidationResult.skipped() => const CrossValidationResult(
         nameMatch: true,
         cedulaMatch: true,
+        vehicleTypeOk: true,
         overallMatch: true,
         skipped: true,
       );
 }
 
+/// RS-077: Updated to use [CertificadoParseResult] instead of CarnetParseResult.
+/// Also validates that the vehicle type is a motorcycle.
 class CrossValidator {
   CrossValidator._();
 
   static CrossValidationResult validate(
     CedulaParseResult cedula,
-    CarnetParseResult carnet,
+    CertificadoParseResult certificado,
   ) {
-    // If carnet has no owner data, skip validation
-    if (carnet.ownerName == null && carnet.ownerCedula == null) {
-      return CrossValidationResult.skipped();
+    final mismatches = <String>[];
+
+    // --- Vehicle type check ---
+    bool vehicleTypeOk = true;
+    if (certificado.vehicleType != null) {
+      vehicleTypeOk =
+          certificado.vehicleType!.toUpperCase().contains('MOTO');
+      if (!vehicleTypeOk) {
+        mismatches.add(
+          'Tipo de vehículo: "${certificado.vehicleType}" no es una motocicleta',
+        );
+      }
+    }
+
+    // If certificado has no owner data, skip name/cedula comparison
+    if (certificado.ownerName == null && certificado.ownerCedula == null) {
+      return CrossValidationResult(
+        nameMatch: true,
+        cedulaMatch: true,
+        vehicleTypeOk: vehicleTypeOk,
+        overallMatch: vehicleTypeOk,
+        mismatchDetails: mismatches.isEmpty ? null : mismatches.join('; '),
+        skipped: certificado.ownerName == null && certificado.ownerCedula == null,
+      );
     }
 
     bool nameMatch = true;
     bool cedulaMatch = true;
-    final mismatches = <String>[];
 
     // --- CI comparison ---
-    if (carnet.ownerCedula != null && cedula.idNumber != null) {
-      final carnetCi = _normalizeCi(carnet.ownerCedula!);
+    if (certificado.ownerCedula != null && cedula.idNumber != null) {
+      final certCi = _normalizeCi(certificado.ownerCedula!);
       final cedulaCi = _normalizeCi('${cedula.idType ?? "V"}${cedula.idNumber!}');
-      cedulaMatch = carnetCi == cedulaCi;
+      cedulaMatch = certCi == cedulaCi;
       if (!cedulaMatch) {
         mismatches.add(
-          'CI: cédula (${cedula.idType}${cedula.idNumber}) ≠ carnet ($carnetCi)',
+          'CI: cédula (${cedula.idType}${cedula.idNumber}) ≠ certificado ($certCi)',
         );
       }
     }
 
     // --- Name comparison ---
-    if (carnet.ownerName != null) {
+    if (certificado.ownerName != null) {
       final cedulaFullName =
           '${cedula.firstName ?? ""} ${cedula.lastName ?? ""}'.trim();
       if (cedulaFullName.isNotEmpty) {
-        nameMatch = _fuzzyNameMatch(cedulaFullName, carnet.ownerName!);
+        nameMatch = _fuzzyNameMatch(cedulaFullName, certificado.ownerName!);
         if (!nameMatch) {
           mismatches.add(
-            'Nombre: "$cedulaFullName" ≠ "${carnet.ownerName}"',
+            'Nombre: "$cedulaFullName" ≠ "${certificado.ownerName}"',
           );
         }
       }
@@ -69,22 +94,20 @@ class CrossValidator {
     return CrossValidationResult(
       nameMatch: nameMatch,
       cedulaMatch: cedulaMatch,
-      overallMatch: nameMatch && cedulaMatch,
+      vehicleTypeOk: vehicleTypeOk,
+      overallMatch: nameMatch && cedulaMatch && vehicleTypeOk,
       mismatchDetails: mismatches.isEmpty ? null : mismatches.join('; '),
     );
   }
 
-  /// Normalizes a CI string: strip prefix punctuation, uppercase, no spaces.
   static String _normalizeCi(String raw) {
     return raw.replaceAll(RegExp(r'[.\s\-]'), '').toUpperCase();
   }
 
-  /// Fuzzy name match: Levenshtein distance ≤ 2, case/accent insensitive.
   static bool _fuzzyNameMatch(String a, String b) {
     final na = _normalizeText(a);
     final nb = _normalizeText(b);
     if (na == nb) return true;
-    // Also try matching substrings (partial name on carnet)
     if (na.contains(nb) || nb.contains(na)) return true;
     return _levenshtein(na, nb) <= 2;
   }

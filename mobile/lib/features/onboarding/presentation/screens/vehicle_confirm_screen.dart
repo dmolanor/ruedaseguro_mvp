@@ -59,7 +59,7 @@ class _VehicleConfirmScreenState extends ConsumerState<VehicleConfirmScreen> {
   }
 
   double _fieldConf(String f) =>
-      ref.read(onboardingProvider).carnetOcr?.fieldConfidences[f] ?? 0.0;
+      ref.read(onboardingProvider).certificadoOcr?.fieldConfidences[f] ?? 0.0;
 
   void _submit() {
     if (!_formKey.currentState!.validate()) return;
@@ -69,7 +69,6 @@ class _VehicleConfirmScreenState extends ConsumerState<VehicleConfirmScreen> {
       brand: _brandCtrl.text.trim(),
       model: _modelCtrl.text.trim(),
       year: int.tryParse(_yearCtrl.text.trim()) ?? DateTime.now().year,
-      color: _colorCtrl.text.trim().isEmpty ? null : _colorCtrl.text.trim(),
       vehicleUse: _vehicleUse,
       serialMotor: _serialMotorCtrl.text.trim().isEmpty
           ? null
@@ -108,18 +107,18 @@ class _VehicleConfirmScreenState extends ConsumerState<VehicleConfirmScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-            // Carnet thumbnail
-            if (data.carnetImage != null)
+            // Certificado thumbnail
+            if (data.certificadoImage != null)
               GestureDetector(
                 onTap: () => showDialog(
                   context: context,
                   builder: (_) => Dialog(
-                      child: Image.file(data.carnetImage!, fit: BoxFit.contain)),
+                      child: Image.file(data.certificadoImage!, fit: BoxFit.contain)),
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(RSRadius.md),
                   child: Image.file(
-                    data.carnetImage!,
+                    data.certificadoImage!,
                     height: 120,
                     width: double.infinity,
                     fit: BoxFit.cover,

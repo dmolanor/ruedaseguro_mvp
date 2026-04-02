@@ -8,6 +8,9 @@ import 'package:ruedaseguro/core/services/supabase_service.dart';
 import 'package:ruedaseguro/core/utils/hash_utils.dart';
 import 'package:ruedaseguro/features/onboarding/domain/onboarding_state.dart';
 
+/// Sprint 4A (RS-078): Updated to remove licencia, use certificadoImage, and
+/// save new vehicle fields (vehicle_type, vehicle_body_type, serial_niv, seats)
+/// plus geolocation fields on profiles (RS-085).
 class OnboardingRepository {
   OnboardingRepository._();
   static final instance = OnboardingRepository._();
@@ -21,11 +24,9 @@ class OnboardingRepository {
     final userId = user.id;
     final phone = user.phone ?? '';
 
-    // Upload documents first (fail fast if storage is down)
+    // Upload documents (fail fast if storage is down)
     String? cedulaUrl;
-    String? licenciaUrl;
-    String? carnetUrl;
-    String? vehiclePhotoUrl;
+    String? certificadoUrl;
 
     if (data.cedulaImage != null) {
       cedulaUrl = await _uploadDocument(
@@ -35,27 +36,11 @@ class OnboardingRepository {
       );
     }
 
-    if (data.licenciaImage != null) {
-      licenciaUrl = await _uploadDocument(
-        file: data.licenciaImage!,
+    if (data.certificadoImage != null) {
+      certificadoUrl = await _uploadDocument(
+        file: data.certificadoImage!,
         userId: userId,
-        docType: 'licencia',
-      );
-    }
-
-    if (data.carnetImage != null) {
-      carnetUrl = await _uploadDocument(
-        file: data.carnetImage!,
-        userId: userId,
-        docType: 'carnet',
-      );
-    }
-
-    if (data.vehiclePhoto != null) {
-      vehiclePhotoUrl = await _uploadDocument(
-        file: data.vehiclePhoto!,
-        userId: userId,
-        docType: 'vehicle_photo',
+        docType: 'certificado_circulacion',
       );
     }
 
@@ -67,21 +52,22 @@ class OnboardingRepository {
       'id_number': data.idNumber,
       'first_name': data.firstName,
       'last_name': data.lastName,
-      'date_of_birth': data.dateOfBirth?.toIso8601String().split('T').first,
+      'date_of_birth':
+          data.dateOfBirth?.toIso8601String().split('T').first,
       'nationality': data.nationality,
       'sex': data.sex,
       'urbanizacion': data.urbanizacion,
-      'ciudad': data.ciudad,
       'municipio': data.municipio,
       'estado': data.estado,
       'codigo_postal': data.codigoPostal,
+      // RS-085: geolocation
+      if (data.latitude != null) 'latitude': data.latitude,
+      if (data.longitude != null) 'longitude': data.longitude,
+      'address_from_gps': data.addressFromGps,
+      // Emergency contact (single — RS-088 will add multi-contact table)
       'emergency_name': data.emergencyContactName,
       'emergency_phone': data.emergencyContactPhone,
       'emergency_relation': data.emergencyContactRelation,
-      'licencia_number': data.licenciaNumber,
-      'licencia_categories': data.licenciaCategories,
-      'licencia_expiry': data.licenciaExpiry?.toIso8601String().split('T').first,
-      'blood_type': data.bloodType,
       'consent_rcv': data.consentRcv,
       'consent_veracidad': data.consentVeracidad,
       'consent_antifraude': data.consentAntifraude,
@@ -90,14 +76,13 @@ class OnboardingRepository {
           DateTime.now().toUtc().toIso8601String(),
     });
 
-    // Insert or update vehicle (check first to avoid duplicates on retry)
+    // Insert or update vehicle
     final vehicleId = await _upsertVehicle(
       userId: userId,
       data: data,
-      vehiclePhotoUrl: vehiclePhotoUrl,
     );
 
-    // Insert document records (only if not already uploaded for this user)
+    // Insert document records
     if (cedulaUrl != null) {
       await _upsertDocumentRecord(
         userId: userId,
@@ -115,58 +100,32 @@ class OnboardingRepository {
       );
     }
 
-    if (licenciaUrl != null) {
+    if (certificadoUrl != null) {
       await _upsertDocumentRecord(
         userId: userId,
         vehicleId: vehicleId,
-        url: licenciaUrl,
-        docType: 'licencia_conducir',
-        file: data.licenciaImage!,
-        ocrData: {
-          'licenciaNumber': data.licenciaNumber,
-          'categories': data.licenciaCategories,
-          'expiryDate': data.licenciaExpiry?.toIso8601String(),
-          'bloodType': data.bloodType,
-        },
-        ocrConfidence: data.licenciaOcr?.confidence,
-      );
-    }
-
-    if (carnetUrl != null) {
-      await _upsertDocumentRecord(
-        userId: userId,
-        vehicleId: vehicleId,
-        url: carnetUrl,
-        docType: 'carnet_circulacion',
-        file: data.carnetImage!,
+        url: certificadoUrl,
+        docType: 'certificado_circulacion',
+        file: data.certificadoImage!,
         ocrData: {
           'plate': data.plate,
           'brand': data.brand,
           'model': data.model,
           'year': data.year,
+          'vehicleType': data.vehicleType,
+          'vehicleBodyType': data.vehicleBodyType,
+          'serialNiv': data.serialNiv,
+          'seats': data.seats,
+          'format': data.certificadoOcr?.format.name,
         },
-        ocrConfidence: data.carnetOcr?.confidence,
-      );
-    }
-
-    if (vehiclePhotoUrl != null) {
-      await _upsertDocumentRecord(
-        userId: userId,
-        vehicleId: vehicleId,
-        url: vehiclePhotoUrl,
-        docType: 'vehicle_photo',
-        file: data.vehiclePhoto!,
-        ocrData: {},
-        ocrConfidence: null,
+        ocrConfidence: data.certificadoOcr?.confidence,
       );
     }
   }
 
-  /// Inserts a new vehicle or updates the existing one for this user.
   Future<String> _upsertVehicle({
     required String userId,
     required OnboardingData data,
-    String? vehiclePhotoUrl,
   }) async {
     final existing = await SupabaseService.client
         .from(SupabaseConstants.vehicles)
@@ -180,11 +139,13 @@ class OnboardingRepository {
       'brand': data.brand,
       'model': data.model,
       'year': data.year,
-      'color': data.color,
       'vehicle_use': data.vehicleUse ?? 'particular',
+      // New Sprint 4A fields (RS-079)
+      'vehicle_type': data.vehicleType,
+      'vehicle_body_type': data.vehicleBodyType,
+      'serial_niv': data.serialNiv,
       'serial_motor': data.serialMotor,
-      'serial_carroceria': data.serialCarroceria,
-      if (vehiclePhotoUrl != null) 'rear_photo_url': vehiclePhotoUrl,
+      'seats': data.seats,
     };
 
     if (existing != null) {
@@ -208,19 +169,22 @@ class OnboardingRepository {
     required String userId,
     required String docType,
   }) async {
-    final path = '$userId/${docType}_${_uuid.v4()}.jpg';
+    // Use appropriate extension for PDFs
+    final ext = file.path.toLowerCase().endsWith('.pdf') ? 'pdf' : 'jpg';
+    final path = '$userId/${docType}_${_uuid.v4()}.$ext';
     await SupabaseService.storage.from(SupabaseConstants.bucketDocuments).upload(
       path,
       file,
-      fileOptions: const FileOptions(contentType: 'image/jpeg', upsert: false),
+      fileOptions: FileOptions(
+        contentType: ext == 'pdf' ? 'application/pdf' : 'image/jpeg',
+        upsert: false,
+      ),
     );
     return await SupabaseService.storage
         .from(SupabaseConstants.bucketDocuments)
-        .createSignedUrl(path, 60 * 60 * 24 * 365); // 1 year
+        .createSignedUrl(path, 60 * 60 * 24 * 365);
   }
 
-  /// Inserts a document record, skipping if one with the same hash already
-  /// exists for this user+docType (safe retry on network failure).
   Future<void> _upsertDocumentRecord({
     required String userId,
     required String vehicleId,
@@ -232,7 +196,6 @@ class OnboardingRepository {
   }) async {
     final hash = await HashUtils.sha256HashFile(file);
 
-    // Check for existing record with same hash to prevent duplicates on retry.
     final existing = await SupabaseService.client
         .from(SupabaseConstants.documents)
         .select('id')
@@ -241,7 +204,7 @@ class OnboardingRepository {
         .eq('file_hash', hash)
         .maybeSingle();
 
-    if (existing != null) return; // Already uploaded — skip.
+    if (existing != null) return;
 
     await SupabaseService.client.from(SupabaseConstants.documents).insert({
       'id': _uuid.v4(),
