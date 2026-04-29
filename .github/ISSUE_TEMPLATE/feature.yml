@@ -1,0 +1,43 @@
+name: "🚀 Nueva Funcionalidad"
+description: "Propón una idea o mejora para RuedaSeguro"
+title: "[FEAT]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ¿Tienes una idea para mejorar la app? Cuéntanos los detalles.
+  - type: textarea
+    id: user-story
+    attributes:
+      label: "User Story"
+      description: "¿Quién se beneficia y por qué?"
+      placeholder: "Como [rol], quiero [funcionalidad] para [objetivo/beneficio]"
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: "Criterios de Aceptación"
+      description: "Lista de puntos que deben cumplirse para dar la tarea por terminada."
+      placeholder: |
+        - [ ] El usuario puede ver...
+        - [ ] Se guarda en la DB...
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: "Contexto Adicional"
+      description: "Cualquier otra información, capturas de pantalla o ejemplos de otras apps."
+  - type: dropdown
+    id: priority
+    attributes:
+      label: "Prioridad Sugerida"
+      options:
+        - Baja
+        - Media
+        - Alta
+        - Crítica
+    validations:
+      required: true
