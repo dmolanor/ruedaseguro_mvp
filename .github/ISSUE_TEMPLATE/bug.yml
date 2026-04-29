@@ -1,0 +1,46 @@
+name: "🐛 Reporte de Bug"
+description: "Reporta algo que no está funcionando como debería"
+title: "[BUG]: "
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Gracias por reportar un bug. Por favor, completa la información de abajo para ayudarnos a resolverlo rápido.
+  - type: textarea
+    id: description
+    attributes:
+      label: "Descripción del Bug"
+      description: "Una descripción clara y concisa de lo que sucede."
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: "Pasos para Reproducir"
+      description: "Lista de pasos para que nosotros podamos ver el error."
+      placeholder: |
+        1. Abrir la app
+        2. Ir a la pantalla de Onboarding
+        3. Escanear cédula...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: "Comportamiento Esperado"
+      description: "Lo que debería haber pasado."
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: "Entorno"
+      description: "Ej: Android 13, iOS 17, Web, Staging, Dev"
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: "Logs o Capturas"
+      description: "Pega aquí logs de Sentry, capturas de pantalla o errores de consola."
