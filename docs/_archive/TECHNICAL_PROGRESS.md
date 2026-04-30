@@ -1,4 +1,5 @@
 # RuedaSeguro — Technical Progress Summary
+
 > Sprint 0 + Sprint 1 | Last updated: 2026-03-22
 
 ---
@@ -7,11 +8,11 @@
 
 **RuedaSeguro** is a Venezuelan InsurTech platform delivering parametric micro-insurance for motorcycle riders (B2C) managed through a carrier/broker network (B2B). The MVP is structured as a monorepo with three primary systems:
 
-| System | Stack | Purpose |
-|--------|-------|---------|
-| **Mobile App** | Flutter 3.x / Dart | Rider-facing: onboarding, policy purchase, claims |
-| **Admin Portal** | Next.js 16 / React 19 / TypeScript | Carrier & broker dashboard |
-| **Backend** | Supabase (PostgreSQL + Auth + Edge Functions) | Shared data layer, auth, business logic |
+| System           | Stack                                         | Purpose                                           |
+| ---------------- | --------------------------------------------- | ------------------------------------------------- |
+| **Mobile App**   | Flutter 3.x / Dart                            | Rider-facing: onboarding, policy purchase, claims |
+| **Admin Portal** | Next.js 16 / React 19 / TypeScript            | Carrier & broker dashboard                        |
+| **Backend**      | Supabase (PostgreSQL + Auth + Edge Functions) | Shared data layer, auth, business logic           |
 
 ---
 
@@ -47,6 +48,7 @@ RuedaSeguro/
 ### Flutter App Scaffold (RS-002)
 
 **Entry point** `mobile/lib/main.dart`:
+
 ```dart
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -70,28 +72,32 @@ Authenticated (with profile):   /home  /policy/*  /payment/method  /claims/new  
 ```
 
 **Auth state machine** (`AuthStatus` enum, 4 states):
+
 ```dart
 enum AuthStatus { initial, unauthenticated, authenticated, authenticatedWithProfile }
 ```
+
 GoRouter subscribes to auth changes via `GoRouterRefreshStream` — a thin `ChangeNotifier` wrapper around a Dart `Stream<AuthState>` that calls `notifyListeners()` on every emit, triggering a redirect evaluation.
 
 **Design system** (`mobile/lib/core/theme/`):
+
 - Colors: Navy `#1A3A52` (primary), Orange `#FF6B35` (accent), dark background `#0F2236`
 - Typography: Montserrat (headings) + Lato (body), defined via `RSTypography` constants
 - Spacing: 4px grid — `xs=4, sm=8, md=16, lg=24, xl=32, xxl=48`
 
 **Key dependencies:**
+
 ```yaml
-supabase_flutter: ^2.9.0       # Auth + DB + Storage + Edge Functions
-google_mlkit_text_recognition: ^0.14.0  # On-device OCR (no server round-trip)
-camera: ^0.11.1                # Live camera feed for document scanning
-flutter_riverpod: ^2.6.1       # State management
-go_router: ^14.8.1             # Declarative routing
-crypto: ^3.0.6                 # SHA-256 hashing (document integrity)
-intl: ^0.19.0                  # Spanish date/currency formatting
-local_auth: ^2.3.0             # Biometric auth (Phase 1.5 prep)
-pdf + printing: ^3/^5          # Policy PDF generation
-fl_chart: ^0.70.2              # Charts in admin views
+supabase_flutter: ^2.9.0 # Auth + DB + Storage + Edge Functions
+google_mlkit_text_recognition: ^0.14.0 # On-device OCR (no server round-trip)
+camera: ^0.11.1 # Live camera feed for document scanning
+flutter_riverpod: ^2.6.1 # State management
+go_router: ^14.8.1 # Declarative routing
+crypto: ^3.0.6 # SHA-256 hashing (document integrity)
+intl: ^0.19.0 # Spanish date/currency formatting
+local_auth: ^2.3.0 # Biometric auth (Phase 1.5 prep)
+pdf + printing: ^3/^5 # Policy PDF generation
+fl_chart: ^0.70.2 # Charts in admin views
 ```
 
 ### Next.js Admin Portal Scaffold (RS-003)
@@ -99,6 +105,7 @@ fl_chart: ^0.70.2              # Charts in admin views
 Built with **Next.js 16.2.1 App Router** (React 19), **Tailwind CSS v4**, **shadcn/ui** component library, and **Supabase SSR** for server-side session management.
 
 **Route groups:**
+
 ```
 app/
 ├── login/               # Shared login (phone OTP)
@@ -108,11 +115,13 @@ app/
 ```
 
 **Supabase SSR pattern** — two separate client factories:
+
 - `lib/supabase/client.ts` → browser client (`createBrowserClient`)
 - `lib/supabase/server.ts` → server client (`createServerClient` with cookie jar)
 - `middleware.ts` → session refresh on every request (prevents token expiry mid-session)
 
 **UI stack:**
+
 - `shadcn/ui` components: Button, Card, Table, Badge, Dialog, Sheet, Select, Tabs, Avatar, Dropdown
 - `sonner` for toast notifications
 - `lucide-react` for icons
@@ -122,22 +131,24 @@ app/
 
 **Database schema** (20 tables across 5 concern areas):
 
-| Area | Tables |
-|------|--------|
-| B2B2C Network | `carriers`, `carrier_users`, `brokers`, `promoters`, `points_of_sale` |
-| Rider Identity | `profiles`, `vehicles`, `documents` |
-| Insurance Core | `policy_types`, `policies`, `payments`, `claims`, `claim_evidence` |
-| Finance | `exchange_rates` |
-| Compliance | `audit_log` |
+| Area           | Tables                                                                |
+| -------------- | --------------------------------------------------------------------- |
+| B2B2C Network  | `carriers`, `carrier_users`, `brokers`, `promoters`, `points_of_sale` |
+| Rider Identity | `profiles`, `vehicles`, `documents`                                   |
+| Insurance Core | `policy_types`, `policies`, `payments`, `claims`, `claim_evidence`    |
+| Finance        | `exchange_rates`                                                      |
+| Compliance     | `audit_log`                                                           |
 
 **Storage buckets:** `documents` (cedula/carnet scans), `policies` (PDFs), `receipts`, `public`
 
 **Edge Functions** (Deno runtime):
+
 - `bcv-rate/index.ts` — fetches live BCV exchange rate (USD→VES) for premium calculation
 - `send-otp/index.ts` — sends OTP via SMS (requires Twilio credentials; currently gated behind dev bypass)
 - `verify-otp/index.ts` — validates OTP token
 
 **Supabase constants** centralized in `core/constants/supabase_constants.dart`:
+
 ```dart
 class SupabaseConstants {
   static const profiles = 'profiles';
@@ -159,6 +170,7 @@ class SupabaseConstants {
 #### Phone + OTP Login (`login_screen.dart`, `otp_screen.dart`)
 
 **Login screen** collects a phone number with a country-picker that supports Venezuela and Colombia:
+
 ```dart
 class _Country {
   final String flag;
@@ -169,11 +181,13 @@ class _Country {
 bool _isVenezuelanPhone(String d) => d.length == 10 && d.startsWith('4');
 bool _isColombianPhone(String d)  => d.length == 10 && d.startsWith('3');
 ```
+
 A bottom sheet lets the user switch between `🇻🇪 +58` and `🇨🇴 +57`. The phone number is auto-formatted as `XXX XXXXXXX` by a custom `TextInputFormatter` and validated on each keystroke before enabling the submit button.
 
 On submit, the full E.164 phone is constructed (`${country.dialCode}$rawDigits`) and passed to `AuthRepository.signInWithOtp()`.
 
 **OTP screen** (`otp_screen.dart`) renders six individual `TextField` boxes (one digit each) with:
+
 - Auto-advance: typing a digit moves focus to the next box
 - Paste support: pasting `123456` fills all six boxes at once
 - Backspace navigation: deleting from an empty box moves focus left
@@ -183,6 +197,7 @@ On submit, the full E.164 phone is constructed (`${country.dialCode}$rawDigits`)
 Keyboard events use the current Flutter API (`KeyboardListener` / `KeyEvent` / `KeyDownEvent`) — the deprecated `RawKeyboardListener`/`RawKeyEvent` API was replaced.
 
 **Auth repository** (`auth_repository.dart`):
+
 ```dart
 Future<void> signInWithOtp(String phone)       // triggers SMS OTP
 Future<Session?> verifyOtp(String phone, String token)  // validates OTP
@@ -234,6 +249,7 @@ class OnboardingData {
 #### Document Scanner Widget (`document_scanner.dart`)
 
 Reusable widget wrapping `camera` + `google_mlkit_text_recognition`. Flow:
+
 1. Live camera preview with a framing overlay
 2. User taps capture → image saved to temp file
 3. `TextRecognizer` runs **on-device** (no network) → returns `RecognizedText` with positioned `TextBlock` objects
@@ -242,6 +258,7 @@ Reusable widget wrapping `camera` + `google_mlkit_text_recognition`. Flow:
 #### OCR Parsers
 
 **`CedulaParser.parse(rawText, blocks)`** extracts Venezuelan/Colombian ID data:
+
 - Venezuelan (V/E prefix): regex `([VvEe])[.\-\s]?\s*(\d{1,3}[.,]?\d{3}[.,]?\d{0,3})`
 - Colombian CC: detected by `COLOMBIA` keyword + 8–10 digit number without letter prefix
 - Date of birth: day/month/year heuristic with age validation (16–100 years)
@@ -250,6 +267,7 @@ Reusable widget wrapping `camera` + `google_mlkit_text_recognition`. Flow:
 - Per-field confidence scores (0.0–1.0); overall = mean of all scored fields
 
 **`CarnetParser.parse(rawText, blocks)`** extracts motorcycle registration data:
+
 - Venezuelan plates: `ABC-123-DE` pattern (3 letters, 2–3 digits, 2–3 letters)
 - Colombian plates: `ABC-123` pattern (3 letters, 3 digits, no trailing letters)
 - Brand matching: exact substring match against 20 known brands (`HONDA`, `YAMAHA`, `BAJAJ`, `BERA`, etc.)
@@ -261,6 +279,7 @@ Reusable widget wrapping `camera` + `google_mlkit_text_recognition`. Flow:
 #### Identity Confirmation Screen (`cedula_confirm_screen.dart`)
 
 Pre-fills form fields from OCR results. Fields with confidence < 0.90 are highlighted in amber with a "Verifica este campo" hint:
+
 ```dart
 class _ConfidenceField extends StatelessWidget {
   // Shows RSTextField with amber border if 0 < confidence < 0.9
@@ -274,6 +293,7 @@ Supports ID types `V`, `E`, `CC` (Colombian). ID number validation: 6–10 digit
 Address form collects: `urbanizacion`, `ciudad`, `municipio`, `estado`, `codigoPostal` — all text fields matching Venezuelan address conventions.
 
 Consent screen presents four SUDEASEG-required checkboxes:
+
 - RCV coverage terms
 - Data truthfulness declaration
 - Anti-fraud acknowledgment
@@ -300,17 +320,18 @@ static bool isValidPlate(String v) { /* ABC-123-DE or ABC-123 */ }
 
 **7 test files, ~120 test cases total:**
 
-| File | What it tests |
-|------|---------------|
-| `currency_utils_test.dart` | `formatUSD`, `formatVES`, `convertUsdToVes`, `formatExchangeRate` |
-| `hash_utils_test.dart` | `sha256Hash` (Uint8List), `sha256HashString`; known SHA-256 vectors |
-| `date_utils_test.dart` | ISO 8601 round-trip, Spanish display formatting, `isExpired`, `daysUntilExpiry` |
-| `validators_test.dart` | Phone (VE + CO), email, cédula, plate validation |
-| `cedula_parser_test.dart` | Venezuelan V/E parsing, Colombian CC parsing, field confidence, name extraction |
-| `carnet_parser_test.dart` | Venezuelan/Colombian plate parsing, brand/color/year detection, serial extraction |
-| `cross_validator_test.dart` | ID match, mismatch, missing field handling |
+| File                        | What it tests                                                                     |
+| --------------------------- | --------------------------------------------------------------------------------- |
+| `currency_utils_test.dart`  | `formatUSD`, `formatVES`, `convertUsdToVes`, `formatExchangeRate`                 |
+| `hash_utils_test.dart`      | `sha256Hash` (Uint8List), `sha256HashString`; known SHA-256 vectors               |
+| `date_utils_test.dart`      | ISO 8601 round-trip, Spanish display formatting, `isExpired`, `daysUntilExpiry`   |
+| `validators_test.dart`      | Phone (VE + CO), email, cédula, plate validation                                  |
+| `cedula_parser_test.dart`   | Venezuelan V/E parsing, Colombian CC parsing, field confidence, name extraction   |
+| `carnet_parser_test.dart`   | Venezuelan/Colombian plate parsing, brand/color/year detection, serial extraction |
+| `cross_validator_test.dart` | ID match, mismatch, missing field handling                                        |
 
 **Notable test fixes:**
+
 - `formatUSD(1.005)` → `'$1.00'` not `'$1.01'`: IEEE 754 — `1.005` is actually `1.004999...` in binary float; test changed to `formatUSD(10.1)` → `'$10.10'`
 - `date_utils_test` requires `setUpAll(() async { await initializeDateFormatting('es'); })` — `DateFormat('d MMM yyyy', 'es')` throws `LocaleDataException` without prior initialization
 - `carnet_parser_test` garbage-input test used `'LOREM IPSUM'` which contains brand `UM` (substring of `IPSUM`); changed to `'LOREM DOLOR'`
@@ -318,15 +339,15 @@ static bool isValidPlate(String v) { /* ABC-123-DE or ABC-123 */ }
 
 ### Bug Fixes Applied During Sprint 1
 
-| Bug | Root cause | Fix |
-|-----|-----------|-----|
-| App crash on startup | `main()` was synchronous, `Supabase.instance` called before `initialize()` | Rewrote `main()` as `async`, added `Supabase.initialize()` |
-| App stuck on splash forever | `/splash` was in `_publicRoutes`; unauthenticated redirect returned `null` for it | Removed `/splash` from `_publicRoutes`; splash is now its own guard |
-| `unawaited_futures` lint warnings | `context.push()` returns `Future<T>`; not being awaited | Wrapped with `unawaited()` from `dart:async` in 4 screens |
-| Deprecated keyboard API | `RawKeyboardListener`/`RawKeyEvent` removed in Flutter 3.18+ | Migrated to `KeyboardListener`/`KeyEvent`/`KeyDownEvent`/`onKeyEvent:` |
-| `inputFormatters` ignored | `rs_text_field.dart` declared `List<dynamic>?` but never passed it to `TextFormField` | Typed as `List<TextInputFormatter>?` and wired into `TextFormField` |
-| Duplicate import lint error | `consent_screen.dart` imported typography twice | Removed duplicate import |
-| `LocaleDataException` at runtime | `initializeDateFormatting('es')` not called before `DateFormat` with locale | Added to `main()` before `runApp()` |
+| Bug                               | Root cause                                                                            | Fix                                                                    |
+| --------------------------------- | ------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| App crash on startup              | `main()` was synchronous, `Supabase.instance` called before `initialize()`            | Rewrote `main()` as `async`, added `Supabase.initialize()`             |
+| App stuck on splash forever       | `/splash` was in `_publicRoutes`; unauthenticated redirect returned `null` for it     | Removed `/splash` from `_publicRoutes`; splash is now its own guard    |
+| `unawaited_futures` lint warnings | `context.push()` returns `Future<T>`; not being awaited                               | Wrapped with `unawaited()` from `dart:async` in 4 screens              |
+| Deprecated keyboard API           | `RawKeyboardListener`/`RawKeyEvent` removed in Flutter 3.18+                          | Migrated to `KeyboardListener`/`KeyEvent`/`KeyDownEvent`/`onKeyEvent:` |
+| `inputFormatters` ignored         | `rs_text_field.dart` declared `List<dynamic>?` but never passed it to `TextFormField` | Typed as `List<TextInputFormatter>?` and wired into `TextFormField`    |
+| Duplicate import lint error       | `consent_screen.dart` imported typography twice                                       | Removed duplicate import                                               |
+| `LocaleDataException` at runtime  | `initializeDateFormatting('es')` not called before `DateFormat` with locale           | Added to `main()` before `runApp()`                                    |
 
 ---
 
@@ -381,17 +402,17 @@ static bool isValidPlate(String v) { /* ABC-123-DE or ABC-123 */ }
 
 ## What Is NOT Yet Built (Sprint 2+)
 
-| Feature | Sprint | Notes |
-|---------|--------|-------|
-| Supabase RLS policies | Sprint 2 | All tables currently unprotected |
-| Profile write to DB | Sprint 2 | Consent screen collects data locally only |
-| Policy quoting engine | Sprint 2 | `ProductSelectionScreen` is a stub |
-| Payment integration (Stripe / Pago Móvil) | Sprint 2 | `PaymentMethodScreen` is a stub |
-| Claims filing flow | Sprint 2 | `NewClaimScreen` is a stub |
-| SMS provider (Twilio) | Sprint 2 | Phone OTP currently requires dev bypass |
-| BCV rate fetching | Sprint 2 | Edge function exists, not yet called from app |
-| PDF policy generation | Sprint 2 | `pdf` package installed, not implemented |
-| Admin portal data binding | Sprint 2 | Screens show static mock data |
-| Biometric auth | Phase 1.5 | `local_auth` installed, not wired |
-| Background telemetry | Phase 1.5 | `sensors_plus`, `geolocator` commented out |
-| Smart contracts | Phase 1.5 | `contracts/` directory is a placeholder |
+| Feature                                   | Sprint    | Notes                                         |
+| ----------------------------------------- | --------- | --------------------------------------------- |
+| Supabase RLS policies                     | Sprint 2  | All tables currently unprotected              |
+| Profile write to DB                       | Sprint 2  | Consent screen collects data locally only     |
+| Policy quoting engine                     | Sprint 2  | `ProductSelectionScreen` is a stub            |
+| Payment integration (Stripe / Pago Móvil) | Sprint 2  | `PaymentMethodScreen` is a stub               |
+| Claims filing flow                        | Sprint 2  | `NewClaimScreen` is a stub                    |
+| SMS provider (Twilio)                     | Sprint 2  | Phone OTP currently requires dev bypass       |
+| BCV rate fetching                         | Sprint 2  | Edge function exists, not yet called from app |
+| PDF policy generation                     | Sprint 2  | `pdf` package installed, not implemented      |
+| Admin portal data binding                 | Sprint 2  | Screens show static mock data                 |
+| Biometric auth                            | Phase 1.5 | `local_auth` installed, not wired             |
+| Background telemetry                      | Phase 1.5 | `sensors_plus`, `geolocator` commented out    |
+| Smart contracts                           | Phase 1.5 | `contracts/` directory is a placeholder       |

@@ -12,26 +12,26 @@
 
 ## Labels Reference
 
-| Label | Color | Description |
-|---|---|---|
-| `epic` | Purple | High-level grouping of related stories |
-| `story` | Blue | User-facing functionality |
-| `task` | Green | Technical work, no direct user impact |
-| `bug` | Red | Defect (used post-implementation) |
-| `spike` | Orange | Research / investigation / prototyping |
-| `flutter` | Cyan | Flutter mobile app work |
-| `admin` | Teal | Admin portal (Next.js) work |
-| `supabase` | Dark Green | Backend / database / Edge Functions |
-| `devops` | Gray | CI/CD, infrastructure, tooling |
-| `design` | Pink | UI/UX design system work |
-| `testing` | Yellow | Test coverage |
-| `documentation` | White | Docs, READMEs, guides |
-| `b2b2c` | Indigo | Sales network (brokers, promoters, POS) |
-| `security` | Dark Orange | Anti-fraud, validation, encryption |
-| `P0` | Dark Red | Blocker — Sprint cannot complete without this |
-| `P1` | Red | Critical — Core functionality |
-| `P2` | Orange | Important — Quality & polish |
-| `P3` | Yellow | Nice-to-have — Can defer if time-constrained |
+| Label           | Color       | Description                                   |
+| --------------- | ----------- | --------------------------------------------- |
+| `epic`          | Purple      | High-level grouping of related stories        |
+| `story`         | Blue        | User-facing functionality                     |
+| `task`          | Green       | Technical work, no direct user impact         |
+| `bug`           | Red         | Defect (used post-implementation)             |
+| `spike`         | Orange      | Research / investigation / prototyping        |
+| `flutter`       | Cyan        | Flutter mobile app work                       |
+| `admin`         | Teal        | Admin portal (Next.js) work                   |
+| `supabase`      | Dark Green  | Backend / database / Edge Functions           |
+| `devops`        | Gray        | CI/CD, infrastructure, tooling                |
+| `design`        | Pink        | UI/UX design system work                      |
+| `testing`       | Yellow      | Test coverage                                 |
+| `documentation` | White       | Docs, READMEs, guides                         |
+| `b2b2c`         | Indigo      | Sales network (brokers, promoters, POS)       |
+| `security`      | Dark Orange | Anti-fraud, validation, encryption            |
+| `P0`            | Dark Red    | Blocker — Sprint cannot complete without this |
+| `P1`            | Red         | Critical — Core functionality                 |
+| `P2`            | Orange      | Important — Quality & polish                  |
+| `P3`            | Yellow      | Nice-to-have — Can defer if time-constrained  |
 
 ---
 
@@ -47,18 +47,20 @@
 ## Epic: E0.1 — Repository & DevOps Setup
 
 ### RS-001: Initialize monorepo and Git configuration
-| Field | Value |
-|---|---|
-| **Type** | `task` |
-| **Labels** | `devops`, `P0` |
-| **Points** | 2 |
-| **Assignee** | — |
+
+| Field            | Value             |
+| ---------------- | ----------------- |
+| **Type**         | `task`            |
+| **Labels**       | `devops`, `P0`    |
+| **Points**       | 2                 |
+| **Assignee**     | —                 |
 | **Dependencies** | None (first task) |
 
 **Description**
 Create the Git repository with the monorepo structure defined in `MVP_ARCHITECTURE.md` Section 15. Establish branching conventions and protect the main branch.
 
 **Acceptance Criteria**
+
 - [ ] Git repository initialized at project root
 - [ ] `.gitignore` configured for Flutter, Next.js, Supabase, and IDE files (Android build artifacts, `node_modules/`, `.env*`, `*.jks`, `.dart_tool/`, `build/`, `.next/`)
 - [ ] Branch protection: `main` requires PR with at least 1 approval
@@ -84,18 +86,20 @@ Create the Git repository with the monorepo structure defined in `MVP_ARCHITECTU
 ---
 
 ### RS-002: Configure Flutter project with dependencies
-| Field | Value |
-|---|---|
-| **Type** | `task` |
-| **Labels** | `flutter`, `P0` |
-| **Points** | 3 |
-| **Assignee** | — |
-| **Dependencies** | RS-001 |
+
+| Field            | Value           |
+| ---------------- | --------------- |
+| **Type**         | `task`          |
+| **Labels**       | `flutter`, `P0` |
+| **Points**       | 3               |
+| **Assignee**     | —               |
+| **Dependencies** | RS-001          |
 
 **Description**
 Initialize the Flutter project inside `mobile/` with all required dependencies from `MVP_ARCHITECTURE.md` Section 4.3. Pin dependency versions for reproducibility. Include Phase 1.5 sensor packages as commented-out stubs.
 
 **Acceptance Criteria**
+
 - [ ] Flutter project created at `mobile/` with `flutter create --org com.ruedaseguro mobile`
 - [ ] Minimum SDK: Flutter 3.x, Dart 3.x
 - [ ] All dependencies from Section 4.3 added to `pubspec.yaml` with pinned versions
@@ -119,18 +123,20 @@ Initialize the Flutter project inside `mobile/` with all required dependencies f
 ---
 
 ### RS-003: Configure Next.js admin portal project
-| Field | Value |
-|---|---|
-| **Type** | `task` |
-| **Labels** | `admin`, `P0` |
-| **Points** | 3 |
-| **Assignee** | — |
-| **Dependencies** | RS-001 |
+
+| Field            | Value         |
+| ---------------- | ------------- |
+| **Type**         | `task`        |
+| **Labels**       | `admin`, `P0` |
+| **Points**       | 3             |
+| **Assignee**     | —             |
+| **Dependencies** | RS-001        |
 
 **Description**
 Initialize the Next.js admin portal inside `admin-portal/` with shadcn/ui and Supabase client. The portal serves multiple roles: carrier admins, brokers, and (in Phase 1.5) clinical staff. Route structure must support this from Day 1.
 
 **Acceptance Criteria**
+
 - [ ] Next.js 15 project created at `admin-portal/` with App Router
 - [ ] TypeScript configured with strict mode
 - [ ] Tailwind CSS 4 installed and configured
@@ -156,18 +162,20 @@ Initialize the Next.js admin portal inside `admin-portal/` with shadcn/ui and Su
 ---
 
 ### RS-004: Set up GitHub Actions CI pipeline
-| Field | Value |
-|---|---|
-| **Type** | `task` |
-| **Labels** | `devops`, `P1` |
-| **Points** | 3 |
-| **Assignee** | — |
+
+| Field            | Value          |
+| ---------------- | -------------- |
+| **Type**         | `task`         |
+| **Labels**       | `devops`, `P1` |
+| **Points**       | 3              |
+| **Assignee**     | —              |
 | **Dependencies** | RS-002, RS-003 |
 
 **Description**
 Create CI workflows that run on every PR and push to main. Separate workflows for Flutter and admin portal.
 
 **Acceptance Criteria**
+
 - [ ] `.github/workflows/flutter-ci.yml`:
   - Triggers on PR and push to `main` (paths: `mobile/**`)
   - Runs `flutter analyze`
@@ -186,18 +194,20 @@ Create CI workflows that run on every PR and push to main. Separate workflows fo
 ---
 
 ### RS-005: Configure Android release signing
-| Field | Value |
-|---|---|
-| **Type** | `task` |
-| **Labels** | `flutter`, `devops`, `P2` |
-| **Points** | 2 |
-| **Assignee** | — |
-| **Dependencies** | RS-002 |
+
+| Field            | Value                     |
+| ---------------- | ------------------------- |
+| **Type**         | `task`                    |
+| **Labels**       | `flutter`, `devops`, `P2` |
+| **Points**       | 2                         |
+| **Assignee**     | —                         |
+| **Dependencies** | RS-002                    |
 
 **Description**
 Set up Android release signing so we can produce signed APKs for distribution. The keystore must NOT be committed to the repository.
 
 **Acceptance Criteria**
+
 - [ ] Upload keystore generated (`ruedaseguro-upload.jks`)
 - [ ] `mobile/android/key.properties` added to `.gitignore`
 - [ ] `key.properties.example` template committed with placeholder values
@@ -211,18 +221,20 @@ Set up Android release signing so we can produce signed APKs for distribution. T
 ## Epic: E0.2 — Supabase Backend Setup
 
 ### RS-006: Create Supabase project and configure environment
-| Field | Value |
-|---|---|
-| **Type** | `task` |
-| **Labels** | `supabase`, `P0` |
-| **Points** | 2 |
-| **Assignee** | — |
-| **Dependencies** | RS-001 |
+
+| Field            | Value            |
+| ---------------- | ---------------- |
+| **Type**         | `task`           |
+| **Labels**       | `supabase`, `P0` |
+| **Points**       | 2                |
+| **Assignee**     | —                |
+| **Dependencies** | RS-001           |
 
 **Description**
 Provision the Supabase project (free tier) and configure local development with the Supabase CLI. Per MVP Architecture v2.0, Supabase is authorized for initial development and testing — production migration to local Venezuelan server comes in Phase 1.5.
 
 **Acceptance Criteria**
+
 - [ ] Supabase project created on `supabase.com` (free tier)
 - [ ] Project region selected (closest to Venezuela — `us-east-1` or `sa-east-1`)
 - [ ] `supabase/config.toml` configured with project reference
@@ -238,18 +250,20 @@ Provision the Supabase project (free tier) and configure local development with 
 ---
 
 ### RS-007: Apply initial database schema migration
-| Field | Value |
-|---|---|
-| **Type** | `task` |
-| **Labels** | `supabase`, `P0` |
-| **Points** | 8 |
-| **Assignee** | — |
-| **Dependencies** | RS-006 |
+
+| Field            | Value            |
+| ---------------- | ---------------- |
+| **Type**         | `task`           |
+| **Labels**       | `supabase`, `P0` |
+| **Points**       | 8                |
+| **Assignee**     | —                |
+| **Dependencies** | RS-006           |
 
 **Description**
 Create and apply the SQL migration files containing the complete MVP v2.0 schema from `MVP_ARCHITECTURE.md` Section 5.2. This includes the full B2B2C hierarchy (brokers, promoters, points of sale), updated policy tables with consent fields and sales attribution, and expanded RLS policies.
 
 **Acceptance Criteria**
+
 - [ ] Migration file `supabase/migrations/001_initial_schema.sql` created containing:
   - All ENUM types: `policy_status` (with `pending_emission`, `observed`, `rejected_emission`), `payment_status`, `payment_method`, `claim_status`, `document_type` (with `vehicle_photo`, `factura_compra`, `payment_receipt`, `rcv_certificate`), `id_type`, `broker_status`, `promoter_status`
   - Core tables: `carriers` (with `required_documents` JSONB), `carrier_users` (with expanded role options), `profiles` (with address fields: `urbanizacion`, `ciudad`, `municipio`, `estado`, `codigo_postal`; referral tracking; `nationality`, `sex`), `vehicles` (with `vehicle_use`, `rear_photo_url`), `policy_types` (with `tier`, `coverage_details`, `upsell_options`, `target_percentage`, `payment_frequency`), `policies` (with `broker_id`, `promoter_id`, `point_of_sale_id`, `referral_code`, consent booleans, `emission_response`, `certificate_url`, `upsells`), `payments` (with `method` enum, `receipt_url`), `claims` (with oracle validation fields, `triage_level`), `claim_evidence`, `documents` (with `sharpness_score`, `is_screen_photo`), `exchange_rates`, `audit_log`
@@ -278,18 +292,20 @@ Create and apply the SQL migration files containing the complete MVP v2.0 schema
 ---
 
 ### RS-008: Configure Supabase Auth for phone OTP
-| Field | Value |
-|---|---|
-| **Type** | `task` |
-| **Labels** | `supabase`, `P0` |
-| **Points** | 2 |
-| **Assignee** | — |
-| **Dependencies** | RS-006 |
+
+| Field            | Value            |
+| ---------------- | ---------------- |
+| **Type**         | `task`           |
+| **Labels**       | `supabase`, `P0` |
+| **Points**       | 2                |
+| **Assignee**     | —                |
+| **Dependencies** | RS-006           |
 
 **Description**
 Configure Supabase Auth to support phone number authentication with OTP via SMS. This is the primary auth method for riders.
 
 **Acceptance Criteria**
+
 - [ ] Phone auth enabled in Supabase Dashboard → Authentication → Providers
 - [ ] SMS provider configured (options ranked by preference):
   1. Supabase built-in (free for testing, rate-limited)
@@ -306,18 +322,20 @@ Configure Supabase Auth to support phone number authentication with OTP via SMS.
 ---
 
 ### RS-009: Configure Supabase Storage buckets
-| Field | Value |
-|---|---|
-| **Type** | `task` |
-| **Labels** | `supabase`, `P1` |
-| **Points** | 2 |
-| **Assignee** | — |
-| **Dependencies** | RS-006 |
+
+| Field            | Value            |
+| ---------------- | ---------------- |
+| **Type**         | `task`           |
+| **Labels**       | `supabase`, `P1` |
+| **Points**       | 2                |
+| **Assignee**     | —                |
+| **Dependencies** | RS-006           |
 
 **Description**
 Create the Storage buckets needed for document uploads, policy PDFs, payment receipts, and public assets.
 
 **Acceptance Criteria**
+
 - [ ] Bucket `documents` created — **private** (requires auth for access)
   - Purpose: scanned cédulas, carnets de circulación, vehicle rear photos, facturas (future), claim photos
   - Max file size: 10MB
@@ -344,18 +362,20 @@ Create the Storage buckets needed for document uploads, policy PDFs, payment rec
 ---
 
 ### RS-010: Create seed data for development and demos
-| Field | Value |
-|---|---|
-| **Type** | `task` |
-| **Labels** | `supabase`, `b2b2c`, `P1` |
-| **Points** | 3 |
-| **Assignee** | — |
-| **Dependencies** | RS-007 |
+
+| Field            | Value                     |
+| ---------------- | ------------------------- |
+| **Type**         | `task`                    |
+| **Labels**       | `supabase`, `b2b2c`, `P1` |
+| **Points**       | 3                         |
+| **Assignee**     | —                         |
+| **Dependencies** | RS-007                    |
 
 **Description**
 Create a SQL seed file with realistic test data including the full B2B2C hierarchy — carriers, brokers, promoters, points of sale, and policy types matching the multi-tier product structure.
 
 **Acceptance Criteria**
+
 - [ ] `supabase/seed.sql` file created with:
   - 1 primary test carrier:
     - "Seguros Pirámide" (RIF: J-00312345-6) — primary strategic partner
@@ -389,18 +409,20 @@ Create a SQL seed file with realistic test data including the full B2B2C hierarc
 ## Epic: E0.3 — Flutter App Foundation
 
 ### RS-011: Implement Flutter folder structure and core architecture
-| Field | Value |
-|---|---|
-| **Type** | `task` |
-| **Labels** | `flutter`, `P0` |
-| **Points** | 3 |
-| **Assignee** | — |
-| **Dependencies** | RS-002 |
+
+| Field            | Value           |
+| ---------------- | --------------- |
+| **Type**         | `task`          |
+| **Labels**       | `flutter`, `P0` |
+| **Points**       | 3               |
+| **Assignee**     | —               |
+| **Dependencies** | RS-002          |
 
 **Description**
 Create the full folder structure from `MVP_ARCHITECTURE.md` Section 7.1. Set up the architectural foundation: Riverpod providers, GoRouter, and the feature directory convention. Routes reflect the 8-step onboarding flow.
 
 **Acceptance Criteria**
+
 - [ ] Complete folder structure from Section 7.1 created (all directories, placeholder files where needed)
 - [ ] `main.dart`:
   - Initializes `WidgetsFlutterBinding`
@@ -439,18 +461,20 @@ Create the full folder structure from `MVP_ARCHITECTURE.md` Section 7.1. Set up 
 ---
 
 ### RS-012: Implement design system — theme, colors, typography
-| Field | Value |
-|---|---|
-| **Type** | `task` |
-| **Labels** | `flutter`, `design`, `P1` |
-| **Points** | 3 |
-| **Assignee** | — |
-| **Dependencies** | RS-011 |
+
+| Field            | Value                     |
+| ---------------- | ------------------------- |
+| **Type**         | `task`                    |
+| **Labels**       | `flutter`, `design`, `P1` |
+| **Points**       | 3                         |
+| **Assignee**     | —                         |
+| **Dependencies** | RS-011                    |
 
 **Description**
 Implement the RuedaSeguro design system as defined in `MVP_ARCHITECTURE.md` Section 7.3, updated with v2.0 branding (Navy Blue + Orange, Montserrat + Lato).
 
 **Acceptance Criteria**
+
 - [ ] `core/theme/colors.dart`:
   - `RSColors` class with all color constants:
     - `primary` = Navy Blue (#1A237E) — trust, protection
@@ -490,18 +514,20 @@ Implement the RuedaSeguro design system as defined in `MVP_ARCHITECTURE.md` Sect
 ---
 
 ### RS-013: Build shared widget library — base components
-| Field | Value |
-|---|---|
-| **Type** | `task` |
-| **Labels** | `flutter`, `design`, `P1` |
-| **Points** | 5 |
-| **Assignee** | — |
-| **Dependencies** | RS-012 |
+
+| Field            | Value                     |
+| ---------------- | ------------------------- |
+| **Type**         | `task`                    |
+| **Labels**       | `flutter`, `design`, `P1` |
+| **Points**       | 5                         |
+| **Assignee**     | —                         |
+| **Dependencies** | RS-012                    |
 
 **Description**
 Build the reusable widget library defined in `MVP_ARCHITECTURE.md` Section 7.1 (`shared/widgets/`). These are the building blocks for all feature screens.
 
 **Acceptance Criteria**
+
 - [ ] `rs_button.dart`:
   - Primary button (filled, accent orange, rounded corners)
   - Secondary button (outlined)
@@ -548,18 +574,20 @@ Build the reusable widget library defined in `MVP_ARCHITECTURE.md` Section 7.1 (
 ---
 
 ### RS-014: Implement core services — Supabase, connectivity, local storage
-| Field | Value |
-|---|---|
-| **Type** | `task` |
-| **Labels** | `flutter`, `P0` |
-| **Points** | 5 |
-| **Assignee** | — |
-| **Dependencies** | RS-006, RS-011 |
+
+| Field            | Value           |
+| ---------------- | --------------- |
+| **Type**         | `task`          |
+| **Labels**       | `flutter`, `P0` |
+| **Points**       | 5               |
+| **Assignee**     | —               |
+| **Dependencies** | RS-006, RS-011  |
 
 **Description**
 Implement the core service layer that all features depend on: Supabase client wrapper, connectivity monitoring, and local storage (SQLite + Hive).
 
 **Acceptance Criteria**
+
 - [ ] `core/services/supabase_service.dart`:
   - Singleton access to Supabase client
   - Helper getters for `.auth`, `.from()`, `.storage`, `.functions`
@@ -593,18 +621,20 @@ Implement the core service layer that all features depend on: Supabase client wr
 ---
 
 ### RS-015: Implement core utilities — validators, formatters, hash helpers, image quality
-| Field | Value |
-|---|---|
-| **Type** | `task` |
-| **Labels** | `flutter`, `security`, `P1` |
-| **Points** | 5 |
-| **Assignee** | — |
-| **Dependencies** | RS-011 |
+
+| Field            | Value                       |
+| ---------------- | --------------------------- |
+| **Type**         | `task`                      |
+| **Labels**       | `flutter`, `security`, `P1` |
+| **Points**       | 5                           |
+| **Assignee**     | —                           |
+| **Dependencies** | RS-011                      |
 
 **Description**
 Implement the utility classes from `MVP_ARCHITECTURE.md` Section 7.1 (`core/utils/`). Includes image quality validation for anti-fraud per v2.0 requirements.
 
 **Acceptance Criteria**
+
 - [ ] `validators.dart`:
   - `isValidCedula(String)` — validates V/E/J/P prefix + 6-9 digits
   - `isValidPhone(String)` — validates Venezuelan phone format (04XX-XXXXXXX or +58 4XX XXXXXXX)
@@ -666,18 +696,20 @@ Implement the utility classes from `MVP_ARCHITECTURE.md` Section 7.1 (`core/util
 ## Epic: E0.4 — Admin Portal Foundation
 
 ### RS-016: Build admin portal layout shell and auth gate
-| Field | Value |
-|---|---|
-| **Type** | `task` |
-| **Labels** | `admin`, `b2b2c`, `P1` |
-| **Points** | 5 |
-| **Assignee** | — |
-| **Dependencies** | RS-003, RS-008 |
+
+| Field            | Value                  |
+| ---------------- | ---------------------- |
+| **Type**         | `task`                 |
+| **Labels**       | `admin`, `b2b2c`, `P1` |
+| **Points**       | 5                      |
+| **Assignee**     | —                      |
+| **Dependencies** | RS-003, RS-008         |
 
 **Description**
 Build the admin portal's layout structure and authentication gate. Supports two roles from Day 1: carrier admin and broker. Role determines which navigation links and dashboards are shown.
 
 **Acceptance Criteria**
+
 - [ ] `/login` page:
   - Email + password form
   - Supabase Auth sign-in
@@ -719,18 +751,20 @@ Build the admin portal's layout structure and authentication gate. Supports two 
 ---
 
 ### RS-017: Deploy admin portal to Vercel
-| Field | Value |
-|---|---|
-| **Type** | `task` |
-| **Labels** | `admin`, `devops`, `P2` |
-| **Points** | 1 |
-| **Assignee** | — |
-| **Dependencies** | RS-003 |
+
+| Field            | Value                   |
+| ---------------- | ----------------------- |
+| **Type**         | `task`                  |
+| **Labels**       | `admin`, `devops`, `P2` |
+| **Points**       | 1                       |
+| **Assignee**     | —                       |
+| **Dependencies** | RS-003                  |
 
 **Description**
 Connect the admin portal to Vercel for automatic deployments from the `main` branch.
 
 **Acceptance Criteria**
+
 - [ ] Vercel project created and linked to GitHub repository
 - [ ] Root directory set to `admin-portal/`
 - [ ] Environment variables configured on Vercel (Supabase URL, keys)
@@ -744,18 +778,20 @@ Connect the admin portal to Vercel for automatic deployments from the `main` bra
 ## Epic: E0.5 — BCV Exchange Rate Service
 
 ### RS-018: Implement BCV exchange rate Edge Function
-| Field | Value |
-|---|---|
-| **Type** | `task` |
-| **Labels** | `supabase`, `P1` |
-| **Points** | 3 |
-| **Assignee** | — |
-| **Dependencies** | RS-007, RS-006 |
+
+| Field            | Value            |
+| ---------------- | ---------------- |
+| **Type**         | `task`           |
+| **Labels**       | `supabase`, `P1` |
+| **Points**       | 3                |
+| **Assignee**     | —                |
+| **Dependencies** | RS-007, RS-006   |
 
 **Description**
 Create the Supabase Edge Function that fetches the official BCV USD/VES exchange rate and caches it in the `exchange_rates` table. This is critical — every payment amount depends on this rate.
 
 **Acceptance Criteria**
+
 - [ ] Edge Function `supabase/functions/bcv-rate/index.ts` created
 - [ ] Fetches rate from a reliable source (try in order of reliability):
   1. `https://pydolarve.org/api/v2/dollar?monitor=bcv` (community API)
@@ -777,27 +813,27 @@ Create the Supabase Edge Function that fetches the official BCV USD/VES exchange
 
 ## Sprint 0 Summary
 
-| Issue | Title | Points | Priority | Dependencies |
-|---|---|---|---|---|
-| RS-001 | Initialize monorepo and Git configuration | 2 | P0 | — |
-| RS-002 | Configure Flutter project with dependencies | 3 | P0 | RS-001 |
-| RS-003 | Configure Next.js admin portal project | 3 | P0 | RS-001 |
-| RS-004 | Set up GitHub Actions CI pipeline | 3 | P1 | RS-002, RS-003 |
-| RS-005 | Configure Android release signing | 2 | P2 | RS-002 |
-| RS-006 | Create Supabase project and configure environment | 2 | P0 | RS-001 |
-| RS-007 | Apply initial database schema migration | 8 | P0 | RS-006 |
-| RS-008 | Configure Supabase Auth for phone OTP | 2 | P0 | RS-006 |
-| RS-009 | Configure Supabase Storage buckets | 2 | P1 | RS-006 |
-| RS-010 | Create seed data for development and demos | 3 | P1 | RS-007 |
-| RS-011 | Implement Flutter folder structure and core architecture | 3 | P0 | RS-002 |
-| RS-012 | Implement design system — theme, colors, typography | 3 | P1 | RS-011 |
-| RS-013 | Build shared widget library — base components | 5 | P1 | RS-012 |
-| RS-014 | Implement core services — Supabase, connectivity, local storage | 5 | P0 | RS-006, RS-011 |
-| RS-015 | Implement core utilities — validators, formatters, hash, image quality | 5 | P1 | RS-011 |
-| RS-016 | Build admin portal layout shell with B2B2C auth gate | 5 | P1 | RS-003, RS-008 |
-| RS-017 | Deploy admin portal to Vercel | 1 | P2 | RS-003 |
-| RS-018 | Implement BCV exchange rate Edge Function | 3 | P1 | RS-007, RS-006 |
-| | **Sprint 0 Total** | **58** | | |
+| Issue  | Title                                                                  | Points | Priority | Dependencies   |
+| ------ | ---------------------------------------------------------------------- | ------ | -------- | -------------- |
+| RS-001 | Initialize monorepo and Git configuration                              | 2      | P0       | —              |
+| RS-002 | Configure Flutter project with dependencies                            | 3      | P0       | RS-001         |
+| RS-003 | Configure Next.js admin portal project                                 | 3      | P0       | RS-001         |
+| RS-004 | Set up GitHub Actions CI pipeline                                      | 3      | P1       | RS-002, RS-003 |
+| RS-005 | Configure Android release signing                                      | 2      | P2       | RS-002         |
+| RS-006 | Create Supabase project and configure environment                      | 2      | P0       | RS-001         |
+| RS-007 | Apply initial database schema migration                                | 8      | P0       | RS-006         |
+| RS-008 | Configure Supabase Auth for phone OTP                                  | 2      | P0       | RS-006         |
+| RS-009 | Configure Supabase Storage buckets                                     | 2      | P1       | RS-006         |
+| RS-010 | Create seed data for development and demos                             | 3      | P1       | RS-007         |
+| RS-011 | Implement Flutter folder structure and core architecture               | 3      | P0       | RS-002         |
+| RS-012 | Implement design system — theme, colors, typography                    | 3      | P1       | RS-011         |
+| RS-013 | Build shared widget library — base components                          | 5      | P1       | RS-012         |
+| RS-014 | Implement core services — Supabase, connectivity, local storage        | 5      | P0       | RS-006, RS-011 |
+| RS-015 | Implement core utilities — validators, formatters, hash, image quality | 5      | P1       | RS-011         |
+| RS-016 | Build admin portal layout shell with B2B2C auth gate                   | 5      | P1       | RS-003, RS-008 |
+| RS-017 | Deploy admin portal to Vercel                                          | 1      | P2       | RS-003         |
+| RS-018 | Implement BCV exchange rate Edge Function                              | 3      | P1       | RS-007, RS-006 |
+|        | **Sprint 0 Total**                                                     | **58** |          |                |
 
 **Critical Path:** RS-001 → RS-006 → RS-007 → RS-010 (backend ready)
 **Parallel Path A:** RS-001 → RS-002 → RS-011 → RS-014 (Flutter foundation)
@@ -820,13 +856,14 @@ Create the Supabase Edge Function that fetches the official BCV USD/VES exchange
 ## Epic: E1.1 — Authentication System
 
 ### RS-019: Implement welcome screen
-| Field | Value |
-|---|---|
-| **Type** | `story` |
-| **Labels** | `flutter`, `design`, `P0` |
-| **Points** | 2 |
-| **Assignee** | — |
-| **Dependencies** | RS-011, RS-012, RS-013 |
+
+| Field            | Value                     |
+| ---------------- | ------------------------- |
+| **Type**         | `story`                   |
+| **Labels**       | `flutter`, `design`, `P0` |
+| **Points**       | 2                         |
+| **Assignee**     | —                         |
+| **Dependencies** | RS-011, RS-012, RS-013    |
 
 **Description**
 **As a** new rider opening the app for the first time,
@@ -834,6 +871,7 @@ Create the Supabase Edge Function that fetches the official BCV USD/VES exchange
 **so that** I understand what RuedaSeguro does and can start the registration process.
 
 **Acceptance Criteria**
+
 - [ ] Screen displays:
   - RuedaSeguro logo/branding at top (Navy Blue + Orange)
   - Value proposition headline: "Asegura tu vehículo en minutos"
@@ -850,12 +888,13 @@ Create the Supabase Edge Function that fetches the official BCV USD/VES exchange
 ---
 
 ### RS-020: Implement phone number input screen
-| Field | Value |
-|---|---|
-| **Type** | `story` |
-| **Labels** | `flutter`, `P0` |
-| **Points** | 3 |
-| **Assignee** | — |
+
+| Field            | Value                  |
+| ---------------- | ---------------------- |
+| **Type**         | `story`                |
+| **Labels**       | `flutter`, `P0`        |
+| **Points**       | 3                      |
+| **Assignee**     | —                      |
 | **Dependencies** | RS-013, RS-014, RS-015 |
 
 **Description**
@@ -864,6 +903,7 @@ Create the Supabase Edge Function that fetches the official BCV USD/VES exchange
 **so that** I receive an OTP code to verify my identity.
 
 **Acceptance Criteria**
+
 - [ ] Screen displays:
   - Header: "Ingresa tu número de teléfono"
   - Subtitle: "Te enviaremos un código de verificación por SMS"
@@ -891,13 +931,14 @@ Create the Supabase Edge Function that fetches the official BCV USD/VES exchange
 ---
 
 ### RS-021: Implement OTP verification screen
-| Field | Value |
-|---|---|
-| **Type** | `story` |
-| **Labels** | `flutter`, `P0` |
-| **Points** | 5 |
-| **Assignee** | — |
-| **Dependencies** | RS-020, RS-008 |
+
+| Field            | Value           |
+| ---------------- | --------------- |
+| **Type**         | `story`         |
+| **Labels**       | `flutter`, `P0` |
+| **Points**       | 5               |
+| **Assignee**     | —               |
+| **Dependencies** | RS-020, RS-008  |
 
 **Description**
 **As a** rider who entered their phone number,
@@ -905,6 +946,7 @@ Create the Supabase Edge Function that fetches the official BCV USD/VES exchange
 **so that** my identity is verified and I can access the app.
 
 **Acceptance Criteria**
+
 - [ ] Screen displays:
   - Header: "Ingresa el código"
   - Subtitle: "Enviamos un código de 6 dígitos a +58 XXX XXXXXXX" (masked, show last 4 digits)
@@ -939,18 +981,20 @@ Create the Supabase Edge Function that fetches the official BCV USD/VES exchange
 ---
 
 ### RS-022: Implement auth state management and session persistence
-| Field | Value |
-|---|---|
-| **Type** | `task` |
-| **Labels** | `flutter`, `P0` |
-| **Points** | 3 |
-| **Assignee** | — |
-| **Dependencies** | RS-014 |
+
+| Field            | Value           |
+| ---------------- | --------------- |
+| **Type**         | `task`          |
+| **Labels**       | `flutter`, `P0` |
+| **Points**       | 3               |
+| **Assignee**     | —               |
+| **Dependencies** | RS-014          |
 
 **Description**
 Implement robust auth state management using Riverpod. The app must automatically detect and handle session state across app restarts, token expiry, and logout.
 
 **Acceptance Criteria**
+
 - [ ] `features/auth/data/auth_repository.dart`:
   - `signInWithOtp(phone)` — sends OTP
   - `verifyOtp(phone, token)` — verifies OTP and returns session
@@ -976,13 +1020,14 @@ Implement robust auth state management using Riverpod. The app must automaticall
 ---
 
 ### RS-023: Implement splash screen with session check
-| Field | Value |
-|---|---|
-| **Type** | `story` |
-| **Labels** | `flutter`, `P1` |
-| **Points** | 2 |
-| **Assignee** | — |
-| **Dependencies** | RS-022, RS-011 |
+
+| Field            | Value           |
+| ---------------- | --------------- |
+| **Type**         | `story`         |
+| **Labels**       | `flutter`, `P1` |
+| **Points**       | 2               |
+| **Assignee**     | —               |
+| **Dependencies** | RS-022, RS-011  |
 
 **Description**
 **As a** returning rider opening the app,
@@ -990,6 +1035,7 @@ Implement robust auth state management using Riverpod. The app must automaticall
 **so that** I go directly to the home screen without logging in again.
 
 **Acceptance Criteria**
+
 - [ ] Splash screen shows:
   - RuedaSeguro logo centered
   - Subtle loading animation (fade or pulse)
@@ -1007,18 +1053,20 @@ Implement robust auth state management using Riverpod. The app must automaticall
 ## Epic: E1.2 — Document Capture & OCR
 
 ### RS-024: Implement camera service with document scanning overlay
-| Field | Value |
-|---|---|
-| **Type** | `task` |
-| **Labels** | `flutter`, `P0` |
-| **Points** | 5 |
-| **Assignee** | — |
-| **Dependencies** | RS-002 |
+
+| Field            | Value           |
+| ---------------- | --------------- |
+| **Type**         | `task`          |
+| **Labels**       | `flutter`, `P0` |
+| **Points**       | 5               |
+| **Assignee**     | —               |
+| **Dependencies** | RS-002          |
 
 **Description**
 Build a reusable camera component with a document-alignment overlay that guides the user to position their document within the frame. Used for Cédula, Carnet, and vehicle photo.
 
 **Acceptance Criteria**
+
 - [ ] `shared/widgets/document_scanner.dart` — reusable widget:
   - Opens rear camera at maximum resolution
   - Displays semi-transparent overlay with clear rectangle "window"
@@ -1044,18 +1092,20 @@ Build a reusable camera component with a document-alignment overlay that guides 
 ---
 
 ### RS-025: Implement Google ML Kit OCR integration
-| Field | Value |
-|---|---|
-| **Type** | `task` |
-| **Labels** | `flutter`, `P0` |
-| **Points** | 3 |
-| **Assignee** | — |
-| **Dependencies** | RS-002 |
+
+| Field            | Value           |
+| ---------------- | --------------- |
+| **Type**         | `task`          |
+| **Labels**       | `flutter`, `P0` |
+| **Points**       | 3               |
+| **Assignee**     | —               |
+| **Dependencies** | RS-002          |
 
 **Description**
 Integrate Google ML Kit Text Recognition to extract raw text from document images entirely on-device (no API calls, no cost).
 
 **Acceptance Criteria**
+
 - [ ] `features/onboarding/data/ocr_repository.dart`:
   - `Future<OcrResult> extractText(File imageFile)` method
   - Uses `google_mlkit_text_recognition` package
@@ -1079,18 +1129,20 @@ Integrate Google ML Kit Text Recognition to extract raw text from document image
 ---
 
 ### RS-026: Implement Cédula field extraction parser
-| Field | Value |
-|---|---|
-| **Type** | `task` |
-| **Labels** | `flutter`, `P1` |
-| **Points** | 5 |
-| **Assignee** | — |
-| **Dependencies** | RS-025, RS-015 |
+
+| Field            | Value           |
+| ---------------- | --------------- |
+| **Type**         | `task`          |
+| **Labels**       | `flutter`, `P1` |
+| **Points**       | 5               |
+| **Assignee**     | —               |
+| **Dependencies** | RS-025, RS-015  |
 
 **Description**
 Build the regex-based parser that extracts structured fields from raw OCR text of a Venezuelan Cédula de Identidad. Updated for v2.0 to also extract nationality and sex.
 
 **Acceptance Criteria**
+
 - [ ] `features/onboarding/domain/cedula_parser.dart`:
   - `CedulaParseResult parse(String rawText, List<TextBlock> blocks)` method
   - Returns `CedulaParseResult` with:
@@ -1117,12 +1169,13 @@ Build the regex-based parser that extracts structured fields from raw OCR text o
 ---
 
 ### RS-027: Implement Cédula scan screen
-| Field | Value |
-|---|---|
-| **Type** | `story` |
-| **Labels** | `flutter`, `P0` |
-| **Points** | 3 |
-| **Assignee** | — |
+
+| Field            | Value                          |
+| ---------------- | ------------------------------ |
+| **Type**         | `story`                        |
+| **Labels**       | `flutter`, `P0`                |
+| **Points**       | 3                              |
+| **Assignee**     | —                              |
 | **Dependencies** | RS-024, RS-025, RS-026, RS-038 |
 
 **Description**
@@ -1131,6 +1184,7 @@ Build the regex-based parser that extracts structured fields from raw OCR text o
 **so that** my personal data is automatically extracted.
 
 **Acceptance Criteria**
+
 - [ ] Screen uses `DocumentScanner` with instruction: "Coloca el frente de tu cédula dentro del recuadro"
 - [ ] After capture:
   1. Run image quality validation (RS-038) — reject if blurry or photo-of-screen
@@ -1146,13 +1200,14 @@ Build the regex-based parser that extracts structured fields from raw OCR text o
 ---
 
 ### RS-028: Implement identity confirmation screen
-| Field | Value |
-|---|---|
-| **Type** | `story` |
-| **Labels** | `flutter`, `P0` |
-| **Points** | 5 |
-| **Assignee** | — |
-| **Dependencies** | RS-027, RS-013 |
+
+| Field            | Value           |
+| ---------------- | --------------- |
+| **Type**         | `story`         |
+| **Labels**       | `flutter`, `P0` |
+| **Points**       | 5               |
+| **Assignee**     | —               |
+| **Dependencies** | RS-027, RS-013  |
 
 **Description**
 **As a** rider who just scanned their Cédula,
@@ -1160,6 +1215,7 @@ Build the regex-based parser that extracts structured fields from raw OCR text o
 **so that** my profile information is accurate.
 
 **Acceptance Criteria**
+
 - [ ] Screen displays:
   - Header: "Confirma tus datos"
   - Subtitle: "Verifica que la información sea correcta"
@@ -1190,18 +1246,20 @@ Build the regex-based parser that extracts structured fields from raw OCR text o
 ---
 
 ### RS-029: Implement Carnet de Circulación field extraction parser
-| Field | Value |
-|---|---|
-| **Type** | `task` |
-| **Labels** | `flutter`, `P1` |
-| **Points** | 5 |
-| **Assignee** | — |
-| **Dependencies** | RS-025, RS-015 |
+
+| Field            | Value           |
+| ---------------- | --------------- |
+| **Type**         | `task`          |
+| **Labels**       | `flutter`, `P1` |
+| **Points**       | 5               |
+| **Assignee**     | —               |
+| **Dependencies** | RS-025, RS-015  |
 
 **Description**
 Build the parser that extracts vehicle data from raw OCR text of a Venezuelan Carnet de Circulación. Updated for v2.0 to include `vehicle_use` field.
 
 **Acceptance Criteria**
+
 - [ ] `features/onboarding/domain/carnet_parser.dart`:
   - `CarnetParseResult parse(String rawText, List<TextBlock> blocks)` method
   - Returns `CarnetParseResult` with:
@@ -1230,12 +1288,13 @@ Build the parser that extracts vehicle data from raw OCR text of a Venezuelan Ca
 ---
 
 ### RS-030: Implement Carnet de Circulación scan screen
-| Field | Value |
-|---|---|
-| **Type** | `story` |
-| **Labels** | `flutter`, `P0` |
-| **Points** | 3 |
-| **Assignee** | — |
+
+| Field            | Value                          |
+| ---------------- | ------------------------------ |
+| **Type**         | `story`                        |
+| **Labels**       | `flutter`, `P0`                |
+| **Points**       | 3                              |
+| **Assignee**     | —                              |
 | **Dependencies** | RS-024, RS-025, RS-029, RS-038 |
 
 **Description**
@@ -1244,6 +1303,7 @@ Build the parser that extracts vehicle data from raw OCR text of a Venezuelan Ca
 **so that** my motorcycle data is automatically captured.
 
 **Acceptance Criteria**
+
 - [ ] Same capture → quality check → OCR → parse → navigate flow as RS-027
 - [ ] Instruction: "Coloca tu carnet de circulación dentro del recuadro"
 - [ ] Image quality validation active (RS-038)
@@ -1252,13 +1312,14 @@ Build the parser that extracts vehicle data from raw OCR text of a Venezuelan Ca
 ---
 
 ### RS-031: Implement vehicle confirmation screen with cross-validation
-| Field | Value |
-|---|---|
-| **Type** | `story` |
-| **Labels** | `flutter`, `security`, `P0` |
-| **Points** | 5 |
-| **Assignee** | — |
-| **Dependencies** | RS-030, RS-013, RS-039 |
+
+| Field            | Value                       |
+| ---------------- | --------------------------- |
+| **Type**         | `story`                     |
+| **Labels**       | `flutter`, `security`, `P0` |
+| **Points**       | 5                           |
+| **Assignee**     | —                           |
+| **Dependencies** | RS-030, RS-013, RS-039      |
 
 **Description**
 **As a** rider who scanned their Carnet de Circulación,
@@ -1266,6 +1327,7 @@ Build the parser that extracts vehicle data from raw OCR text of a Venezuelan Ca
 **so that** my vehicle is correctly registered. The system also cross-validates that the Cédula name matches the Carnet owner.
 
 **Acceptance Criteria**
+
 - [ ] Screen displays:
   - Header: "Confirma los datos de tu moto"
   - Thumbnail of scanned carnet (tappable to view full-size)
@@ -1291,13 +1353,14 @@ Build the parser that extracts vehicle data from raw OCR text of a Venezuelan Ca
 ---
 
 ### RS-032: Implement vehicle rear photo capture screen
-| Field | Value |
-|---|---|
-| **Type** | `story` |
-| **Labels** | `flutter`, `P0` |
-| **Points** | 3 |
-| **Assignee** | — |
-| **Dependencies** | RS-024, RS-038 |
+
+| Field            | Value           |
+| ---------------- | --------------- |
+| **Type**         | `story`         |
+| **Labels**       | `flutter`, `P0` |
+| **Points**       | 3               |
+| **Assignee**     | —               |
+| **Dependencies** | RS-024, RS-038  |
 
 **Description**
 **As a** rider during onboarding,
@@ -1305,6 +1368,7 @@ Build the parser that extracts vehicle data from raw OCR text of a Venezuelan Ca
 **so that** the insurer can verify my vehicle visually.
 
 **Acceptance Criteria**
+
 - [ ] Uses `DocumentScanner` in `vehicle_photo` mode with wider frame
 - [ ] Instruction: "Toma una foto de la parte trasera de tu moto con la placa visible"
 - [ ] Image quality check: sharpness validation, screen-photo rejection
@@ -1319,13 +1383,14 @@ Build the parser that extracts vehicle data from raw OCR text of a Venezuelan Ca
 ## Epic: E1.3 — Data Review, Address & Consent
 
 ### RS-033: Implement address form screen
-| Field | Value |
-|---|---|
-| **Type** | `story` |
-| **Labels** | `flutter`, `P1` |
-| **Points** | 3 |
-| **Assignee** | — |
-| **Dependencies** | RS-013 |
+
+| Field            | Value           |
+| ---------------- | --------------- |
+| **Type**         | `story`         |
+| **Labels**       | `flutter`, `P1` |
+| **Points**       | 3               |
+| **Assignee**     | —               |
+| **Dependencies** | RS-013          |
 
 **Description**
 **As a** rider completing onboarding,
@@ -1333,6 +1398,7 @@ Build the parser that extracts vehicle data from raw OCR text of a Venezuelan Ca
 **so that** my profile is complete for policy issuance. These fields are not captured via OCR — they must be entered manually (per Flujo doc specification).
 
 **Acceptance Criteria**
+
 - [ ] Screen displays:
   - Header: "Tu dirección"
   - Subtitle: "Necesitamos tu dirección para emitir la póliza"
@@ -1350,13 +1416,14 @@ Build the parser that extracts vehicle data from raw OCR text of a Venezuelan Ca
 ---
 
 ### RS-034: Implement legal consent screen (SUDEASEG compliance)
-| Field | Value |
-|---|---|
-| **Type** | `story` |
-| **Labels** | `flutter`, `security`, `P0` |
-| **Points** | 3 |
-| **Assignee** | — |
-| **Dependencies** | RS-013 |
+
+| Field            | Value                       |
+| ---------------- | --------------------------- |
+| **Type**         | `story`                     |
+| **Labels**       | `flutter`, `security`, `P0` |
+| **Points**       | 3                           |
+| **Assignee**     | —                           |
+| **Dependencies** | RS-013                      |
 
 **Description**
 **As a** rider completing onboarding,
@@ -1364,6 +1431,7 @@ Build the parser that extracts vehicle data from raw OCR text of a Venezuelan Ca
 **so that** my policy issuance is compliant with SUDEASEG regulations.
 
 **Acceptance Criteria**
+
 - [ ] Screen displays:
   - Header: "Términos y condiciones"
   - Subtitle: "Para emitir tu póliza necesitamos tu consentimiento"
@@ -1386,18 +1454,20 @@ Build the parser that extracts vehicle data from raw OCR text of a Venezuelan Ca
 ## Epic: E1.4 — Profile & Vehicle Persistence
 
 ### RS-035: Implement onboarding data save to Supabase
-| Field | Value |
-|---|---|
-| **Type** | `task` |
-| **Labels** | `flutter`, `supabase`, `P0` |
-| **Points** | 5 |
-| **Assignee** | — |
-| **Dependencies** | RS-007, RS-009, RS-014 |
+
+| Field            | Value                       |
+| ---------------- | --------------------------- |
+| **Type**         | `task`                      |
+| **Labels**       | `flutter`, `supabase`, `P0` |
+| **Points**       | 5                           |
+| **Assignee**     | —                           |
+| **Dependencies** | RS-007, RS-009, RS-014      |
 
 **Description**
 Implement the repository layer that saves all onboarding data (profile, vehicle, 3 documents, consent) to Supabase in a single atomic flow. Runs when user taps "Finalizar registro."
 
 **Acceptance Criteria**
+
 - [ ] `features/onboarding/data/profile_repository.dart`:
   - `Future<Profile> createProfile(ProfileData data)` — inserts into `profiles` table (including address fields, nationality, sex, referral code)
   - `Future<Profile> getProfile()` — fetches current user's profile
@@ -1429,18 +1499,20 @@ Implement the repository layer that saves all onboarding data (profile, vehicle,
 ---
 
 ### RS-036: Implement offline data caching for profile and vehicle
-| Field | Value |
-|---|---|
-| **Type** | `task` |
-| **Labels** | `flutter`, `P1` |
-| **Points** | 3 |
-| **Assignee** | — |
-| **Dependencies** | RS-014, RS-035 |
+
+| Field            | Value           |
+| ---------------- | --------------- |
+| **Type**         | `task`          |
+| **Labels**       | `flutter`, `P1` |
+| **Points**       | 3               |
+| **Assignee**     | —               |
+| **Dependencies** | RS-014, RS-035  |
 
 **Description**
 After onboarding data is saved, cache it locally in SQLite so the app works offline for all read operations.
 
 **Acceptance Criteria**
+
 - [ ] After successful Supabase save:
   - Profile cached in `cached_profiles` SQLite table
   - Vehicle cached in `cached_vehicles` SQLite table
@@ -1463,18 +1535,20 @@ After onboarding data is saved, cache it locally in SQLite so the app works offl
 ## Epic: E1.5 — Anti-Fraud & Validation Services
 
 ### RS-037: Implement image quality validation service
-| Field | Value |
-|---|---|
-| **Type** | `task` |
-| **Labels** | `flutter`, `security`, `P0` |
-| **Points** | 3 |
-| **Assignee** | — |
-| **Dependencies** | RS-015 |
+
+| Field            | Value                       |
+| ---------------- | --------------------------- |
+| **Type**         | `task`                      |
+| **Labels**       | `flutter`, `security`, `P0` |
+| **Points**       | 3                           |
+| **Assignee**     | —                           |
+| **Dependencies** | RS-015                      |
 
 **Description**
 Build the image quality validation service that checks document photos for sharpness and detects photos taken of digital screens (anti-fraud requirement from v2.0 architecture).
 
 **Acceptance Criteria**
+
 - [ ] `features/onboarding/domain/image_validator.dart`:
   - `Future<ImageQualityResult> validate(File image)` method
   - Returns `ImageQualityResult`:
@@ -1502,18 +1576,20 @@ Build the image quality validation service that checks document photos for sharp
 ---
 
 ### RS-038: Implement cross-validation service (Cédula ↔ Carnet)
-| Field | Value |
-|---|---|
-| **Type** | `task` |
-| **Labels** | `flutter`, `security`, `P1` |
-| **Points** | 2 |
-| **Assignee** | — |
-| **Dependencies** | RS-026, RS-029 |
+
+| Field            | Value                       |
+| ---------------- | --------------------------- |
+| **Type**         | `task`                      |
+| **Labels**       | `flutter`, `security`, `P1` |
+| **Points**       | 2                           |
+| **Assignee**     | —                           |
+| **Dependencies** | RS-026, RS-029              |
 
 **Description**
 Build the cross-validation service that compares the name and CI extracted from the Cédula with the owner information from the Carnet de Circulación. Flags mismatches for user resolution.
 
 **Acceptance Criteria**
+
 - [ ] `features/onboarding/domain/cross_validator.dart`:
   - `CrossValidationResult validate(CedulaParseResult cedula, CarnetParseResult carnet)` method
   - Returns `CrossValidationResult`:
@@ -1533,18 +1609,20 @@ Build the cross-validation service that compares the name and CI extracted from 
 ## Epic: E1.6 — Quality & Testing
 
 ### RS-039: Write unit tests for OCR parsers
-| Field | Value |
-|---|---|
-| **Type** | `task` |
-| **Labels** | `flutter`, `testing`, `P1` |
-| **Points** | 3 |
-| **Assignee** | — |
-| **Dependencies** | RS-026, RS-029 |
+
+| Field            | Value                      |
+| ---------------- | -------------------------- |
+| **Type**         | `task`                     |
+| **Labels**       | `flutter`, `testing`, `P1` |
+| **Points**       | 3                          |
+| **Assignee**     | —                          |
+| **Dependencies** | RS-026, RS-029             |
 
 **Description**
 Comprehensive unit tests for Cédula parser, Carnet parser, and cross-validation.
 
 **Acceptance Criteria**
+
 - [ ] `test/features/onboarding/domain/cedula_parser_test.dart`:
   - At least 10 test cases covering: V/E prefixes, dot/space formats, names, DOB, nationality, sex, garbage text, low confidence, accented chars
 - [ ] `test/features/onboarding/domain/carnet_parser_test.dart`:
@@ -1557,18 +1635,20 @@ Comprehensive unit tests for Cédula parser, Carnet parser, and cross-validation
 ---
 
 ### RS-040: Write unit tests for validators, utilities, and image quality
-| Field | Value |
-|---|---|
-| **Type** | `task` |
-| **Labels** | `flutter`, `testing`, `P1` |
-| **Points** | 2 |
-| **Assignee** | — |
-| **Dependencies** | RS-015 |
+
+| Field            | Value                      |
+| ---------------- | -------------------------- |
+| **Type**         | `task`                     |
+| **Labels**       | `flutter`, `testing`, `P1` |
+| **Points**       | 2                          |
+| **Assignee**     | —                          |
+| **Dependencies** | RS-015                     |
 
 **Description**
 Unit tests for all utility functions: validators, currency formatters, hash utilities, date utilities.
 
 **Acceptance Criteria**
+
 - [ ] `test/core/utils/validators_test.dart`:
   - Valid/invalid cédulas, phones, plates, references, bank codes, passwords, emails, age check
 - [ ] `test/core/utils/currency_utils_test.dart`:
@@ -1582,18 +1662,20 @@ Unit tests for all utility functions: validators, currency formatters, hash util
 ---
 
 ### RS-041: Create onboarding integration test
-| Field | Value |
-|---|---|
-| **Type** | `task` |
-| **Labels** | `flutter`, `testing`, `P2` |
-| **Points** | 3 |
-| **Assignee** | — |
-| **Dependencies** | RS-028, RS-031, RS-035 |
+
+| Field            | Value                      |
+| ---------------- | -------------------------- |
+| **Type**         | `task`                     |
+| **Labels**       | `flutter`, `testing`, `P2` |
+| **Points**       | 3                          |
+| **Assignee**     | —                          |
+| **Dependencies** | RS-028, RS-031, RS-035     |
 
 **Description**
 Write an integration (widget) test verifying the complete onboarding flow end-to-end.
 
 **Acceptance Criteria**
+
 - [ ] `integration_test/onboarding_flow_test.dart`:
   - Test navigates: Welcome → Login → OTP → Cédula Confirm → Carnet Confirm → Vehicle Photo → Address → Consent → Home
   - Uses mock Supabase client and mock OCR results
@@ -1606,18 +1688,20 @@ Write an integration (widget) test verifying the complete onboarding flow end-to
 ## Epic: E1.7 — Documentation
 
 ### RS-042: Write developer setup guide
-| Field | Value |
-|---|---|
-| **Type** | `task` |
-| **Labels** | `documentation`, `P2` |
-| **Points** | 2 |
-| **Assignee** | — |
+
+| Field            | Value                  |
+| ---------------- | ---------------------- |
+| **Type**         | `task`                 |
+| **Labels**       | `documentation`, `P2`  |
+| **Points**       | 2                      |
+| **Assignee**     | —                      |
 | **Dependencies** | RS-002, RS-003, RS-006 |
 
 **Description**
 Comprehensive setup guide so any new developer can get the project running locally in under 15 minutes.
 
 **Acceptance Criteria**
+
 - [ ] `README.md` at project root updated with:
   - Project description (B2B2C InsurTech platform for Venezuelan motorcycle RCV insurance)
   - Prerequisites: Flutter 3.x, Node.js 20+, Supabase CLI, Git
@@ -1640,33 +1724,33 @@ Comprehensive setup guide so any new developer can get the project running local
 
 ## Sprint 1 Summary
 
-| Issue | Title | Points | Priority | Dependencies |
-|---|---|---|---|---|
-| RS-019 | Implement welcome screen | 2 | P0 | RS-011, RS-012, RS-013 |
-| RS-020 | Implement phone number input screen | 3 | P0 | RS-013, RS-014, RS-015 |
-| RS-021 | Implement OTP verification screen | 5 | P0 | RS-020, RS-008 |
-| RS-022 | Implement auth state management and session persistence | 3 | P0 | RS-014 |
-| RS-023 | Implement splash screen with session check | 2 | P1 | RS-022, RS-011 |
-| RS-024 | Implement camera service with document scanning overlay | 5 | P0 | RS-002 |
-| RS-025 | Implement Google ML Kit OCR integration | 3 | P0 | RS-002 |
-| RS-026 | Implement Cédula field extraction parser | 5 | P1 | RS-025, RS-015 |
-| RS-027 | Implement Cédula scan screen | 3 | P0 | RS-024, RS-025, RS-026, RS-037 |
-| RS-028 | Implement identity confirmation screen | 5 | P0 | RS-027, RS-013 |
-| RS-029 | Implement Carnet de Circulación field extraction parser | 5 | P1 | RS-025, RS-015 |
-| RS-030 | Implement Carnet scan screen | 3 | P0 | RS-024, RS-025, RS-029, RS-037 |
-| RS-031 | Implement vehicle confirmation with cross-validation | 5 | P0 | RS-030, RS-013, RS-038 |
-| RS-032 | Implement vehicle rear photo capture | 3 | P0 | RS-024, RS-037 |
-| RS-033 | Implement address form screen | 3 | P1 | RS-013 |
-| RS-034 | Implement legal consent screen (SUDEASEG) | 3 | P0 | RS-013 |
-| RS-035 | Implement onboarding data save to Supabase | 5 | P0 | RS-007, RS-009, RS-014 |
-| RS-036 | Implement offline data caching | 3 | P1 | RS-014, RS-035 |
-| RS-037 | Implement image quality validation service | 3 | P0 | RS-015 |
-| RS-038 | Implement cross-validation service (Cédula ↔ Carnet) | 2 | P1 | RS-026, RS-029 |
-| RS-039 | Write unit tests for OCR parsers + cross-validation | 3 | P1 | RS-026, RS-029 |
-| RS-040 | Write unit tests for validators and utilities | 2 | P1 | RS-015 |
-| RS-041 | Create onboarding integration test | 3 | P2 | RS-028, RS-031, RS-035 |
-| RS-042 | Write developer setup guide | 2 | P2 | RS-002, RS-003, RS-006 |
-| | **Sprint 1 Total** | **86** | | |
+| Issue  | Title                                                   | Points | Priority | Dependencies                   |
+| ------ | ------------------------------------------------------- | ------ | -------- | ------------------------------ |
+| RS-019 | Implement welcome screen                                | 2      | P0       | RS-011, RS-012, RS-013         |
+| RS-020 | Implement phone number input screen                     | 3      | P0       | RS-013, RS-014, RS-015         |
+| RS-021 | Implement OTP verification screen                       | 5      | P0       | RS-020, RS-008                 |
+| RS-022 | Implement auth state management and session persistence | 3      | P0       | RS-014                         |
+| RS-023 | Implement splash screen with session check              | 2      | P1       | RS-022, RS-011                 |
+| RS-024 | Implement camera service with document scanning overlay | 5      | P0       | RS-002                         |
+| RS-025 | Implement Google ML Kit OCR integration                 | 3      | P0       | RS-002                         |
+| RS-026 | Implement Cédula field extraction parser                | 5      | P1       | RS-025, RS-015                 |
+| RS-027 | Implement Cédula scan screen                            | 3      | P0       | RS-024, RS-025, RS-026, RS-037 |
+| RS-028 | Implement identity confirmation screen                  | 5      | P0       | RS-027, RS-013                 |
+| RS-029 | Implement Carnet de Circulación field extraction parser | 5      | P1       | RS-025, RS-015                 |
+| RS-030 | Implement Carnet scan screen                            | 3      | P0       | RS-024, RS-025, RS-029, RS-037 |
+| RS-031 | Implement vehicle confirmation with cross-validation    | 5      | P0       | RS-030, RS-013, RS-038         |
+| RS-032 | Implement vehicle rear photo capture                    | 3      | P0       | RS-024, RS-037                 |
+| RS-033 | Implement address form screen                           | 3      | P1       | RS-013                         |
+| RS-034 | Implement legal consent screen (SUDEASEG)               | 3      | P0       | RS-013                         |
+| RS-035 | Implement onboarding data save to Supabase              | 5      | P0       | RS-007, RS-009, RS-014         |
+| RS-036 | Implement offline data caching                          | 3      | P1       | RS-014, RS-035                 |
+| RS-037 | Implement image quality validation service              | 3      | P0       | RS-015                         |
+| RS-038 | Implement cross-validation service (Cédula ↔ Carnet)   | 2      | P1       | RS-026, RS-029                 |
+| RS-039 | Write unit tests for OCR parsers + cross-validation     | 3      | P1       | RS-026, RS-029                 |
+| RS-040 | Write unit tests for validators and utilities           | 2      | P1       | RS-015                         |
+| RS-041 | Create onboarding integration test                      | 3      | P2       | RS-028, RS-031, RS-035         |
+| RS-042 | Write developer setup guide                             | 2      | P2       | RS-002, RS-003, RS-006         |
+|        | **Sprint 1 Total**                                      | **86** |          |                                |
 
 **Critical Path:** RS-037 → RS-024 + RS-025 → RS-026 → RS-027 → RS-028 → RS-031 → RS-032 → RS-033 → RS-034 → RS-035 (scan to save)
 **Parallel Path A:** RS-022 → RS-023 (auth + splash, independent of OCR)
@@ -1725,32 +1809,32 @@ RS-001 (repo) ─┬─ RS-002 (flutter) ──── RS-011 (structure) ──�
 
 # Sprint Velocity Notes
 
-| Sprint | Total Points | Notes |
-|---|---|---|
-| Sprint 0 | 58 | Foundation work — high parallelization (backend + Flutter + admin are independent). Schema is larger due to B2B2C tables (+11 pts from v1). Achievable in 3 focused days for a 1-2 person team. |
-| Sprint 1 | 86 | Feature-heavy. Camera + OCR + image quality are highest-risk items. New screens: vehicle photo, address form, legal consent, cross-validation. If velocity is tight, defer RS-036 (cache), RS-041 (integration test), RS-042 (docs), RS-033 (address — can collect during policy purchase instead) to Sprint 2 buffer. |
+| Sprint   | Total Points | Notes                                                                                                                                                                                                                                                                                                                  |
+| -------- | ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Sprint 0 | 58           | Foundation work — high parallelization (backend + Flutter + admin are independent). Schema is larger due to B2B2C tables (+11 pts from v1). Achievable in 3 focused days for a 1-2 person team.                                                                                                                        |
+| Sprint 1 | 86           | Feature-heavy. Camera + OCR + image quality are highest-risk items. New screens: vehicle photo, address form, legal consent, cross-validation. If velocity is tight, defer RS-036 (cache), RS-041 (integration test), RS-042 (docs), RS-033 (address — can collect during policy purchase instead) to Sprint 2 buffer. |
 
 **Recommended Sprint 1 priority cut lines:**
 
-| Priority | Issues | Points | Includes |
-|---|---|---|---|
-| **P0 (Must ship)** | 14 issues | 56 pts | Auth, OCR scanning, confirmations, vehicle photo, consent, save, image quality |
-| **P1 (Very important)** | 7 issues | 23 pts | Splash, parsers, address form, cross-validation, offline cache, unit tests |
-| **P2 (Can slide)** | 3 issues | 7 pts | Integration test, docs |
+| Priority                | Issues    | Points | Includes                                                                       |
+| ----------------------- | --------- | ------ | ------------------------------------------------------------------------------ |
+| **P0 (Must ship)**      | 14 issues | 56 pts | Auth, OCR scanning, confirmations, vehicle photo, consent, save, image quality |
+| **P1 (Very important)** | 7 issues  | 23 pts | Splash, parsers, address form, cross-validation, offline cache, unit tests     |
+| **P2 (Can slide)**      | 3 issues  | 7 pts  | Integration test, docs                                                         |
 
 **v1 → v2 Issue Number Mapping:**
 Issues RS-001 through RS-031 retain their numbers with updated content. The old RS-032 through RS-037 have been renumbered and new issues added:
 
-| v2 Issue | Content | Notes |
-|---|---|---|
-| RS-032 | Vehicle rear photo capture | **NEW** — was not in v1 |
-| RS-033 | Address form screen | **NEW** — was not in v1 |
-| RS-034 | Legal consent screen | **NEW** — was not in v1 |
-| RS-035 | Onboarding data save (was RS-032) | Renumbered, updated for 3 docs + consent |
-| RS-036 | Offline caching (was RS-033) | Renumbered |
-| RS-037 | Image quality validation | **NEW** — anti-fraud requirement from v2.0 |
-| RS-038 | Cross-validation service | **NEW** — CI↔Carnet name match |
-| RS-039 | OCR parser unit tests (was RS-034) | Renumbered, added cross-validation tests |
-| RS-040 | Validator unit tests (was RS-035) | Renumbered |
-| RS-041 | Integration test (was RS-036) | Renumbered, updated flow |
-| RS-042 | Developer setup guide (was RS-037) | Renumbered |
+| v2 Issue | Content                            | Notes                                      |
+| -------- | ---------------------------------- | ------------------------------------------ |
+| RS-032   | Vehicle rear photo capture         | **NEW** — was not in v1                    |
+| RS-033   | Address form screen                | **NEW** — was not in v1                    |
+| RS-034   | Legal consent screen               | **NEW** — was not in v1                    |
+| RS-035   | Onboarding data save (was RS-032)  | Renumbered, updated for 3 docs + consent   |
+| RS-036   | Offline caching (was RS-033)       | Renumbered                                 |
+| RS-037   | Image quality validation           | **NEW** — anti-fraud requirement from v2.0 |
+| RS-038   | Cross-validation service           | **NEW** — CI↔Carnet name match            |
+| RS-039   | OCR parser unit tests (was RS-034) | Renumbered, added cross-validation tests   |
+| RS-040   | Validator unit tests (was RS-035)  | Renumbered                                 |
+| RS-041   | Integration test (was RS-036)      | Renumbered, updated flow                   |
+| RS-042   | Developer setup guide (was RS-037) | Renumbered                                 |

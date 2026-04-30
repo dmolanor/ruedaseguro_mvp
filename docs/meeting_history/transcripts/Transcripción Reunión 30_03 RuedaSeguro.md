@@ -232,9 +232,9 @@
 
 **Diego**: Eh, y bueno, ahí, para seguir preguntando, eh... ¿y hay vendedores independientes o todos están asociados a algún broker?
 
-**Alex**: Todos tienen que estar asociados a algún broker por ley. O... y, y lo que te dije de los puntos de venta, es un... porque son canales alternativos, que es un modelo nuevo que hay, que son aquellos que no son brokers, pero están habilitados por la ley para vender. Que son los, los supermercados, las farmacias, los... los puntos de venta que tienen... Hola. ¿Cómo estás? *(Saluda a Fabiola)*
+**Alex**: Todos tienen que estar asociados a algún broker por ley. O... y, y lo que te dije de los puntos de venta, es un... porque son canales alternativos, que es un modelo nuevo que hay, que son aquellos que no son brokers, pero están habilitados por la ley para vender. Que son los, los supermercados, las farmacias, los... los puntos de venta que tienen... Hola. ¿Cómo estás? _(Saluda a Fabiola)_
 
-**F. Angles**: Estás silenciado, eh... tigre, Toni. No la dejas hablar a Fabiola. *(Fabiola se despide)*
+**F. Angles**: Estás silenciado, eh... tigre, Toni. No la dejas hablar a Fabiola. _(Fabiola se despide)_
 
 **F. Angles**: Eh... ya va, espérate. Déjame primero ver cómo entro al sistema. Ya va, porque... estoy igual que ustedes que el sistema no carga. No, no tengo usuario de ventas, huevón. Yo nunca vendo.
 
@@ -546,7 +546,7 @@
 
 **F. Angles**: Qué bueno.
 
-**Diego**: Fácil, fácil, fácil, fácil. Nadie había... nadie me había dicho eso. *(Risas)*
+**Diego**: Fácil, fácil, fácil, fácil. Nadie había... nadie me había dicho eso. _(Risas)_
 
 **F. Angles**: No, no, epa... eh... Diego, lo que sí cuenta es que tenemos ya la lógica bien armada, o sea, para explicártelo... o sea, no es que te va a pasar como, me imagino que en algún proyecto te ha pasado, que 'no, después vemos a ver cómo'... no, no, aquí tenemos el... es más... nosotros, yo te puedo decir de punta a punta el procedimiento completo.
 
@@ -619,4 +619,3 @@
 **Alex**: Un abrazo, chao. Cuídate.
 
 **Diego**: Chao, muchas gracias.
-

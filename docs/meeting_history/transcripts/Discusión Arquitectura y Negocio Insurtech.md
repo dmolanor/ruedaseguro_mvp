@@ -6,7 +6,7 @@
 
 **Thony:** (Risas) Porque mi hijo le puso un león allí, y dejé el background, caracha. Sí. Espérate un momentico, déjame abrir lo que yo tengo aquí para mostrarte algo. Ya va.
 
-*(Pausa)*
+_(Pausa)_
 
 **Thony:** Ya va un momentico. Estamos. Okay, entonces fíjate. Yo lo que tengo acá... Déjame ir para, para la parte de... para ir echándote el cuento de lo que, de lo que yo estaba pensando y este... ¿cómo se llama? Comenzar a crearnos una arquitectura, ¿no? Para discutir esa arquitectura con esta gente. Porque de alguna manera yo lo que estaba pensando también es que necesitamos... eh, ya va, un momento... Es que necesitamos darle una, una fundación para la discusión, ¿no? A esta vaina. Aquí está. Entonces... no, esta no está cobrando. Disculpa, ya va, Fernando y Diego, ya va. Un momentico.
 
@@ -14,7 +14,7 @@
 
 **Thony:** Vale, vale.
 
-*(Pausa)*
+_(Pausa)_
 
 **Fernando/Diego:** Okay, ya estamos aquí en esta.
 
@@ -258,7 +258,7 @@
 
 **Diego:** Y él tiene en cuenta que la tarifa básica son 17 dólares anuales.
 
-*(Pausa)*
+_(Pausa)_
 
 **Diego:** Y un 5% de cobertura empleada.
 
@@ -266,7 +266,7 @@
 
 **Diego:** 30% a 31 dólares...
 
-*(Pausa)*
+_(Pausa)_
 
 **Diego:** Entonces, en teoría, llegándole a 75 mil pueden ser 2 millones, según ese cálculo.
 
@@ -278,13 +278,13 @@
 
 **Diego:** 2 millones de dólares con 75 mil motorizados.
 
-*(Pausa)*
+_(Pausa)_
 
 **Fernando:** ¿Él dice agregar 10 mil motorizados cada año, no?
 
 **Diego:** Sí, o sea, se inicia con 10 mil, son...
 
-*(Pausa)*
+_(Pausa)_
 
 **Fernando:** Nosotros tenemos que diseñar una plataforma que maneje 10 mil... 10 mil motorizados. Inclusos o muchos más que esos. ¿Sabe cuántos motorizados hay en Colombia? En Colombia hay más o menos, creo que son, 8 millones de motorizados.
 
@@ -356,7 +356,7 @@
 
 **Alex:** (Risas) Porque no quieres que te vea la... aquí está la cámara... Y aquí tengo un poco de computadoras aquí. Estoy en este cuarto, huevón.
 
-*(Risas)*
+_(Risas)_
 
 **Fernando:** Coño, carajo, no jodas, eso parece un bro... un bróker de acciones.
 
@@ -386,7 +386,7 @@
 
 **Alex:** Ya, déjame ponerlos ahí pa' decirle... Ven, ya que está la computadora aquí.
 
-*(Pausa)*
+_(Pausa)_
 
 **Alex:** William, ven acá, vamos a poner. Mira... este es el proyecto de Rueda Seguro. Aquí están conmigo. Aquí, aquí está William y aquí está Manuel. Hola, ¿qué tal? Hola, ¿cómo están?
 
