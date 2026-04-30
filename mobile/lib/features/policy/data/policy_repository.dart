@@ -16,9 +16,9 @@ class PolicyRepository {
   Future<List<PolicyTypeModel>> fetchActivePolicyTypes() async {
     final rows = await SupabaseService.client
         .from(SupabaseConstants.policyTypes)
-        .select()
+        .select('*, carriers!carrier_id(name)')
         .eq('is_active', true)
-        .order('tier', ascending: true);
+        .order('price_usd', ascending: true);
 
     return (rows as List)
         .map((r) => PolicyTypeModel.fromMap(r as Map<String, dynamic>))
@@ -26,7 +26,9 @@ class PolicyRepository {
   }
 
   /// Creates a provisional policy record.
-  /// Returns the new policy UUID.
+  /// Returns the new policy UUID. Idempotent: reuses any existing
+  /// pending_emission record for the same profile+vehicle instead of
+  /// creating a duplicate on retry or double-tap.
   Future<String> createPolicyRecord({
     required String profileId,
     required String vehicleId,
@@ -36,12 +38,22 @@ class PolicyRepository {
     required double priceVes,
     required double exchangeRate,
   }) async {
+    final existing = await SupabaseService.client
+        .from(SupabaseConstants.policies)
+        .select('id')
+        .eq('profile_id', profileId)
+        .eq('vehicle_id', vehicleId)
+        .eq('status', 'pending_emission')
+        .maybeSingle();
+    if (existing != null) return existing['id'] as String;
+
     final policyId = _uuid.v4();
     final now = DateTime.now().toUtc();
 
     await SupabaseService.client.from(SupabaseConstants.policies).insert({
       'id': policyId,
-      'policy_number': 'RS-${now.year}-${policyId.substring(0, 8).toUpperCase()}',
+      'policy_number':
+          'RS-${now.year}-${policyId.substring(0, 8).toUpperCase()}',
       'profile_id': profileId,
       'vehicle_id': vehicleId,
       'carrier_id': carrierId,

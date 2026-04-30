@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
 import 'package:ruedaseguro/core/data/mock_data.dart';
 import 'package:ruedaseguro/core/theme/colors.dart';
 import 'package:ruedaseguro/core/theme/spacing.dart';
 import 'package:ruedaseguro/core/theme/typography.dart';
+import 'package:ruedaseguro/features/claims/presentation/providers/claims_provider.dart';
 import 'package:ruedaseguro/features/policy/domain/policy_detail_model.dart';
 import 'package:ruedaseguro/features/policy/presentation/screens/policy_detail_screen.dart';
 import 'package:ruedaseguro/features/policy/providers/policy_providers.dart';
@@ -31,13 +33,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget build(BuildContext context) {
     final isDemoMode = ref.watch(authProvider).user == null;
 
-    // Resolve active policy ID for the Policy tab
-    final String policyTabId;
+    // Resolve active policy ID for the Policy tab (null = real user with no policy)
+    final String? policyTabId;
     if (isDemoMode) {
       policyTabId = 'RS-2026-001234';
     } else {
       final policyAsync = ref.watch(activePolicySummaryProvider);
-      policyTabId = policyAsync.asData?.value?.id ?? 'RS-2026-001234';
+      policyTabId = policyAsync.asData?.value?.id;
     }
 
     return Scaffold(
@@ -61,8 +63,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           backgroundColor: RSColors.surface,
           selectedItemColor: RSColors.primary,
           unselectedItemColor: RSColors.textSecondary,
-          selectedLabelStyle:
-              RSTypography.caption.copyWith(fontWeight: FontWeight.w600),
+          selectedLabelStyle: RSTypography.caption.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
           unselectedLabelStyle: RSTypography.caption,
           items: const [
             BottomNavigationBarItem(
@@ -125,12 +128,21 @@ class _HomeTab extends ConsumerWidget {
 
             const SizedBox(height: RSSpacing.lg),
 
-            Text('Acciones rápidas',
-                style: RSTypography.titleLarge
-                    .copyWith(color: RSColors.textPrimary)),
+            Text(
+              'Acciones rápidas',
+              style: RSTypography.titleLarge.copyWith(
+                color: RSColors.textPrimary,
+              ),
+            ),
             const SizedBox(height: RSSpacing.md),
             const _QuickActionsGrid()
                 .animate(delay: 450.ms)
+                .fadeIn(duration: 500.ms),
+
+            const SizedBox(height: RSSpacing.lg),
+
+            const _IotTelemetryCard()
+                .animate(delay: 500.ms)
                 .fadeIn(duration: 500.ms),
 
             const SizedBox(height: RSSpacing.lg),
@@ -141,9 +153,12 @@ class _HomeTab extends ConsumerWidget {
 
             const SizedBox(height: RSSpacing.lg),
 
-            Text('Actividad reciente',
-                style: RSTypography.titleLarge
-                    .copyWith(color: RSColors.textPrimary)),
+            Text(
+              'Actividad reciente',
+              style: RSTypography.titleLarge.copyWith(
+                color: RSColors.textPrimary,
+              ),
+            ),
             const SizedBox(height: RSSpacing.md),
             const _RecentActivity()
                 .animate(delay: 700.ms)
@@ -185,74 +200,93 @@ class _GreetingHeader extends ConsumerWidget {
       initials = profile?.initials ?? '?';
     }
 
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          width: 52,
-          height: 52,
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [RSColors.primary, RSColors.primaryLight],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
+        Row(
+          children: [
+            Image.asset(
+              'assets/images/logo.png',
+              height: 32,
+              fit: BoxFit.contain,
             ),
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Center(
-            child: Text(
-              initials,
-              style: RSTypography.titleLarge.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.w700,
+            const Spacer(),
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: RSColors.surfaceVariant,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Stack(
+                children: [
+                  const Center(
+                    child: Icon(
+                      Icons.notifications_outlined,
+                      color: RSColors.textSecondary,
+                      size: 24,
+                    ),
+                  ),
+                  Positioned(
+                    top: 8,
+                    right: 10,
+                    child: Container(
+                      width: 8,
+                      height: 8,
+                      decoration: const BoxDecoration(
+                        color: RSColors.accent,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-          ),
+          ],
         ),
-        const SizedBox(width: RSSpacing.md),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                _greeting,
-                style: RSTypography.bodyMedium
-                    .copyWith(color: RSColors.textSecondary),
+        const SizedBox(height: RSSpacing.md),
+        Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [RSColors.primary, RSColors.primaryLight],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(12),
               ),
-              Text(
-                firstName,
-                style: RSTypography.displayMedium
-                    .copyWith(color: RSColors.textPrimary),
-              ),
-            ],
-          ),
-        ),
-        Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            color: RSColors.surfaceVariant,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Stack(
-            children: [
-              const Center(
-                child: Icon(Icons.notifications_outlined,
-                    color: RSColors.textSecondary, size: 24),
-              ),
-              Positioned(
-                top: 8,
-                right: 10,
-                child: Container(
-                  width: 8,
-                  height: 8,
-                  decoration: const BoxDecoration(
-                    color: RSColors.accent,
-                    shape: BoxShape.circle,
+              child: Center(
+                child: Text(
+                  initials,
+                  style: RSTypography.titleMedium.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ),
-            ],
-          ),
+            ),
+            const SizedBox(width: RSSpacing.md),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _greeting,
+                  style: RSTypography.caption.copyWith(
+                    color: RSColors.textSecondary,
+                  ),
+                ),
+                Text(
+                  firstName,
+                  style: RSTypography.titleLarge.copyWith(
+                    color: RSColors.textPrimary,
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
       ],
     );
@@ -320,18 +354,27 @@ class _NoPolicyCard extends StatelessWidget {
       ),
       child: Column(
         children: [
-          const Icon(Icons.shield_outlined,
-              color: RSColors.textSecondary, size: 40),
+          const Icon(
+            Icons.shield_outlined,
+            color: RSColors.textSecondary,
+            size: 40,
+          ),
           const SizedBox(height: RSSpacing.md),
-          Text('Aún no tienes una póliza activa',
-              style: RSTypography.titleMedium
-                  .copyWith(color: RSColors.textPrimary),
-              textAlign: TextAlign.center),
+          Text(
+            'Aún no tienes una póliza activa',
+            style: RSTypography.titleMedium.copyWith(
+              color: RSColors.textPrimary,
+            ),
+            textAlign: TextAlign.center,
+          ),
           const SizedBox(height: RSSpacing.sm),
-          Text('Cotiza tu primera póliza en menos de 2 minutos.',
-              style: RSTypography.bodyMedium
-                  .copyWith(color: RSColors.textSecondary),
-              textAlign: TextAlign.center),
+          Text(
+            'Cotiza tu primera póliza en menos de 2 minutos.',
+            style: RSTypography.bodyMedium.copyWith(
+              color: RSColors.textSecondary,
+            ),
+            textAlign: TextAlign.center,
+          ),
           const SizedBox(height: RSSpacing.lg),
           RSButton(
             label: 'Cotizar ahora',
@@ -359,10 +402,12 @@ class _PolicyCardContent extends StatelessWidget {
     final progress = policy?.progressFraction ?? 1.0;
     final isProvisional = policy?.isProvisional ?? false;
     final statusLabel = isProvisional ? 'Provisional' : 'Activa';
-    final statusColor =
-        isProvisional ? const Color(0xFFE65100) : const Color(0xFF2E7D32);
-    final statusDot =
-        isProvisional ? const Color(0xFFFFB74D) : const Color(0xFF81C784);
+    final statusColor = isProvisional
+        ? const Color(0xFFE65100)
+        : const Color(0xFF2E7D32);
+    final statusDot = isProvisional
+        ? const Color(0xFFFFB74D)
+        : const Color(0xFF81C784);
 
     return GestureDetector(
       onTap: () {
@@ -372,7 +417,7 @@ class _PolicyCardContent extends StatelessWidget {
         width: double.infinity,
         decoration: BoxDecoration(
           gradient: const LinearGradient(
-            colors: [Color(0xFF1A237E), Color(0xFF283593)],
+            colors: [Color(0xFF0A1B2A), Color(0xFF1A3A5C)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
@@ -403,7 +448,9 @@ class _PolicyCardContent extends StatelessWidget {
                   ),
                   Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 4),
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: statusColor,
                       borderRadius: BorderRadius.circular(20),
@@ -415,14 +462,18 @@ class _PolicyCardContent extends StatelessWidget {
                           width: 6,
                           height: 6,
                           decoration: BoxDecoration(
-                              color: statusDot, shape: BoxShape.circle),
+                            color: statusDot,
+                            shape: BoxShape.circle,
+                          ),
                         ),
                         const SizedBox(width: 6),
-                        Text(statusLabel,
-                            style: RSTypography.caption.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w600,
-                            )),
+                        Text(
+                          statusLabel,
+                          style: RSTypography.caption.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -485,12 +536,12 @@ class _PolicyCardContent extends StatelessWidget {
                     child: LinearProgressIndicator(
                       value: progress,
                       minHeight: 6,
-                      backgroundColor:
-                          Colors.white.withValues(alpha: 0.15),
+                      backgroundColor: Colors.white.withValues(alpha: 0.15),
                       valueColor: AlwaysStoppedAnimation<Color>(
-                          isProvisional
-                              ? const Color(0xFFFFB74D)
-                              : const Color(0xFF81C784)),
+                        isProvisional
+                            ? const Color(0xFFFFB74D)
+                            : const Color(0xFF81C784),
+                      ),
                     ),
                   ),
                 ],
@@ -515,10 +566,12 @@ class _PolicyInfoChip extends StatelessWidget {
       children: [
         Icon(icon, color: Colors.white.withValues(alpha: 0.6), size: 14),
         const SizedBox(width: 4),
-        Text(label,
-            style: RSTypography.caption.copyWith(
-              color: Colors.white.withValues(alpha: 0.8),
-            )),
+        Text(
+          label,
+          style: RSTypography.caption.copyWith(
+            color: Colors.white.withValues(alpha: 0.8),
+          ),
+        ),
       ],
     );
   }
@@ -559,8 +612,11 @@ class _EmergencyButton extends StatelessWidget {
                 color: Colors.white.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(14),
               ),
-              child:
-                  const Icon(Icons.sos_rounded, color: Colors.white, size: 28),
+              child: const Icon(
+                Icons.sos_rounded,
+                color: Colors.white,
+                size: 28,
+              ),
             ),
             const SizedBox(width: RSSpacing.md),
             Expanded(
@@ -583,8 +639,11 @@ class _EmergencyButton extends StatelessWidget {
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right_rounded,
-                color: Colors.white, size: 28),
+            const Icon(
+              Icons.chevron_right_rounded,
+              color: Colors.white,
+              size: 28,
+            ),
           ],
         ),
       ),
@@ -638,10 +697,12 @@ class _QuickActionsGrid extends ConsumerWidget {
       children: actions
           .asMap()
           .entries
-          .map((e) => e.value
-              .animate(delay: (100 * e.key).ms)
-              .fadeIn(duration: 300.ms)
-              .scale(begin: const Offset(0.9, 0.9)))
+          .map(
+            (e) => e.value
+                .animate(delay: (100 * e.key).ms)
+                .fadeIn(duration: 300.ms)
+                .scale(begin: const Offset(0.9, 0.9)),
+          )
           .toList(),
     );
   }
@@ -692,6 +753,72 @@ class _QuickAction extends StatelessWidget {
   }
 }
 
+// ─── IoT Telemetry Card ──────────────────────────────────────────
+class _IotTelemetryCard extends StatelessWidget {
+  const _IotTelemetryCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => context.push('/telemetry/crash-monitor'),
+      child: Container(
+        padding: const EdgeInsets.all(RSSpacing.md),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFF0A1B2A), Color(0xFF122540)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(RSRadius.md),
+          border: Border.all(color: RSColors.accent.withValues(alpha: 0.3)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: RSColors.accent.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(
+                Icons.sensors_rounded,
+                color: RSColors.accent,
+                size: 26,
+              ),
+            ),
+            const SizedBox(width: RSSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Detección de caídas',
+                    style: RSTypography.titleMedium.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Monitor de impacto en tiempo real — Demo IoT',
+                    style: RSTypography.caption.copyWith(color: Colors.white54),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(
+              Icons.arrow_forward_ios_rounded,
+              color: Colors.white30,
+              size: 16,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 // ─── Exchange Rate Banner ────────────────────────────────────────
 class _ExchangeRateBanner extends ConsumerWidget {
   const _ExchangeRateBanner();
@@ -727,8 +854,11 @@ class _ExchangeRateBanner extends ConsumerWidget {
               color: const Color(0xFF2E7D32).withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: const Icon(Icons.currency_exchange_rounded,
-                color: Color(0xFF2E7D32), size: 22),
+            child: const Icon(
+              Icons.currency_exchange_rounded,
+              color: Color(0xFF2E7D32),
+              size: 22,
+            ),
           ),
           const SizedBox(width: RSSpacing.md),
           Expanded(
@@ -737,8 +867,9 @@ class _ExchangeRateBanner extends ConsumerWidget {
               children: [
                 Text(
                   'Tasa BCV',
-                  style: RSTypography.caption
-                      .copyWith(color: RSColors.textSecondary),
+                  style: RSTypography.caption.copyWith(
+                    color: RSColors.textSecondary,
+                  ),
                 ),
                 Text(
                   rate,
@@ -752,8 +883,7 @@ class _ExchangeRateBanner extends ConsumerWidget {
           ),
           Text(
             time,
-            style:
-                RSTypography.caption.copyWith(color: RSColors.textSecondary),
+            style: RSTypography.caption.copyWith(color: RSColors.textSecondary),
           ),
         ],
       ),
@@ -762,32 +892,84 @@ class _ExchangeRateBanner extends ConsumerWidget {
 }
 
 // ─── Recent Activity ─────────────────────────────────────────────
-class _RecentActivity extends StatelessWidget {
+class _RecentActivity extends ConsumerWidget {
   const _RecentActivity();
 
   @override
-  Widget build(BuildContext context) {
-    final activities = [
-      _ActivityItem(
-        icon: Icons.check_circle_rounded,
-        color: const Color(0xFF2E7D32),
-        title: 'Póliza registrada',
-        subtitle: 'RCV Plus — ${MockPolicy.issueDate}',
-      ),
-      _ActivityItem(
-        icon: Icons.payment_rounded,
-        color: RSColors.primary,
-        title: 'Pago enviado',
-        subtitle: 'Pago Móvil — \$${MockPolicy.premiumUsd.toStringAsFixed(2)}',
-      ),
-      _ActivityItem(
-        icon: Icons.hourglass_top_rounded,
-        color: const Color(0xFFFFB300),
-        title: 'Reclamo en revisión',
-        subtitle:
-            '${MockClaims.claims.first.id} — ${MockClaims.claims.first.type}',
-      ),
-    ];
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isDemoMode = ref.watch(authProvider).user == null;
+
+    final List<_ActivityItem> activities;
+
+    if (isDemoMode) {
+      activities = [
+        _ActivityItem(
+          icon: Icons.check_circle_rounded,
+          color: const Color(0xFF2E7D32),
+          title: 'Póliza registrada',
+          subtitle: 'RCV Plus — ${MockPolicy.issueDate}',
+        ),
+        _ActivityItem(
+          icon: Icons.payment_rounded,
+          color: RSColors.primary,
+          title: 'Pago enviado',
+          subtitle:
+              'Pago Móvil — \$${MockPolicy.premiumUsd.toStringAsFixed(2)}',
+        ),
+        _ActivityItem(
+          icon: Icons.hourglass_top_rounded,
+          color: const Color(0xFFFFB300),
+          title: 'Reclamo en revisión',
+          subtitle:
+              '${MockClaims.claims.first.id} — ${MockClaims.claims.first.type}',
+        ),
+      ];
+    } else {
+      activities = [];
+      final policy = ref.watch(activePolicySummaryProvider).asData?.value;
+      if (policy != null) {
+        activities.add(
+          _ActivityItem(
+            icon: Icons.check_circle_rounded,
+            color: const Color(0xFF2E7D32),
+            title: 'Póliza registrada',
+            subtitle: '${policy.planName} — ${policy.formattedStartDate}',
+          ),
+        );
+      }
+      final claims = ref.watch(userClaimsProvider).asData?.value ?? [];
+      for (final c in claims.take(2)) {
+        final status = c['status'] as String? ?? '';
+        final isResolved =
+            status == 'approved' || status == 'paid' || status == 'closed';
+        activities.add(
+          _ActivityItem(
+            icon: isResolved
+                ? Icons.check_circle_rounded
+                : Icons.hourglass_top_rounded,
+            color: isResolved
+                ? const Color(0xFF2E7D32)
+                : const Color(0xFFFFB300),
+            title: isResolved ? 'Siniestro liquidado' : 'Siniestro en revisión',
+            subtitle: '${c['claim_number']} — ${c['incident_type']}',
+          ),
+        );
+      }
+    }
+
+    if (activities.isEmpty) {
+      return RSCard(
+        padding: const EdgeInsets.all(RSSpacing.lg),
+        child: Center(
+          child: Text(
+            'Sin actividad reciente',
+            style: RSTypography.bodyMedium.copyWith(
+              color: RSColors.textSecondary,
+            ),
+          ),
+        ),
+      );
+    }
 
     return RSCard(
       padding: EdgeInsets.zero,
@@ -818,14 +1000,18 @@ class _RecentActivity extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(item.title,
-                              style: RSTypography.bodyMedium.copyWith(
-                                fontWeight: FontWeight.w600,
-                              )),
-                          Text(item.subtitle,
-                              style: RSTypography.caption.copyWith(
-                                color: RSColors.textSecondary,
-                              )),
+                          Text(
+                            item.title,
+                            style: RSTypography.bodyMedium.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          Text(
+                            item.subtitle,
+                            style: RSTypography.caption.copyWith(
+                              color: RSColors.textSecondary,
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -856,11 +1042,13 @@ class _ActivityItem {
 }
 
 // ─── Claims Tab ──────────────────────────────────────────────────
-class _ClaimsTab extends StatelessWidget {
+class _ClaimsTab extends ConsumerWidget {
   const _ClaimsTab();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isDemoMode = ref.watch(authProvider).user == null;
+
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.all(RSSpacing.lg),
@@ -870,14 +1058,16 @@ class _ClaimsTab extends StatelessWidget {
             const SizedBox(height: RSSpacing.sm),
             Text(
               'Asistencia',
-              style:
-                  RSTypography.displayLarge.copyWith(color: RSColors.textPrimary),
+              style: RSTypography.displayLarge.copyWith(
+                color: RSColors.textPrimary,
+              ),
             ),
             const SizedBox(height: RSSpacing.xs),
             Text(
               'Gestiona siniestros y solicita ayuda',
-              style: RSTypography.bodyMedium
-                  .copyWith(color: RSColors.textSecondary),
+              style: RSTypography.bodyMedium.copyWith(
+                color: RSColors.textSecondary,
+              ),
             ),
             const SizedBox(height: RSSpacing.lg),
 
@@ -894,19 +1084,29 @@ class _ClaimsTab extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.sos_rounded, color: Colors.white, size: 32),
+                    const Icon(
+                      Icons.sos_rounded,
+                      color: Colors.white,
+                      size: 32,
+                    ),
                     const SizedBox(width: RSSpacing.md),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Emergencia',
-                              style: RSTypography.titleLarge.copyWith(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w700)),
-                          Text('Tuve un accidente — necesito ayuda',
-                              style: RSTypography.caption.copyWith(
-                                  color: Colors.white.withValues(alpha: 0.8))),
+                          Text(
+                            'Emergencia',
+                            style: RSTypography.titleLarge.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          Text(
+                            'Tuve un accidente — necesito ayuda',
+                            style: RSTypography.caption.copyWith(
+                              color: Colors.white.withValues(alpha: 0.8),
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -927,77 +1127,219 @@ class _ClaimsTab extends StatelessWidget {
 
             Text(
               'Historial de siniestros',
-              style:
-                  RSTypography.titleLarge.copyWith(color: RSColors.textPrimary),
+              style: RSTypography.titleLarge.copyWith(
+                color: RSColors.textPrimary,
+              ),
             ),
             const SizedBox(height: RSSpacing.md),
 
-            Expanded(
-              child: ListView.separated(
-                itemCount: MockClaims.claims.length,
-                separatorBuilder: (_, __) =>
-                    const SizedBox(height: RSSpacing.md),
-                itemBuilder: (_, i) {
-                  final claim = MockClaims.claims[i];
-                  return RSCard(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(claim.id,
-                                style: RSTypography.mono.copyWith(
-                                  fontSize: 12,
-                                  color: RSColors.textSecondary,
-                                )),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 10, vertical: 4),
-                              decoration: BoxDecoration(
-                                color:
-                                    claim.statusColor.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(claim.statusIcon,
-                                      size: 14, color: claim.statusColor),
-                                  const SizedBox(width: 4),
-                                  Text(claim.status,
-                                      style: RSTypography.caption.copyWith(
-                                        color: claim.statusColor,
-                                        fontWeight: FontWeight.w600,
-                                      )),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: RSSpacing.sm),
-                        Text(claim.type,
-                            style: RSTypography.titleMedium.copyWith(
-                              fontWeight: FontWeight.w600,
-                            )),
-                        const SizedBox(height: RSSpacing.xs),
-                        Text(claim.description,
-                            style: RSTypography.bodyMedium.copyWith(
-                              color: RSColors.textSecondary,
-                            )),
-                        const SizedBox(height: RSSpacing.sm),
-                        Text(claim.date,
-                            style: RSTypography.caption.copyWith(
-                              color: RSColors.textSecondary,
-                            )),
-                      ],
-                    ),
-                  );
-                },
-              ),
-            ),
+            if (isDemoMode)
+              Expanded(child: _MockClaimsList())
+            else
+              Expanded(child: _RealClaimsList()),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _MockClaimsList extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return ListView.separated(
+      itemCount: MockClaims.claims.length,
+      separatorBuilder: (_, __) => const SizedBox(height: RSSpacing.md),
+      itemBuilder: (_, i) => _ClaimCard.fromMock(MockClaims.claims[i]),
+    );
+  }
+}
+
+class _RealClaimsList extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final claimsAsync = ref.watch(userClaimsProvider);
+
+    return claimsAsync.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (_, __) => Center(
+        child: Text(
+          'Error al cargar siniestros',
+          style: RSTypography.bodyMedium.copyWith(
+            color: RSColors.textSecondary,
+          ),
+        ),
+      ),
+      data: (claims) {
+        if (claims.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(
+                  Icons.check_circle_outline_rounded,
+                  color: RSColors.textSecondary,
+                  size: 48,
+                ),
+                const SizedBox(height: RSSpacing.md),
+                Text(
+                  'Sin siniestros registrados',
+                  style: RSTypography.titleMedium.copyWith(
+                    color: RSColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: RSSpacing.sm),
+                Text(
+                  'No tienes siniestros reportados.',
+                  style: RSTypography.bodyMedium.copyWith(
+                    color: RSColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+        return ListView.separated(
+          itemCount: claims.length,
+          separatorBuilder: (_, __) => const SizedBox(height: RSSpacing.md),
+          itemBuilder: (_, i) => _ClaimCard.fromMap(claims[i]),
+        );
+      },
+    );
+  }
+}
+
+class _ClaimCard extends StatelessWidget {
+  const _ClaimCard({
+    required this.claimNumber,
+    required this.type,
+    required this.description,
+    required this.date,
+    required this.statusLabel,
+    required this.statusColor,
+    required this.statusIcon,
+  });
+
+  final String claimNumber;
+  final String type;
+  final String description;
+  final String date;
+  final String statusLabel;
+  final Color statusColor;
+  final IconData statusIcon;
+
+  factory _ClaimCard.fromMock(MockClaim c) => _ClaimCard(
+    claimNumber: c.id,
+    type: c.type,
+    description: c.description,
+    date: c.date,
+    statusLabel: c.status,
+    statusColor: c.statusColor,
+    statusIcon: c.statusIcon,
+  );
+
+  factory _ClaimCard.fromMap(Map<String, dynamic> m) {
+    final status = m['status'] as String? ?? 'reported';
+    final (label, color, icon) = _statusMeta(status);
+    String date = '';
+    try {
+      final dt = DateTime.parse(m['created_at'] as String);
+      date = DateFormat('dd MMM yyyy', 'es').format(dt);
+    } catch (_) {}
+    return _ClaimCard(
+      claimNumber: m['claim_number'] as String? ?? '',
+      type: m['incident_type'] as String? ?? '',
+      description: m['incident_description'] as String? ?? '',
+      date: date,
+      statusLabel: label,
+      statusColor: color,
+      statusIcon: icon,
+    );
+  }
+
+  static (String, Color, IconData) _statusMeta(String status) {
+    switch (status) {
+      case 'approved':
+      case 'paid':
+      case 'closed':
+        return (
+          'Liquidado',
+          const Color(0xFF2E7D32),
+          Icons.check_circle_rounded,
+        );
+      case 'rejected':
+        return ('Rechazado', const Color(0xFFC62828), Icons.cancel_rounded);
+      default:
+        return (
+          'En revisión',
+          const Color(0xFFFFB300),
+          Icons.hourglass_top_rounded,
+        );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return RSCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                claimNumber,
+                style: RSTypography.mono.copyWith(
+                  fontSize: 12,
+                  color: RSColors.textSecondary,
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: statusColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(statusIcon, size: 14, color: statusColor),
+                    const SizedBox(width: 4),
+                    Text(
+                      statusLabel,
+                      style: RSTypography.caption.copyWith(
+                        color: statusColor,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: RSSpacing.sm),
+          Text(
+            type,
+            style: RSTypography.titleMedium.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: RSSpacing.xs),
+          Text(
+            description,
+            style: RSTypography.bodyMedium.copyWith(
+              color: RSColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: RSSpacing.sm),
+          Text(
+            date,
+            style: RSTypography.caption.copyWith(color: RSColors.textSecondary),
+          ),
+        ],
       ),
     );
   }

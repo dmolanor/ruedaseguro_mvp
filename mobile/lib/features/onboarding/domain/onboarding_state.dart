@@ -13,6 +13,10 @@ import 'package:ruedaseguro/features/onboarding/domain/cross_validator.dart';
 /// - Renamed: carnetOcr → certificadoOcr, carnetImage → certificadoImage.
 /// - Added: vehicleType, vehicleBodyType, serialNiv, seats, idIssuedDate,
 ///   idExpiryDate, latitude, longitude, addressFromGps.
+///
+/// Sprint 4B (RS-090): Plan-first + conductor habitual flow.
+/// - Added: selectedPlan, premiumUsd (plan selection before documents).
+/// - Replaced: isLegalRepresentative → isHabitualDriver + ownerCedula* fields.
 class OnboardingData {
   // Step 1 — Cédula
   final CedulaParseResult? cedulaOcr;
@@ -53,11 +57,26 @@ class OnboardingData {
 
   // Cross-validation result (cedula ↔ certificado)
   final CrossValidationResult? crossValidation;
-  final bool isLegalRepresentative;
+
+  // Ownership: conductor habitual flow (RS-090)
+  // When isHabitualDriver=true, owner fields must be populated before emission.
+  // RCV covers the owner; accident coverage covers the rider.
+  final bool isHabitualDriver;
+  final CedulaParseResult? ownerCedulaOcr;
+  final File? ownerCedulaImage;
+  final String? ownerIdType;
+  final String? ownerIdNumber;
+  final String? ownerFirstName;
+  final String? ownerLastName;
 
   // Optional vehicle extras (not extracted from certificado, user-editable)
   final String? color;
   final File? vehiclePhoto;
+
+  // Step 0 — Plan selection (RS-090, must be chosen before document scan)
+  final String?
+  selectedPlan; // 'rcv_basico' | 'rcv_accidentes' | 'rcv_ampliada'
+  final double? premiumUsd;
 
   // Step 3 — Address (RS-084/085)
   final String? urbanizacion;
@@ -65,6 +84,7 @@ class OnboardingData {
   final String? municipio;
   final String? estado;
   final String? codigoPostal;
+  final String? email; // optional — for post-emission document delivery
   final double? latitude;
   final double? longitude;
   final bool addressFromGps;
@@ -105,14 +125,23 @@ class OnboardingData {
     this.serialCarroceria,
     this.seats,
     this.crossValidation,
-    this.isLegalRepresentative = false,
+    this.isHabitualDriver = false,
+    this.ownerCedulaOcr,
+    this.ownerCedulaImage,
+    this.ownerIdType,
+    this.ownerIdNumber,
+    this.ownerFirstName,
+    this.ownerLastName,
     this.color,
     this.vehiclePhoto,
+    this.selectedPlan,
+    this.premiumUsd,
     this.urbanizacion,
     this.ciudad,
     this.municipio,
     this.estado,
     this.codigoPostal,
+    this.email,
     this.latitude,
     this.longitude,
     this.addressFromGps = false,
@@ -158,14 +187,23 @@ class OnboardingData {
     String? serialCarroceria,
     int? seats,
     CrossValidationResult? crossValidation,
-    bool? isLegalRepresentative,
+    bool? isHabitualDriver,
+    CedulaParseResult? ownerCedulaOcr,
+    File? ownerCedulaImage,
+    String? ownerIdType,
+    String? ownerIdNumber,
+    String? ownerFirstName,
+    String? ownerLastName,
     String? color,
     File? vehiclePhoto,
+    String? selectedPlan,
+    double? premiumUsd,
     String? urbanizacion,
     String? ciudad,
     String? municipio,
     String? estado,
     String? codigoPostal,
+    String? email,
     double? latitude,
     double? longitude,
     bool? addressFromGps,
@@ -188,7 +226,8 @@ class OnboardingData {
       nationality: nationality ?? this.nationality,
       sex: sex ?? this.sex,
       emergencyContactName: emergencyContactName ?? this.emergencyContactName,
-      emergencyContactPhone: emergencyContactPhone ?? this.emergencyContactPhone,
+      emergencyContactPhone:
+          emergencyContactPhone ?? this.emergencyContactPhone,
       emergencyContactRelation:
           emergencyContactRelation ?? this.emergencyContactRelation,
       certificadoOcr: certificadoOcr ?? this.certificadoOcr,
@@ -205,15 +244,23 @@ class OnboardingData {
       serialCarroceria: serialCarroceria ?? this.serialCarroceria,
       seats: seats ?? this.seats,
       crossValidation: crossValidation ?? this.crossValidation,
-      isLegalRepresentative:
-          isLegalRepresentative ?? this.isLegalRepresentative,
+      isHabitualDriver: isHabitualDriver ?? this.isHabitualDriver,
+      ownerCedulaOcr: ownerCedulaOcr ?? this.ownerCedulaOcr,
+      ownerCedulaImage: ownerCedulaImage ?? this.ownerCedulaImage,
+      ownerIdType: ownerIdType ?? this.ownerIdType,
+      ownerIdNumber: ownerIdNumber ?? this.ownerIdNumber,
+      ownerFirstName: ownerFirstName ?? this.ownerFirstName,
+      ownerLastName: ownerLastName ?? this.ownerLastName,
       color: color ?? this.color,
       vehiclePhoto: vehiclePhoto ?? this.vehiclePhoto,
+      selectedPlan: selectedPlan ?? this.selectedPlan,
+      premiumUsd: premiumUsd ?? this.premiumUsd,
       urbanizacion: urbanizacion ?? this.urbanizacion,
       ciudad: ciudad ?? this.ciudad,
       municipio: municipio ?? this.municipio,
       estado: estado ?? this.estado,
       codigoPostal: codigoPostal ?? this.codigoPostal,
+      email: email ?? this.email,
       latitude: latitude ?? this.latitude,
       longitude: longitude ?? this.longitude,
       addressFromGps: addressFromGps ?? this.addressFromGps,
@@ -306,7 +353,6 @@ class OnboardingNotifier extends Notifier<OnboardingData> {
     String? serialCarroceria,
     int? seats,
     CrossValidationResult? crossValidation,
-    bool isLegalRepresentative = false,
   }) {
     state = state.copyWith(
       plate: plate,
@@ -321,8 +367,31 @@ class OnboardingNotifier extends Notifier<OnboardingData> {
       serialCarroceria: serialCarroceria,
       seats: seats,
       crossValidation: crossValidation,
-      isLegalRepresentative: isLegalRepresentative,
     );
+  }
+
+  /// Plan selection (RS-090) — must be called before cédula scan.
+  void selectPlan(String planCode, double premium) {
+    state = state.copyWith(selectedPlan: planCode, premiumUsd: premium);
+  }
+
+  /// Owner identity for conductor habitual path (RS-090).
+  /// Stores owner's cédula data WITHOUT overwriting the rider's own identity.
+  void setOwnerIdentity(CedulaParseResult ocr, File image) {
+    state = state.copyWith(
+      isHabitualDriver: true,
+      ownerCedulaOcr: ocr,
+      ownerCedulaImage: image,
+      ownerIdType: ocr.idType,
+      ownerIdNumber: ocr.idNumber,
+      ownerFirstName: ocr.firstName,
+      ownerLastName: ocr.lastName,
+    );
+  }
+
+  /// Marks the user as the vehicle owner (no mismatch or user claims ownership).
+  void setAsOwner() {
+    state = state.copyWith(isHabitualDriver: false);
   }
 
   void updateAddress({
@@ -330,6 +399,7 @@ class OnboardingNotifier extends Notifier<OnboardingData> {
     required String municipio,
     required String estado,
     String? codigoPostal,
+    String? email,
     double? latitude,
     double? longitude,
     bool addressFromGps = false,
@@ -339,6 +409,7 @@ class OnboardingNotifier extends Notifier<OnboardingData> {
       municipio: municipio,
       estado: estado,
       codigoPostal: codigoPostal,
+      email: email,
       latitude: latitude,
       longitude: longitude,
       addressFromGps: addressFromGps,
@@ -369,5 +440,6 @@ class OnboardingNotifier extends Notifier<OnboardingData> {
   void reset() => state = const OnboardingData();
 }
 
-final onboardingProvider =
-    NotifierProvider<OnboardingNotifier, OnboardingData>(OnboardingNotifier.new);
+final onboardingProvider = NotifierProvider<OnboardingNotifier, OnboardingData>(
+  OnboardingNotifier.new,
+);

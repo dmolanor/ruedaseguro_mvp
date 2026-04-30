@@ -33,7 +33,10 @@ void main() {
       expect(s().consentVeracidad, isFalse);
       expect(s().consentAntifraude, isFalse);
       expect(s().consentPrivacidad, isFalse);
-      expect(s().isLegalRepresentative, isFalse);
+      expect(s().isHabitualDriver, isFalse);
+      expect(s().selectedPlan, isNull);
+      expect(s().premiumUsd, isNull);
+      expect(s().ownerIdNumber, isNull);
     });
 
     test('allConsentsGiven is false when any consent missing', () {
@@ -252,7 +255,6 @@ void main() {
         serialMotor: 'MOTOR123',
         seats: 2,
         crossValidation: cross,
-        isLegalRepresentative: false,
       );
 
       expect(s().plate, 'AB123CD');
@@ -261,10 +263,9 @@ void main() {
       expect(s().vehicleType, 'MOTO PARTICULAR');
       expect(s().serialNiv, 'LBEP4E2F1E2000001');
       expect(s().crossValidation?.overallMatch, isTrue);
-      expect(s().isLegalRepresentative, isFalse);
     });
 
-    test('sets isLegalRepresentative on mismatch', () {
+    test('stores mismatch in crossValidation without blocking', () {
       const cross = CrossValidationResult(
         nameMatch: false,
         cedulaMatch: true,
@@ -279,11 +280,76 @@ void main() {
         year: 2020,
         vehicleUse: 'particular',
         crossValidation: cross,
-        isLegalRepresentative: true,
       );
 
       expect(s().crossValidation?.overallMatch, isFalse);
-      expect(s().isLegalRepresentative, isTrue);
+      // isHabitualDriver stays false until PropertyValidationScreen resolves it
+      expect(s().isHabitualDriver, isFalse);
+    });
+  });
+
+  group('OnboardingNotifier.selectPlan (RS-090)', () {
+    test('stores plan code and premium', () {
+      n().selectPlan('basica', 17.00);
+      expect(s().selectedPlan, 'basica');
+      expect(s().premiumUsd, 17.00);
+    });
+
+    test('overrides a previously selected plan', () {
+      n().selectPlan('basica', 17.00);
+      n().selectPlan('plus', 31.00);
+      expect(s().selectedPlan, 'plus');
+      expect(s().premiumUsd, 31.00);
+    });
+  });
+
+  group('OnboardingNotifier.setOwnerIdentity (RS-090)', () {
+    test('sets owner fields without overwriting rider identity', () {
+      // Set rider identity first
+      n().updateCedula(
+        const CedulaParseResult(
+          idType: 'V',
+          idNumber: '12345678',
+          firstName: 'JUAN',
+          lastName: 'PEREZ',
+          confidence: 0.9,
+        ),
+        File('/tmp/rider_cedula.jpg'),
+      );
+
+      // Now set owner identity (different person)
+      const ownerOcr = CedulaParseResult(
+        idType: 'V',
+        idNumber: '87654321',
+        firstName: 'PEDRO',
+        lastName: 'LOPEZ',
+        confidence: 0.85,
+      );
+      final ownerFile = File('/tmp/owner_cedula.jpg');
+
+      n().setOwnerIdentity(ownerOcr, ownerFile);
+
+      // Rider fields unchanged
+      expect(s().idNumber, '12345678');
+      expect(s().firstName, 'JUAN');
+
+      // Owner fields populated
+      expect(s().ownerIdNumber, '87654321');
+      expect(s().ownerFirstName, 'PEDRO');
+      expect(s().ownerLastName, 'LOPEZ');
+      expect(s().ownerIdType, 'V');
+      expect(s().ownerCedulaOcr, ownerOcr);
+      expect(s().ownerCedulaImage, ownerFile);
+      expect(s().isHabitualDriver, isTrue);
+    });
+  });
+
+  group('OnboardingNotifier.setAsOwner (RS-090)', () {
+    test('sets isHabitualDriver to false', () {
+      // Simulate mismatch path where user claims ownership
+      n().setAsOwner();
+      expect(s().isHabitualDriver, isFalse);
+      expect(s().ownerIdNumber, isNull); // no owner scan needed
     });
   });
 
@@ -376,10 +442,15 @@ void main() {
 
       expect(s().consentTimestamp, isNotNull);
       expect(
-        s().consentTimestamp!.isAfter(before.subtract(const Duration(seconds: 1))),
+        s().consentTimestamp!.isAfter(
+          before.subtract(const Duration(seconds: 1)),
+        ),
         isTrue,
       );
-      expect(s().consentTimestamp!.isBefore(after.add(const Duration(seconds: 1))), isTrue);
+      expect(
+        s().consentTimestamp!.isBefore(after.add(const Duration(seconds: 1))),
+        isTrue,
+      );
     });
   });
 
@@ -415,98 +486,154 @@ void main() {
     });
   });
 
-  group('Full onboarding flow (Sprint 4A — 2-step document scan)', () {
-    test('completes all steps in sequence', () {
-      // Step 1: Cédula scan + confirm
-      n().updateCedula(
-        const CedulaParseResult(
+  group(
+    'Full onboarding flow (Sprint 4B — plan-first + 2-step document scan)',
+    () {
+      test('completes all steps in sequence (happy path, no mismatch)', () {
+        // Step 0: Plan selection
+        n().selectPlan('plus', 31.00);
+        expect(s().selectedPlan, 'plus');
+
+        // Step 1: Cédula scan + confirm
+        n().updateCedula(
+          const CedulaParseResult(
+            idType: 'V',
+            idNumber: '12345678',
+            firstName: 'JUAN',
+            lastName: 'PEREZ',
+            confidence: 0.85,
+          ),
+          File('/tmp/cedula.jpg'),
+        );
+        n().confirmIdentity(
           idType: 'V',
           idNumber: '12345678',
           firstName: 'JUAN',
           lastName: 'PEREZ',
-          confidence: 0.85,
-        ),
-        File('/tmp/cedula.jpg'),
-      );
-      n().confirmIdentity(
-        idType: 'V',
-        idNumber: '12345678',
-        firstName: 'JUAN',
-        lastName: 'PEREZ',
-        dateOfBirth: DateTime(1990, 5, 15),
-        nationality: 'VENEZOLANO',
-        sex: 'M',
-        emergencyContactName: 'Maria Perez',
-        emergencyContactPhone: '04121234567',
-        emergencyContactRelation: 'Esposo/a',
-      );
+          dateOfBirth: DateTime(1990, 5, 15),
+          nationality: 'VENEZOLANO',
+          sex: 'M',
+          emergencyContactName: 'Maria Perez',
+          emergencyContactPhone: '04121234567',
+          emergencyContactRelation: 'Esposo/a',
+        );
 
-      // Step 2: Certificado de circulación scan + confirm
-      n().updateCertificado(
-        const CertificadoParseResult(
+        // Step 2: Certificado de circulación scan + confirm
+        n().updateCertificado(
+          const CertificadoParseResult(
+            plate: 'AB123CD',
+            brand: 'BERA',
+            model: 'BR150',
+            year: 2020,
+            vehicleType: 'MOTO PARTICULAR',
+            vehicleBodyType: 'DEPORTIVA',
+            serialNiv: 'LBEP4E2F1E2000001',
+            serialMotor: 'SK162FMJ12345',
+            seats: 2,
+            ownerName: 'JUAN PEREZ',
+            ownerCedula: 'V12345678',
+            confidence: 0.9,
+          ),
+          File('/tmp/certificado.jpg'),
+        );
+        n().confirmVehicle(
           plate: 'AB123CD',
           brand: 'BERA',
           model: 'BR150',
           year: 2020,
           vehicleType: 'MOTO PARTICULAR',
           vehicleBodyType: 'DEPORTIVA',
+          vehicleUse: 'particular',
           serialNiv: 'LBEP4E2F1E2000001',
           serialMotor: 'SK162FMJ12345',
           seats: 2,
-          ownerName: 'JUAN PEREZ',
-          ownerCedula: 'V12345678',
-          confidence: 0.9,
-        ),
-        File('/tmp/certificado.jpg'),
-      );
-      n().confirmVehicle(
-        plate: 'AB123CD',
-        brand: 'BERA',
-        model: 'BR150',
-        year: 2020,
-        vehicleType: 'MOTO PARTICULAR',
-        vehicleBodyType: 'DEPORTIVA',
-        vehicleUse: 'particular',
-        serialNiv: 'LBEP4E2F1E2000001',
-        serialMotor: 'SK162FMJ12345',
-        seats: 2,
-      );
+        );
 
-      // Step 3: Address with GPS
-      n().updateAddress(
-        urbanizacion: 'El Paraíso',
-        municipio: 'Libertador',
-        estado: 'Distrito Capital',
-        codigoPostal: '1010',
-        latitude: 10.4922,
-        longitude: -66.8577,
-        addressFromGps: true,
-      );
+        // Step 3: Address with GPS
+        n().updateAddress(
+          urbanizacion: 'El Paraíso',
+          municipio: 'Libertador',
+          estado: 'Distrito Capital',
+          codigoPostal: '1010',
+          latitude: 10.4922,
+          longitude: -66.8577,
+          addressFromGps: true,
+        );
 
-      // Step 4: Consent
-      n().updateConsents(
-        rcv: true,
-        veracidad: true,
-        antifraude: true,
-        privacidad: true,
-      );
+        // Step 4: Consent
+        n().updateConsents(
+          rcv: true,
+          veracidad: true,
+          antifraude: true,
+          privacidad: true,
+        );
 
-      // Verify final state
-      expect(s().idNumber, '12345678');
-      expect(s().firstName, 'JUAN');
-      expect(s().emergencyContactName, 'Maria Perez');
-      expect(s().plate, 'AB123CD');
-      expect(s().brand, 'BERA');
-      expect(s().vehicleType, 'MOTO PARTICULAR');
-      expect(s().serialNiv, 'LBEP4E2F1E2000001');
-      expect(s().seats, 2);
-      expect(s().certificadoImage, isNotNull);
-      expect(s().urbanizacion, 'El Paraíso');
-      expect(s().estado, 'Distrito Capital');
-      expect(s().latitude, closeTo(10.4922, 0.0001));
-      expect(s().addressFromGps, isTrue);
-      expect(s().allConsentsGiven, isTrue);
-      expect(s().consentTimestamp, isNotNull);
-    });
-  });
+        // Verify final state
+        expect(s().selectedPlan, 'plus');
+        expect(s().premiumUsd, 31.00);
+        expect(s().idNumber, '12345678');
+        expect(s().firstName, 'JUAN');
+        expect(s().emergencyContactName, 'Maria Perez');
+        expect(s().plate, 'AB123CD');
+        expect(s().brand, 'BERA');
+        expect(s().vehicleType, 'MOTO PARTICULAR');
+        expect(s().serialNiv, 'LBEP4E2F1E2000001');
+        expect(s().seats, 2);
+        expect(s().certificadoImage, isNotNull);
+        expect(s().urbanizacion, 'El Paraíso');
+        expect(s().estado, 'Distrito Capital');
+        expect(s().latitude, closeTo(10.4922, 0.0001));
+        expect(s().addressFromGps, isTrue);
+        expect(s().allConsentsGiven, isTrue);
+        expect(s().consentTimestamp, isNotNull);
+        expect(s().isHabitualDriver, isFalse);
+      });
+
+      test(
+        'conductor habitual path stores owner identity without overwriting rider',
+        () {
+          // Plan
+          n().selectPlan('basica', 17.00);
+
+          // Rider cedula
+          n().updateCedula(
+            const CedulaParseResult(
+              idType: 'V',
+              idNumber: '11111111',
+              firstName: 'JUAN',
+              confidence: 0.9,
+            ),
+            File('/tmp/rider.jpg'),
+          );
+
+          // Certificado — mismatch (owner is different person)
+          n().updateCertificado(
+            const CertificadoParseResult(
+              plate: 'AB123CD',
+              ownerName: 'PEDRO LOPEZ',
+              ownerCedula: 'V22222222',
+              confidence: 0.85,
+            ),
+            File('/tmp/cert.jpg'),
+          );
+
+          // PropertyValidationScreen resolves: user is conductor habitual
+          n().setOwnerIdentity(
+            const CedulaParseResult(
+              idType: 'V',
+              idNumber: '22222222',
+              firstName: 'PEDRO',
+              lastName: 'LOPEZ',
+              confidence: 0.9,
+            ),
+            File('/tmp/owner.jpg'),
+          );
+
+          expect(s().idNumber, '11111111'); // rider unchanged
+          expect(s().ownerIdNumber, '22222222'); // owner set
+          expect(s().isHabitualDriver, isTrue);
+        },
+      );
+    },
+  );
 }

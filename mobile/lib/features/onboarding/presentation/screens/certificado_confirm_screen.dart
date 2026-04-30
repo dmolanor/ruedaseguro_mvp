@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -30,8 +31,7 @@ const _bodyTypes = [
 // Returns Map<brandName, List<models>>
 final _brandsProvider = FutureProvider<Map<String, List<String>>>((ref) async {
   try {
-    final raw =
-        await rootBundle.loadString('assets/data/vehicle_brands.json');
+    final raw = await rootBundle.loadString('assets/data/vehicle_brands.json');
     final json = jsonDecode(raw) as Map<String, dynamic>;
     final brands = (json['brands'] as List).cast<Map<String, dynamic>>();
     return {
@@ -77,7 +77,6 @@ class _CertificadoConfirmScreenState
   String _vehicleUse = 'particular';
   int _selectedYear = DateTime.now().year;
   int? _seats;
-  bool _isLegalRepresentative = false;
 
   @override
   void initState() {
@@ -111,12 +110,18 @@ class _CertificadoConfirmScreenState
   void _submit() {
     if (!_formKey.currentState!.validate()) return;
     final cross = ref.read(onboardingProvider).crossValidation;
-    ref.read(onboardingProvider.notifier).confirmVehicle(
+    final hasMismatch = cross != null && !cross.overallMatch && !cross.skipped;
+
+    ref
+        .read(onboardingProvider.notifier)
+        .confirmVehicle(
           plate: _plateCtrl.text.trim().toUpperCase(),
           brand: _selectedBrand ?? '',
           model: _selectedModel ?? '',
           year: _selectedYear,
-          vehicleType: _vehicleUse == 'cargo' ? 'MOTO CARGA' : 'MOTO PARTICULAR',
+          vehicleType: _vehicleUse == 'cargo'
+              ? 'MOTO CARGA'
+              : 'MOTO PARTICULAR',
           vehicleBodyType: _selectedBodyType,
           vehicleUse: _vehicleUse,
           serialNiv: _serialNivCtrl.text.trim().isEmpty
@@ -127,9 +132,13 @@ class _CertificadoConfirmScreenState
               : _serialMotorCtrl.text.trim().toUpperCase(),
           seats: _seats,
           crossValidation: cross,
-          isLegalRepresentative: _isLegalRepresentative,
         );
-    context.push('/onboarding/address');
+
+    if (hasMismatch) {
+      context.push('/onboarding/property-validation');
+    } else {
+      context.push('/onboarding/address');
+    }
   }
 
   Future<void> _pickYear() async {
@@ -137,10 +146,8 @@ class _CertificadoConfirmScreenState
     final years = List.generate(now - 1979, (i) => now - i);
     final picked = await showDialog<int>(
       context: context,
-      builder: (ctx) => _YearPickerDialog(
-        years: years,
-        selected: _selectedYear,
-      ),
+      builder: (ctx) =>
+          _YearPickerDialog(years: years, selected: _selectedYear),
     );
     if (picked != null) setState(() => _selectedYear = picked);
   }
@@ -158,13 +165,16 @@ class _CertificadoConfirmScreenState
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded,
-              color: RSColors.primary),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: RSColors.primary,
+          ),
           onPressed: () => context.pop(),
         ),
-        title: Text('Confirma los datos del vehículo',
-            style:
-                RSTypography.titleLarge.copyWith(color: RSColors.primary)),
+        title: Text(
+          'Confirma los datos del vehículo',
+          style: RSTypography.titleLarge.copyWith(color: RSColors.primary),
+        ),
       ),
       body: Form(
         key: _formKey,
@@ -179,8 +189,11 @@ class _CertificadoConfirmScreenState
                   onTap: () => showDialog(
                     context: context,
                     builder: (_) => Dialog(
-                        child: Image.file(data.certificadoImage!,
-                            fit: BoxFit.contain)),
+                      child: Image.file(
+                        data.certificadoImage!,
+                        fit: BoxFit.contain,
+                      ),
+                    ),
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(RSRadius.md),
@@ -214,9 +227,6 @@ class _CertificadoConfirmScreenState
                   hasMismatch: hasMismatch,
                   mismatchDetails: cross.mismatchDetails,
                   onRescanCedula: () => context.go('/onboarding/cedula'),
-                  onToggleLegal: (v) =>
-                      setState(() => _isLegalRepresentative = v),
-                  isLegalRepresentative: _isLegalRepresentative,
                 ),
                 const SizedBox(height: RSSpacing.lg),
               ],
@@ -239,7 +249,9 @@ class _CertificadoConfirmScreenState
               const SizedBox(height: RSSpacing.md),
 
               // ── Brand dropdown (RS-083) ───────────────────────────
-              ref.watch(_brandsProvider).when(
+              ref
+                  .watch(_brandsProvider)
+                  .when(
                     data: (brandsMap) => _BrandModelSelector(
                       brandsMap: brandsMap,
                       selectedBrand: _selectedBrand,
@@ -250,8 +262,7 @@ class _CertificadoConfirmScreenState
                         _selectedBrand = b;
                         _selectedModel = null;
                       }),
-                      onModelChanged: (m) =>
-                          setState(() => _selectedModel = m),
+                      onModelChanged: (m) => setState(() => _selectedModel = m),
                     ),
                     loading: () => const _BrandModelFallback(),
                     error: (_, __) => const _BrandModelFallback(),
@@ -267,10 +278,7 @@ class _CertificadoConfirmScreenState
               const SizedBox(height: RSSpacing.md),
 
               // ── Year picker ───────────────────────────────────────
-              _ConfidenceLabel(
-                label: 'Año',
-                confidence: _fieldConf('year'),
-              ),
+              _ConfidenceLabel(label: 'Año', confidence: _fieldConf('year')),
               const SizedBox(height: 4),
               InkWell(
                 onTap: _pickYear,
@@ -296,8 +304,10 @@ class _CertificadoConfirmScreenState
                           style: RSTypography.bodyLarge,
                         ),
                       ),
-                      const Icon(Icons.arrow_drop_down,
-                          color: RSColors.textSecondary),
+                      const Icon(
+                        Icons.arrow_drop_down,
+                        color: RSColors.textSecondary,
+                      ),
                     ],
                   ),
                 ),
@@ -349,11 +359,18 @@ class _CertificadoConfirmScreenState
 
               RSButton(
                 label: 'Continuar',
-                onPressed: (vehicleTypeWrong ||
-                        (hasMismatch && !_isLegalRepresentative))
-                    ? null
-                    : _submit,
+                onPressed: vehicleTypeWrong ? null : _submit,
               ),
+              if (kDebugMode) ...[
+                const SizedBox(height: RSSpacing.sm),
+                Center(
+                  child: TextButton(
+                    onPressed: () =>
+                        context.push('/onboarding/property-validation'),
+                    child: const Text('[DEV] Omitir confirmación'),
+                  ),
+                ),
+              ],
               const SizedBox(height: RSSpacing.xl),
             ],
           ),
@@ -400,9 +417,12 @@ class _ConfidenceLabel extends StatelessWidget {
     final color = _confidenceColor(confidence);
     return Row(
       children: [
-        Text(label,
-            style: RSTypography.bodyMedium
-                .copyWith(color: RSColors.textSecondary)),
+        Text(
+          label,
+          style: RSTypography.bodyMedium.copyWith(
+            color: RSColors.textSecondary,
+          ),
+        ),
         if (confidence > 0) ...[
           const SizedBox(width: RSSpacing.xs),
           Icon(_confidenceIcon(confidence), color: color, size: 16),
@@ -454,8 +474,7 @@ class _ConfidenceField extends StatelessWidget {
               children: [
                 Icon(_confidenceIcon(confidence), color: color, size: 14),
                 const SizedBox(width: 4),
-                Text(hint,
-                    style: RSTypography.caption.copyWith(color: color)),
+                Text(hint, style: RSTypography.caption.copyWith(color: color)),
               ],
             ),
           ),
@@ -464,20 +483,18 @@ class _ConfidenceField extends StatelessWidget {
   }
 }
 
+// RS-090: Simplified banner — no more checkbox. Mismatch is handled by
+// PropertyValidationScreen which is pushed on submit when hasMismatch==true.
 class _CrossValidationBanner extends StatelessWidget {
   const _CrossValidationBanner({
     required this.hasMismatch,
     required this.mismatchDetails,
     required this.onRescanCedula,
-    required this.onToggleLegal,
-    required this.isLegalRepresentative,
   });
 
   final bool hasMismatch;
   final String? mismatchDetails;
   final VoidCallback onRescanCedula;
-  final ValueChanged<bool> onToggleLegal;
-  final bool isLegalRepresentative;
 
   @override
   Widget build(BuildContext context) {
@@ -485,11 +502,11 @@ class _CrossValidationBanner extends StatelessWidget {
       padding: const EdgeInsets.all(RSSpacing.md),
       decoration: BoxDecoration(
         color: hasMismatch
-            ? RSColors.error.withValues(alpha: 0.1)
+            ? RSColors.warning.withValues(alpha: 0.08)
             : RSColors.success.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(RSRadius.md),
         border: Border.all(
-          color: hasMismatch ? RSColors.error : RSColors.success,
+          color: hasMismatch ? RSColors.warning : RSColors.success,
           width: 1.5,
         ),
       ),
@@ -500,47 +517,38 @@ class _CrossValidationBanner extends StatelessWidget {
             children: [
               Icon(
                 hasMismatch
-                    ? Icons.warning_amber_rounded
+                    ? Icons.info_outline_rounded
                     : Icons.verified_rounded,
-                color: hasMismatch ? RSColors.error : RSColors.success,
+                color: hasMismatch ? RSColors.warning : RSColors.success,
               ),
               const SizedBox(width: RSSpacing.sm),
               Expanded(
                 child: Text(
                   hasMismatch
-                      ? 'El nombre o cédula del propietario no coincide con tu cédula'
+                      ? 'El propietario no coincide — lo resolveremos en el siguiente paso'
                       : 'Propietario verificado con tu cédula',
                   style: RSTypography.bodyLarge.copyWith(
-                    color: hasMismatch ? RSColors.error : RSColors.success,
+                    color: hasMismatch ? RSColors.warning : RSColors.success,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
             ],
           ),
-          if (hasMismatch && mismatchDetails != null) ...[
+          if (hasMismatch) ...[
             const SizedBox(height: RSSpacing.sm),
-            Text(mismatchDetails!,
-                style: RSTypography.caption
-                    .copyWith(color: RSColors.textSecondary)),
+            Text(
+              'Puedes continuar. En el siguiente paso te preguntaremos sobre tu relación con el vehículo.',
+              style: RSTypography.caption.copyWith(
+                color: RSColors.textSecondary,
+              ),
+            ),
             const SizedBox(height: RSSpacing.md),
             RSButton(
               label: 'Volver a escanear cédula',
               variant: RSButtonVariant.secondary,
               onPressed: onRescanCedula,
               isFullWidth: false,
-            ),
-            const SizedBox(height: RSSpacing.sm),
-            CheckboxListTile(
-              contentPadding: EdgeInsets.zero,
-              title: Text(
-                'Soy representante legal del propietario',
-                style: RSTypography.bodyMedium,
-              ),
-              value: isLegalRepresentative,
-              onChanged: (v) => onToggleLegal(v!),
-              activeColor: RSColors.primary,
-              controlAffinity: ListTileControlAffinity.leading,
             ),
           ],
         ],
@@ -573,8 +581,7 @@ class _AlertBanner extends StatelessWidget {
         children: [
           Icon(icon, color: color),
           const SizedBox(width: RSSpacing.sm),
-          Expanded(
-              child: Text(message, style: RSTypography.bodyMedium)),
+          Expanded(child: Text(message, style: RSTypography.bodyMedium)),
         ],
       ),
     );
@@ -603,8 +610,9 @@ class _BrandModelSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final models =
-        selectedBrand != null ? (brandsMap[selectedBrand] ?? []) : <String>[];
+    final models = selectedBrand != null
+        ? (brandsMap[selectedBrand] ?? [])
+        : <String>[];
     // Ensure selectedModel is still valid when brand changes
     final validModel = (models.contains(selectedModel)) ? selectedModel : null;
 
@@ -617,13 +625,11 @@ class _BrandModelSelector extends StatelessWidget {
           value: brandsMap.containsKey(selectedBrand) ? selectedBrand : null,
           hint: const Text('Selecciona la marca'),
           isExpanded: true,
-          decoration: _dropdownDecoration(
-              _confidenceColor(brandConfidence)),
+          decoration: _dropdownDecoration(_confidenceColor(brandConfidence)),
           items: brandsMap.keys
               .map((b) => DropdownMenuItem(value: b, child: Text(b)))
               .toList(),
-          validator: (v) =>
-              v == null ? 'Selecciona la marca' : null,
+          validator: (v) => v == null ? 'Selecciona la marca' : null,
           onChanged: onBrandChanged,
         ),
         const SizedBox(height: RSSpacing.md),
@@ -633,16 +639,15 @@ class _BrandModelSelector extends StatelessWidget {
           value: validModel,
           hint: const Text('Selecciona el modelo'),
           isExpanded: true,
-          decoration: _dropdownDecoration(
-              _confidenceColor(modelConfidence)),
+          decoration: _dropdownDecoration(_confidenceColor(modelConfidence)),
           items: [
-            ...models.map(
-                (m) => DropdownMenuItem(value: m, child: Text(m))),
+            ...models.map((m) => DropdownMenuItem(value: m, child: Text(m))),
             const DropdownMenuItem(
-                value: '__other', child: Text('Otro (escribir)')),
+              value: '__other',
+              child: Text('Otro (escribir)'),
+            ),
           ],
-          validator: (v) =>
-              v == null ? 'Selecciona el modelo' : null,
+          validator: (v) => v == null ? 'Selecciona el modelo' : null,
           onChanged: onModelChanged,
         ),
       ],
@@ -652,7 +657,9 @@ class _BrandModelSelector extends StatelessWidget {
   InputDecoration _dropdownDecoration(Color borderColor) {
     return InputDecoration(
       contentPadding: const EdgeInsets.symmetric(
-          horizontal: RSSpacing.md, vertical: RSSpacing.md),
+        horizontal: RSSpacing.md,
+        vertical: RSSpacing.md,
+      ),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(RSRadius.md),
         borderSide: BorderSide(color: borderColor),
@@ -671,7 +678,62 @@ class _BrandModelFallback extends StatelessWidget {
   const _BrandModelFallback();
   @override
   Widget build(BuildContext context) {
-    return const Center(child: CircularProgressIndicator());
+    // Static placeholders — avoids infinite CircularProgressIndicator animation
+    // which would block pumpAndSettle in tests and looks jarring inside a form.
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          'Marca',
+          style: RSTypography.bodyMedium.copyWith(
+            color: RSColors.textSecondary,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: RSSpacing.md,
+            vertical: RSSpacing.md + 2,
+          ),
+          decoration: BoxDecoration(
+            border: Border.all(color: RSColors.border),
+            borderRadius: BorderRadius.circular(RSRadius.md),
+            color: RSColors.surface,
+          ),
+          child: Text(
+            'Cargando marcas…',
+            style: RSTypography.bodyLarge.copyWith(
+              color: RSColors.textSecondary,
+            ),
+          ),
+        ),
+        const SizedBox(height: RSSpacing.md),
+        Text(
+          'Modelo',
+          style: RSTypography.bodyMedium.copyWith(
+            color: RSColors.textSecondary,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: RSSpacing.md,
+            vertical: RSSpacing.md + 2,
+          ),
+          decoration: BoxDecoration(
+            border: Border.all(color: RSColors.border),
+            borderRadius: BorderRadius.circular(RSRadius.md),
+            color: RSColors.surface,
+          ),
+          child: Text(
+            'Selecciona la marca primero',
+            style: RSTypography.bodyLarge.copyWith(
+              color: RSColors.textSecondary,
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }
 
@@ -692,8 +754,7 @@ class _BodyTypeSelector extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _ConfidenceLabel(
-            label: 'Tipo de carrocería', confidence: confidence),
+        _ConfidenceLabel(label: 'Tipo de carrocería', confidence: confidence),
         const SizedBox(height: 8),
         Wrap(
           spacing: RSSpacing.sm,
@@ -703,18 +764,12 @@ class _BodyTypeSelector extends StatelessWidget {
             return FilterChip(
               label: Text(type),
               selected: isSelected,
-              onSelected: (_) =>
-                  onSelected(isSelected ? null : type),
-              selectedColor:
-                  RSColors.primary.withValues(alpha: 0.15),
+              onSelected: (_) => onSelected(isSelected ? null : type),
+              selectedColor: RSColors.primary.withValues(alpha: 0.15),
               checkmarkColor: RSColors.primary,
               labelStyle: RSTypography.bodyMedium.copyWith(
-                color: isSelected
-                    ? RSColors.primary
-                    : RSColors.textSecondary,
-                fontWeight: isSelected
-                    ? FontWeight.w600
-                    : FontWeight.normal,
+                color: isSelected ? RSColors.primary : RSColors.textSecondary,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
               ),
             );
           }).toList(),
@@ -744,9 +799,12 @@ class _DropdownRow<T> extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label,
-            style: RSTypography.bodyMedium
-                .copyWith(color: RSColors.textSecondary)),
+        Text(
+          label,
+          style: RSTypography.bodyMedium.copyWith(
+            color: RSColors.textSecondary,
+          ),
+        ),
         const SizedBox(height: 4),
         DropdownButtonFormField<T>(
           value: value,
@@ -754,7 +812,9 @@ class _DropdownRow<T> extends StatelessWidget {
           isExpanded: true,
           decoration: InputDecoration(
             contentPadding: const EdgeInsets.symmetric(
-                horizontal: RSSpacing.md, vertical: RSSpacing.md),
+              horizontal: RSSpacing.md,
+              vertical: RSSpacing.md,
+            ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(RSRadius.md),
               borderSide: const BorderSide(color: RSColors.border),
@@ -767,10 +827,12 @@ class _DropdownRow<T> extends StatelessWidget {
             fillColor: RSColors.surface,
           ),
           items: items.entries
-              .map((e) => DropdownMenuItem<T>(
-                    value: e.key,
-                    child: Text(e.value, style: RSTypography.bodyLarge),
-                  ))
+              .map(
+                (e) => DropdownMenuItem<T>(
+                  value: e.key,
+                  child: Text(e.value, style: RSTypography.bodyLarge),
+                ),
+              )
               .toList(),
           onChanged: onChanged,
         ),
@@ -839,11 +901,11 @@ class _YearPickerDialogState extends State<_YearPickerDialog> {
       ),
       actions: [
         TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancelar')),
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancelar'),
+        ),
         ElevatedButton(
-          style: ElevatedButton.styleFrom(
-              backgroundColor: RSColors.primary),
+          style: ElevatedButton.styleFrom(backgroundColor: RSColors.primary),
           onPressed: () => Navigator.of(context).pop(_current),
           child: const Text('Confirmar'),
         ),

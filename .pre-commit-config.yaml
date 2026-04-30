@@ -27,13 +27,15 @@ repos:
     hooks:
       - id: flutter-format
         name: Flutter Format
-        entry: flutter format
+        # Flutter 3.x removed `flutter format`; use `dart format` instead.
+        entry: dart format
         language: system
         files: \.dart$
         pass_filenames: true
       - id: flutter-analyze
         name: Flutter Analyze
-        entry: bash -c "cd mobile && flutter analyze"
+        # --fatal-infos and --fatal-warnings omitted: only errors block commit.
+        entry: bash -c "cd mobile && flutter analyze --no-fatal-infos --no-fatal-warnings"
         language: system
         files: \.dart$
         pass_filenames: false

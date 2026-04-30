@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -48,9 +49,14 @@ class _Bank {
 }
 
 class PaymentMethodScreen extends ConsumerStatefulWidget {
-  const PaymentMethodScreen({super.key, this.plan});
+  const PaymentMethodScreen({
+    super.key,
+    this.plan,
+    this.fromOnboarding = false,
+  });
 
   final InsurancePlan? plan;
+  final bool fromOnboarding;
 
   @override
   ConsumerState<PaymentMethodScreen> createState() =>
@@ -58,7 +64,8 @@ class PaymentMethodScreen extends ConsumerStatefulWidget {
 }
 
 class _PaymentMethodScreenState extends ConsumerState<PaymentMethodScreen> {
-  int _selectedMethod = 0; // 0: Pago Móvil, 1: Transferencia
+  int _selectedMethod =
+      0; // 0: Pago Móvil, 1: Transferencia, 2: Débito Inmediato
   _Bank? _selectedBank;
   final _referenceCtrl = TextEditingController();
   bool _isSubmitting = false;
@@ -72,6 +79,7 @@ class _PaymentMethodScreenState extends ConsumerState<PaymentMethodScreen> {
   }
 
   bool get _canSubmit {
+    if (_selectedMethod == 2) return false; // débito inmediato: not yet live
     if (_selectedMethod == 0) {
       return _selectedBank != null && _referenceCtrl.text.trim().length >= 6;
     }
@@ -82,7 +90,9 @@ class _PaymentMethodScreenState extends ConsumerState<PaymentMethodScreen> {
     if (!_canSubmit) return;
     setState(() => _isSubmitting = true);
 
-    final bcvRate = ref.read(bcvRateProvider).when(
+    final bcvRate = ref
+        .read(bcvRateProvider)
+        .when(
           data: (r) => r,
           error: (_, __) => BcvRate.fallback,
           loading: () => BcvRate.fallback,
@@ -90,13 +100,15 @@ class _PaymentMethodScreenState extends ConsumerState<PaymentMethodScreen> {
 
     final extra = {
       'plan': _plan,
-      'paymentMethod':
-          _selectedMethod == 0 ? 'pago_movil_p2p' : 'bank_transfer',
+      'paymentMethod': _selectedMethod == 0
+          ? 'pago_movil_p2p'
+          : 'bank_transfer',
       'pagoMovilReference': _referenceCtrl.text.trim(),
       'pagoMovilBankCode': _selectedBank?.code,
       'amountUsd': _plan.priceUsd,
       'amountVes': bcvRate.toVes(_plan.priceUsd),
       'exchangeRate': bcvRate.rate,
+      'fromOnboarding': widget.fromOnboarding,
     };
 
     if (mounted) {
@@ -107,7 +119,9 @@ class _PaymentMethodScreenState extends ConsumerState<PaymentMethodScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final bcvRate = ref.watch(bcvRateProvider).when(
+    final bcvRate = ref
+        .watch(bcvRateProvider)
+        .when(
           data: (r) => r,
           error: (_, __) => BcvRate.fallback,
           loading: () => BcvRate.fallback,
@@ -120,13 +134,16 @@ class _PaymentMethodScreenState extends ConsumerState<PaymentMethodScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded,
-              color: RSColors.primary),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: RSColors.primary,
+          ),
           onPressed: () => context.pop(),
         ),
-        title: Text('Método de pago',
-            style:
-                RSTypography.titleLarge.copyWith(color: RSColors.primary)),
+        title: Text(
+          'Método de pago',
+          style: RSTypography.titleLarge.copyWith(color: RSColors.primary),
+        ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(RSSpacing.lg),
@@ -141,11 +158,12 @@ class _PaymentMethodScreenState extends ConsumerState<PaymentMethodScreen> {
 
             const SizedBox(height: RSSpacing.lg),
 
-            Text('Selecciona el método de pago',
-                    style: RSTypography.titleLarge
-                        .copyWith(color: RSColors.textPrimary))
-                .animate(delay: 100.ms)
-                .fadeIn(duration: 400.ms),
+            Text(
+              'Selecciona el método de pago',
+              style: RSTypography.titleLarge.copyWith(
+                color: RSColors.textPrimary,
+              ),
+            ).animate(delay: 100.ms).fadeIn(duration: 400.ms),
             const SizedBox(height: RSSpacing.md),
 
             _MethodOption(
@@ -168,42 +186,96 @@ class _PaymentMethodScreenState extends ConsumerState<PaymentMethodScreen> {
               onTap: () => setState(() => _selectedMethod = 1),
             ).animate(delay: 200.ms).fadeIn(duration: 400.ms),
 
+            const SizedBox(height: RSSpacing.sm),
+
+            _MethodOption(
+              index: 2,
+              selectedIndex: _selectedMethod,
+              icon: Icons.flash_on_rounded,
+              title: 'Débito Inmediato',
+              subtitle: 'Cobro directo desde tu cuenta bancaria',
+              badge: 'Próximamente',
+              onTap: () => setState(() => _selectedMethod = 2),
+            ).animate(delay: 250.ms).fadeIn(duration: 400.ms),
+
             const SizedBox(height: RSSpacing.lg),
 
             // Method-specific details + form
             AnimatedSwitcher(
               duration: const Duration(milliseconds: 300),
-              child: _selectedMethod == 0
-                  ? _PagoMovilSection(
-                      key: const ValueKey(0),
-                      selectedBank: _selectedBank,
-                      onBankChanged: (b) =>
-                          setState(() => _selectedBank = b),
-                      referenceCtrl: _referenceCtrl,
-                      onReferenceChanged: (_) => setState(() {}),
-                    )
-                  : _BankTransferSection(
-                      key: const ValueKey(1),
-                      referenceCtrl: _referenceCtrl,
-                      onReferenceChanged: (_) => setState(() {}),
-                    ),
+              child: switch (_selectedMethod) {
+                0 => _PagoMovilSection(
+                  key: const ValueKey(0),
+                  selectedBank: _selectedBank,
+                  onBankChanged: (b) => setState(() => _selectedBank = b),
+                  referenceCtrl: _referenceCtrl,
+                  onReferenceChanged: (_) => setState(() {}),
+                ),
+                1 => _BankTransferSection(
+                  key: const ValueKey(1),
+                  referenceCtrl: _referenceCtrl,
+                  onReferenceChanged: (_) => setState(() {}),
+                ),
+                _ => const _DebitoInmediatoSection(key: ValueKey(2)),
+              },
             ).animate(delay: 250.ms).fadeIn(duration: 400.ms),
 
             const SizedBox(height: RSSpacing.xl),
 
             RSButton(
-              label: 'Confirmar pago',
-              isLoading: _isSubmitting,
-              onPressed: _canSubmit && !_isSubmitting ? _submit : null,
-            ).animate(delay: 400.ms).fadeIn(duration: 400.ms).slideY(begin: 0.2),
+                  label: _selectedMethod == 2
+                      ? 'Próximamente disponible'
+                      : 'Confirmar pago',
+                  isLoading: _isSubmitting,
+                  onPressed: _canSubmit && !_isSubmitting ? _submit : null,
+                )
+                .animate(delay: 400.ms)
+                .fadeIn(duration: 400.ms)
+                .slideY(begin: 0.2),
+
+            if (kDebugMode) ...[
+              const SizedBox(height: RSSpacing.sm),
+              Center(
+                child: TextButton.icon(
+                  onPressed: () {
+                    final bcvRate = ref
+                        .read(bcvRateProvider)
+                        .when(
+                          data: (r) => r,
+                          error: (_, __) => BcvRate.fallback,
+                          loading: () => BcvRate.fallback,
+                        );
+                    context.push(
+                      '/policy/emission',
+                      extra: {
+                        'plan': _plan,
+                        'paymentMethod': 'pago_movil_p2p',
+                        'pagoMovilReference': '000000DEV',
+                        'pagoMovilBankCode': '0134',
+                        'amountUsd': _plan.priceUsd,
+                        'amountVes': bcvRate.toVes(_plan.priceUsd),
+                        'exchangeRate': bcvRate.rate,
+                        'fromOnboarding': widget.fromOnboarding,
+                      },
+                    );
+                  },
+                  icon: const Icon(Icons.skip_next_rounded, size: 16),
+                  label: const Text('Omitir — DEV'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: RSColors.textSecondary,
+                  ),
+                ),
+              ),
+            ],
 
             const SizedBox(height: RSSpacing.md),
 
             Center(
               child: Text(
                 'Tu pago será verificado en menos de 24 horas',
-                style: RSTypography.caption
-                    .copyWith(color: RSColors.textSecondary),
+                style: RSTypography.caption.copyWith(
+                  color: RSColors.textSecondary,
+                ),
               ),
             ),
 
@@ -237,10 +309,12 @@ class _AmountSummary extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Text('Total a pagar',
-              style: RSTypography.bodyMedium.copyWith(
-                color: Colors.white.withValues(alpha: 0.7),
-              )),
+          Text(
+            'Total a pagar',
+            style: RSTypography.bodyMedium.copyWith(
+              color: Colors.white.withValues(alpha: 0.7),
+            ),
+          ),
           const SizedBox(height: RSSpacing.sm),
           Text(
             '\$ ${plan.priceUsd.toStringAsFixed(2)} USD',
@@ -262,16 +336,17 @@ class _AmountSummary extends StatelessWidget {
               ),
               if (isStale) ...[
                 const SizedBox(width: 4),
-                Icon(Icons.info_outline_rounded,
-                    size: 14,
-                    color: Colors.white.withValues(alpha: 0.5)),
+                Icon(
+                  Icons.info_outline_rounded,
+                  size: 14,
+                  color: Colors.white.withValues(alpha: 0.5),
+                ),
               ],
             ],
           ),
           const SizedBox(height: RSSpacing.md),
           Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(20),
@@ -299,6 +374,7 @@ class _MethodOption extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.onTap,
+    this.badge,
   });
 
   final int index;
@@ -307,6 +383,7 @@ class _MethodOption extends StatelessWidget {
   final String title;
   final String subtitle;
   final VoidCallback onTap;
+  final String? badge;
 
   bool get _isSelected => index == selectedIndex;
 
@@ -338,23 +415,59 @@ class _MethodOption extends StatelessWidget {
                     : RSColors.surfaceVariant,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(icon,
-                  color:
-                      _isSelected ? RSColors.primary : RSColors.textSecondary,
-                  size: 22),
+              child: Icon(
+                icon,
+                color: _isSelected ? RSColors.primary : RSColors.textSecondary,
+                size: 22,
+              ),
             ),
             const SizedBox(width: RSSpacing.md),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title,
-                      style: RSTypography.titleMedium.copyWith(
-                          color: RSColors.textPrimary,
-                          fontWeight: FontWeight.w600)),
-                  Text(subtitle,
-                      style: RSTypography.caption
-                          .copyWith(color: RSColors.textSecondary)),
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          title,
+                          style: RSTypography.titleMedium.copyWith(
+                            color: RSColors.textPrimary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      if (badge != null) ...[
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(
+                              0xFFFF6A1A,
+                            ).withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            badge!,
+                            style: RSTypography.caption.copyWith(
+                              color: const Color(0xFFFF6A1A),
+                              fontWeight: FontWeight.w600,
+                              fontSize: 9,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                  Text(
+                    subtitle,
+                    style: RSTypography.caption.copyWith(
+                      color: RSColors.textSecondary,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -368,12 +481,14 @@ class _MethodOption extends StatelessWidget {
                   color: _isSelected ? RSColors.primary : RSColors.border,
                   width: 2,
                 ),
-                color:
-                    _isSelected ? RSColors.primary : Colors.transparent,
+                color: _isSelected ? RSColors.primary : Colors.transparent,
               ),
               child: _isSelected
-                  ? const Icon(Icons.check_rounded,
-                      color: Colors.white, size: 14)
+                  ? const Icon(
+                      Icons.check_rounded,
+                      color: Colors.white,
+                      size: 14,
+                    )
                   : null,
             ),
           ],
@@ -407,12 +522,15 @@ class _PagoMovilSection extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Datos para Pago Móvil',
-                  style: RSTypography.titleMedium.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: RSColors.textPrimary,
-                  )),
+              Text(
+                'Datos para Pago Móvil',
+                style: RSTypography.titleMedium.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: RSColors.textPrimary,
+                ),
+              ),
               const SizedBox(height: RSSpacing.md),
+              // TODO(RS-100): Replace with real AZ Capital payment details before beta.
               _BankDataRow(label: 'Teléfono', value: '0424-1234567'),
               const Divider(height: RSSpacing.lg),
               _BankDataRow(label: 'Banco', value: 'Banesco'),
@@ -429,14 +547,18 @@ class _PagoMovilSection extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.info_outlined,
-                        color: RSColors.warning, size: 16),
+                    Icon(
+                      Icons.info_outlined,
+                      color: RSColors.warning,
+                      size: 16,
+                    ),
                     const SizedBox(width: RSSpacing.sm),
                     Expanded(
                       child: Text(
                         'Incluye "RUEDASEGURO-RCV" como concepto del pago',
-                        style: RSTypography.caption
-                            .copyWith(color: RSColors.warning),
+                        style: RSTypography.caption.copyWith(
+                          color: RSColors.warning,
+                        ),
                       ),
                     ),
                   ],
@@ -446,9 +568,10 @@ class _PagoMovilSection extends StatelessWidget {
           ),
         ),
         const SizedBox(height: RSSpacing.lg),
-        Text('Confirma tu pago',
-            style: RSTypography.titleLarge
-                .copyWith(color: RSColors.textPrimary)),
+        Text(
+          'Confirma tu pago',
+          style: RSTypography.titleLarge.copyWith(color: RSColors.textPrimary),
+        ),
         const SizedBox(height: RSSpacing.md),
         // Bank selector
         Container(
@@ -462,24 +585,32 @@ class _PagoMovilSection extends StatelessWidget {
               value: selectedBank,
               isExpanded: true,
               hint: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: RSSpacing.md),
-                child: Text('Selecciona tu banco',
-                    style: RSTypography.bodyMedium
-                        .copyWith(color: RSColors.textSecondary)),
+                padding: const EdgeInsets.symmetric(horizontal: RSSpacing.md),
+                child: Text(
+                  'Selecciona tu banco',
+                  style: RSTypography.bodyMedium.copyWith(
+                    color: RSColors.textSecondary,
+                  ),
+                ),
               ),
               dropdownColor: RSColors.surface,
               items: _kBanks
-                  .map((b) => DropdownMenuItem(
-                        value: b,
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: RSSpacing.md),
-                          child: Text('${b.code} — ${b.name}',
-                              style: RSTypography.bodyMedium
-                                  .copyWith(color: RSColors.textPrimary)),
+                  .map(
+                    (b) => DropdownMenuItem(
+                      value: b,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: RSSpacing.md,
                         ),
-                      ))
+                        child: Text(
+                          '${b.code} — ${b.name}',
+                          style: RSTypography.bodyMedium.copyWith(
+                            color: RSColors.textPrimary,
+                          ),
+                        ),
+                      ),
+                    ),
+                  )
                   .toList(),
               onChanged: onBankChanged,
             ),
@@ -519,17 +650,21 @@ class _BankTransferSection extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Datos de cuenta bancaria',
-                  style: RSTypography.titleMedium.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: RSColors.textPrimary,
-                  )),
+              Text(
+                'Datos de cuenta bancaria',
+                style: RSTypography.titleMedium.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: RSColors.textPrimary,
+                ),
+              ),
               const SizedBox(height: RSSpacing.md),
+              // TODO(RS-100): Replace with real AZ Capital bank account before beta.
               _BankDataRow(label: 'Banco', value: 'Banco Provincial'),
               const Divider(height: RSSpacing.lg),
               _BankDataRow(
-                  label: 'Cuenta corriente',
-                  value: '0108-0000-12-0012345678'),
+                label: 'Cuenta corriente',
+                value: '0108-0000-12-0012345678',
+              ),
               const Divider(height: RSSpacing.lg),
               _BankDataRow(label: 'Beneficiario', value: 'AZ Capital C.A.'),
               const Divider(height: RSSpacing.lg),
@@ -538,9 +673,10 @@ class _BankTransferSection extends StatelessWidget {
           ),
         ),
         const SizedBox(height: RSSpacing.lg),
-        Text('Confirma tu pago',
-            style: RSTypography.titleLarge
-                .copyWith(color: RSColors.textPrimary)),
+        Text(
+          'Confirma tu pago',
+          style: RSTypography.titleLarge.copyWith(color: RSColors.textPrimary),
+        ),
         const SizedBox(height: RSSpacing.md),
         RSTextField(
           label: 'Número de referencia',
@@ -565,16 +701,154 @@ class _BankDataRow extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label,
-            style: RSTypography.bodyMedium
-                .copyWith(color: RSColors.textSecondary)),
-        Text(value,
-            style: RSTypography.mono.copyWith(
-              fontSize: 13,
-              color: RSColors.textPrimary,
-              fontWeight: FontWeight.w600,
-            )),
+        Text(
+          label,
+          style: RSTypography.bodyMedium.copyWith(
+            color: RSColors.textSecondary,
+          ),
+        ),
+        Text(
+          value,
+          style: RSTypography.mono.copyWith(
+            fontSize: 13,
+            color: RSColors.textPrimary,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
       ],
+    );
+  }
+}
+
+// ─── RS-100: Débito Inmediato (stub — pending bank integration) ────
+class _DebitoInmediatoSection extends StatelessWidget {
+  const _DebitoInmediatoSection({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return RSCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFF6A1A).withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.flash_on_rounded,
+                  color: Color(0xFFFF6A1A),
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: RSSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Débito Inmediato',
+                      style: RSTypography.titleMedium.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: RSColors.textPrimary,
+                      ),
+                    ),
+                    Text(
+                      'Integración con banca en curso',
+                      style: RSTypography.caption.copyWith(
+                        color: RSColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: RSSpacing.md),
+          const Divider(height: 1),
+          const SizedBox(height: RSSpacing.md),
+          Text(
+            'Este método permitirá cobrar directamente desde tu cuenta '
+            'bancaria en tiempo real, sin necesidad de realizar una '
+            'transferencia manual.',
+            style: RSTypography.bodyMedium.copyWith(
+              color: RSColors.textSecondary,
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: RSSpacing.md),
+          _FeatureRow(
+            icon: Icons.timer_outlined,
+            text: 'Activación de póliza instantánea',
+          ),
+          _FeatureRow(
+            icon: Icons.security_rounded,
+            text: 'Sin necesidad de ingresar número de referencia',
+          ),
+          _FeatureRow(
+            icon: Icons.account_balance_rounded,
+            text: 'Compatible con los principales bancos venezolanos',
+          ),
+          const SizedBox(height: RSSpacing.md),
+          Container(
+            padding: const EdgeInsets.all(RSSpacing.sm),
+            decoration: BoxDecoration(
+              color: RSColors.warning.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(RSRadius.sm),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.info_outline_rounded,
+                  color: RSColors.warning,
+                  size: 16,
+                ),
+                const SizedBox(width: RSSpacing.sm),
+                Expanded(
+                  child: Text(
+                    'Disponible próximamente. Por ahora usa Pago Móvil o Transferencia.',
+                    style: RSTypography.caption.copyWith(
+                      color: RSColors.warning,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FeatureRow extends StatelessWidget {
+  const _FeatureRow({required this.icon, required this.text});
+  final IconData icon;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: RSSpacing.sm),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: RSColors.primary, size: 16),
+          const SizedBox(width: RSSpacing.sm),
+          Expanded(
+            child: Text(
+              text,
+              style: RSTypography.bodyMedium.copyWith(
+                color: RSColors.textPrimary,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

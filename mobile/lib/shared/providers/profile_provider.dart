@@ -12,6 +12,7 @@ class ProfileSummary {
   final String idType;
   final String idNumber;
   final String phone;
+  final String? email; // from Supabase Auth — null for phone-only signups
   // Extended fields for the profile screen
   final String? dateOfBirth;
   final String? ciudad;
@@ -27,6 +28,7 @@ class ProfileSummary {
     required this.idType,
     required this.idNumber,
     required this.phone,
+    this.email,
     this.dateOfBirth,
     this.ciudad,
     this.estado,
@@ -46,19 +48,19 @@ class ProfileSummary {
   }
 
   factory ProfileSummary.fromMap(Map<String, dynamic> m) => ProfileSummary(
-        id: m['id'] as String,
-        firstName: m['first_name'] as String? ?? '',
-        lastName: m['last_name'] as String? ?? '',
-        idType: m['id_type'] as String? ?? 'V',
-        idNumber: m['id_number'] as String? ?? '',
-        phone: m['phone'] as String? ?? '',
-        dateOfBirth: m['date_of_birth'] as String?,
-        ciudad: m['ciudad'] as String?,
-        estado: m['estado'] as String?,
-        emergencyName: m['emergency_name'] as String?,
-        emergencyPhone: m['emergency_phone'] as String?,
-        emergencyRelation: m['emergency_relation'] as String?,
-      );
+    id: m['id'] as String,
+    firstName: m['first_name'] as String? ?? '',
+    lastName: m['last_name'] as String? ?? '',
+    idType: m['id_type'] as String? ?? 'V',
+    idNumber: m['id_number'] as String? ?? '',
+    phone: m['phone'] as String? ?? '',
+    dateOfBirth: m['date_of_birth'] as String?,
+    ciudad: m['ciudad'] as String?,
+    estado: m['estado'] as String?,
+    emergencyName: m['emergency_name'] as String?,
+    emergencyPhone: m['emergency_phone'] as String?,
+    emergencyRelation: m['emergency_relation'] as String?,
+  );
 }
 
 final profileProvider = FutureProvider<ProfileSummary?>((ref) async {
@@ -77,7 +79,27 @@ final profileProvider = FutureProvider<ProfileSummary?>((ref) async {
       .maybeSingle();
 
   if (row == null) return null;
-  return ProfileSummary.fromMap(row as Map<String, dynamic>);
+  final profile = ProfileSummary.fromMap(row);
+  // Inject email from Supabase Auth (not stored in the profiles table)
+  final authEmail = SupabaseService.auth.currentUser?.email;
+  if (authEmail != null && authEmail.isNotEmpty) {
+    return ProfileSummary(
+      id: profile.id,
+      firstName: profile.firstName,
+      lastName: profile.lastName,
+      idType: profile.idType,
+      idNumber: profile.idNumber,
+      phone: profile.phone,
+      email: authEmail,
+      dateOfBirth: profile.dateOfBirth,
+      ciudad: profile.ciudad,
+      estado: profile.estado,
+      emergencyName: profile.emergencyName,
+      emergencyPhone: profile.emergencyPhone,
+      emergencyRelation: profile.emergencyRelation,
+    );
+  }
+  return profile;
 });
 
 // ─── Vehicle ─────────────────────────────────────────────────────
@@ -102,14 +124,14 @@ class VehicleSummary {
   });
 
   factory VehicleSummary.fromMap(Map<String, dynamic> m) => VehicleSummary(
-        id: m['id'] as String,
-        brand: m['brand'] as String? ?? '',
-        model: m['model'] as String? ?? '',
-        year: m['year'] as int? ?? 0,
-        plate: m['plate'] as String? ?? '',
-        color: m['color'] as String? ?? '',
-        serialMotor: m['serial_motor'] as String?,
-      );
+    id: m['id'] as String,
+    brand: m['brand'] as String? ?? '',
+    model: m['model'] as String? ?? '',
+    year: m['year'] as int? ?? 0,
+    plate: m['plate'] as String? ?? '',
+    color: m['color'] as String? ?? '',
+    serialMotor: m['serial_motor'] as String?,
+  );
 }
 
 final vehicleProvider = FutureProvider<VehicleSummary?>((ref) async {
@@ -124,5 +146,5 @@ final vehicleProvider = FutureProvider<VehicleSummary?>((ref) async {
       .maybeSingle();
 
   if (row == null) return null;
-  return VehicleSummary.fromMap(row as Map<String, dynamic>);
+  return VehicleSummary.fromMap(row);
 });

@@ -24,7 +24,8 @@ migrate_working_dir/
 #.vscode/
 
 # App secrets (never commit real credentials)
-lib/core/config/env_config.dart
+# Note: env_config.dart is now safe to track — all defaults are empty strings.
+# Real values are provided via --dart-define at build time.
 
 # Flutter/Dart/Pub related
 **/doc/api/

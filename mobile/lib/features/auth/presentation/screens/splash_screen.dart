@@ -15,43 +15,21 @@ class SplashScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Logo / Brand mark
-            Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                color: RSColors.accent,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: const Icon(
-                Icons.shield_rounded,
-                color: Colors.white,
-                size: 48,
-              ),
-            )
+            Image.asset(
+                  'assets/images/logo.png',
+                  width: 220,
+                  fit: BoxFit.contain,
+                )
                 .animate()
                 .fadeIn(duration: 600.ms)
-                .scale(begin: const Offset(0.8, 0.8)),
-            const SizedBox(height: 20),
-            Text(
-              'RuedaSeguro',
-              style: RSTypography.displayMedium.copyWith(
-                color: Colors.white,
-                letterSpacing: 0.5,
-              ),
-            )
-                .animate(delay: 200.ms)
-                .fadeIn(duration: 500.ms)
-                .slideY(begin: 0.2, end: 0),
-            const SizedBox(height: 8),
+                .scale(begin: const Offset(0.85, 0.85)),
+            const SizedBox(height: 24),
             Text(
               'Si te caes, no estás solo.',
               style: RSTypography.bodyMedium.copyWith(
                 color: Colors.white.withValues(alpha: 0.7),
               ),
-            )
-                .animate(delay: 400.ms)
-                .fadeIn(duration: 500.ms),
+            ).animate(delay: 300.ms).fadeIn(duration: 500.ms),
             const SizedBox(height: 48),
             SizedBox(
               width: 24,
@@ -62,9 +40,7 @@ class SplashScreen extends StatelessWidget {
                   Colors.white.withValues(alpha: 0.6),
                 ),
               ),
-            )
-                .animate(delay: 600.ms)
-                .fadeIn(duration: 400.ms),
+            ).animate(delay: 600.ms).fadeIn(duration: 400.ms),
           ],
         ),
       ),

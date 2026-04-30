@@ -1,5 +1,7 @@
 # RuedaSeguro — Technical Progress Report
+
 ## Sprint 3 — Policy Lifecycle, Real Claims, Tickets & Observability
+
 **As of:** 2026-03-29 | **Prepared by:** Engineering
 **Continues from:** `docs/PROGRESS_REPORT_SPRINTS_1_2A_2B.md`
 
@@ -35,26 +37,26 @@ Sprint 3 closes the policy lifecycle loop and introduces real data writes for ev
 
 ### Completed tickets
 
-| Ticket | Description | Status |
-|--------|-------------|--------|
-| RS-060 | Carrier API client interface + Seguros Pirámide stub | ✅ Interface built; stub active; real client awaiting William's docs |
-| RS-061 | Policy issuance state machine (provisional → confirmed) | ✅ Full state machine with DB transitions and audit trail |
-| RS-062 | Emission screen: confirmed vs provisional flow | ✅ 4-step loading, confirmed/provisional states, carrier fallback |
-| RS-066 | Renewal reminder Edge Function | ✅ Deployed; Pago Móvil deep-link generation; audit events |
-| RS-067 | Real claim submission with photo evidence | ✅ Full camera flow, Supabase writes, schema enhanced |
-| RS-068 | Support ticket creation | ✅ 5-category screen, TicketRepository, route wired |
-| RS-070 | Sentry Flutter initialization | ✅ Conditional on SENTRY_DSN dart-define; screenshots + hierarchy |
-| RS-071 | Telemetry buffer service (SQLite) | ✅ 15-min ring buffer; sensor activation deferred to Phase 1.5 |
-| RS-073 | Admin portal deprecation | ✅ DEPRECATED.md committed; CI/CD pointing frozen |
+| Ticket | Description                                             | Status                                                               |
+| ------ | ------------------------------------------------------- | -------------------------------------------------------------------- |
+| RS-060 | Carrier API client interface + Seguros Pirámide stub    | ✅ Interface built; stub active; real client awaiting William's docs |
+| RS-061 | Policy issuance state machine (provisional → confirmed) | ✅ Full state machine with DB transitions and audit trail            |
+| RS-062 | Emission screen: confirmed vs provisional flow          | ✅ 4-step loading, confirmed/provisional states, carrier fallback    |
+| RS-066 | Renewal reminder Edge Function                          | ✅ Deployed; Pago Móvil deep-link generation; audit events           |
+| RS-067 | Real claim submission with photo evidence               | ✅ Full camera flow, Supabase writes, schema enhanced                |
+| RS-068 | Support ticket creation                                 | ✅ 5-category screen, TicketRepository, route wired                  |
+| RS-070 | Sentry Flutter initialization                           | ✅ Conditional on SENTRY_DSN dart-define; screenshots + hierarchy    |
+| RS-071 | Telemetry buffer service (SQLite)                       | ✅ 15-min ring buffer; sensor activation deferred to Phase 1.5       |
+| RS-073 | Admin portal deprecation                                | ✅ DEPRECATED.md committed; CI/CD pointing frozen                    |
 
 ### Deferred to Sprint 4 (external dependencies)
 
-| Ticket | Blocker |
-|--------|---------|
-| RS-060 (real) | William's Acsel/Sirway sandbox credentials and API docs pending |
-| RS-063 | MessageBird already live — Twilio reference in earlier planning docs was incorrect; no action needed |
-| RS-059 | MQTT client — low priority; Thony's platform uses Supabase Realtime as fallback |
-| RS-065 | Push notifications — Firebase `google-services.json` (Android) + `GoogleService-Info.plist` (iOS) not yet configured |
+| Ticket        | Blocker                                                                                                              |
+| ------------- | -------------------------------------------------------------------------------------------------------------------- |
+| RS-060 (real) | William's Acsel/Sirway sandbox credentials and API docs pending                                                      |
+| RS-063        | MessageBird already live — Twilio reference in earlier planning docs was incorrect; no action needed                 |
+| RS-059        | MQTT client — low priority; Thony's platform uses Supabase Realtime as fallback                                      |
+| RS-065        | Push notifications — Firebase `google-services.json` (Android) + `GoogleService-Info.plist` (iOS) not yet configured |
 
 ---
 
@@ -89,17 +91,17 @@ admin-portal/
 
 ### Modified files (Sprint 3)
 
-| File | Changes |
-|------|---------|
-| `mobile/lib/app/router.dart` | Added `/support/new-ticket` → `CreateTicketScreen()` |
-| `mobile/lib/main.dart` | Wrapped `runApp` in `SentryFlutter.init()` |
-| `mobile/pubspec.yaml` | Added `sentry_flutter: ^8.0.0`; `sqflite_common_ffi: ^2.3.4` (dev) |
-| `mobile/lib/core/config/env_config.dart` | Added `sentryDsn` dart-define |
-| `mobile/lib/core/constants/supabase_constants.dart` | Added Sprint 3 table + Edge Function constants |
-| `mobile/lib/features/claims/presentation/screens/new_claim_screen.dart` | Full rewrite: stub → real ConsumerStatefulWidget |
-| `mobile/lib/features/policy/presentation/screens/emission_screen.dart` | Carrier integration, confirmed state, `fetchVehiclePlate` |
-| `mobile/lib/features/policy/presentation/screens/policy_detail_screen.dart` | `_ProvisionalBanner` widget |
-| `mobile/lib/features/policy/data/policy_repository.dart` | Added `fetchVehiclePlate(vehicleId)` |
+| File                                                                        | Changes                                                            |
+| --------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| `mobile/lib/app/router.dart`                                                | Added `/support/new-ticket` → `CreateTicketScreen()`               |
+| `mobile/lib/main.dart`                                                      | Wrapped `runApp` in `SentryFlutter.init()`                         |
+| `mobile/pubspec.yaml`                                                       | Added `sentry_flutter: ^8.0.0`; `sqflite_common_ffi: ^2.3.4` (dev) |
+| `mobile/lib/core/config/env_config.dart`                                    | Added `sentryDsn` dart-define                                      |
+| `mobile/lib/core/constants/supabase_constants.dart`                         | Added Sprint 3 table + Edge Function constants                     |
+| `mobile/lib/features/claims/presentation/screens/new_claim_screen.dart`     | Full rewrite: stub → real ConsumerStatefulWidget                   |
+| `mobile/lib/features/policy/presentation/screens/emission_screen.dart`      | Carrier integration, confirmed state, `fetchVehiclePlate`          |
+| `mobile/lib/features/policy/presentation/screens/policy_detail_screen.dart` | `_ProvisionalBanner` widget                                        |
+| `mobile/lib/features/policy/data/policy_repository.dart`                    | Added `fetchVehiclePlate(vehicleId)`                               |
 
 ### Updated data flow
 
@@ -319,21 +321,21 @@ Each step animates in with a `CircularProgressIndicator` and `FadeIn + SlideX` v
 
 ### AppBar title by state
 
-| State | Title | Color |
-|-------|-------|-------|
-| `confirmed` | "Póliza confirmada" | `RSColors.success` |
-| `success` | "Póliza registrada" | `RSColors.success` |
-| `observed` | "Requiere corrección" | `Color(0xFFE65100)` (deep orange) |
-| `rejected` | "Error de emisión" | `RSColors.error` |
+| State       | Title                 | Color                             |
+| ----------- | --------------------- | --------------------------------- |
+| `confirmed` | "Póliza confirmada"   | `RSColors.success`                |
+| `success`   | "Póliza registrada"   | `RSColors.success`                |
+| `observed`  | "Requiere corrección" | `Color(0xFFE65100)` (deep orange) |
+| `rejected`  | "Error de emisión"    | `RSColors.error`                  |
 
 ### `_SuccessView` changes
 
 New `isConfirmed: bool` parameter:
 
-| `isConfirmed` | Headline | Body copy |
-|---|---|---|
-| `true` | "¡Póliza confirmada!" | "Tu póliza fue registrada y confirmada por la aseguradora. Ya tienes cobertura RCV activa." |
-| `false` | "¡Solicitud registrada!" | "Tu póliza provisional está registrada. Verificaremos tu pago en menos de 24 horas y la activaremos." |
+| `isConfirmed` | Headline                 | Body copy                                                                                             |
+| ------------- | ------------------------ | ----------------------------------------------------------------------------------------------------- |
+| `true`        | "¡Póliza confirmada!"    | "Tu póliza fue registrada y confirmada por la aseguradora. Ya tienes cobertura RCV activa."           |
+| `false`       | "¡Solicitud registrada!" | "Tu póliza provisional está registrada. Verificaremos tu pago en menos de 24 horas y la activaremos." |
 
 The `_PolicyPreviewCard` inside `_SuccessView` continues to show the `PROVISIONAL` amber badge and "Activación en ≤ 24 h" footer regardless of `isConfirmed` — the card represents what was shown during the loading phase before the carrier response arrived.
 
@@ -393,6 +395,7 @@ if (policy != null && policy!.isProvisional)
 ```
 
 **Visual design:**
+
 - Background: `Color(0xFFFFF3E0)` (amber 50)
 - Border: 1px `Color(0xFFFFB300)` (amber), radius 12
 - Leading icon: `Icons.hourglass_top_rounded` (amber)
@@ -413,15 +416,15 @@ All additions use `ADD COLUMN IF NOT EXISTS` for idempotency. Run after the base
 
 **`claims` table additions:**
 
-| Column | Type | Notes |
-|--------|------|-------|
-| `claim_number` | `TEXT UNIQUE` | Auto-assigned: `SIN-{year}-{6-char-UUID-prefix}` |
-| `incident_type` | `TEXT` | `'colision'` \| `'dano_tercero'` \| `'robo'` \| `'lesiones'` |
-| `location` | `TEXT` | Free-text location of incident |
-| `has_injuries` | `BOOLEAN NOT NULL DEFAULT false` | Whether people were injured |
-| `incident_at` | `TIMESTAMPTZ` | When the incident occurred (user-selected) |
-| `archived_at` | `TIMESTAMPTZ` | Soft-delete timestamp |
-| `retain_until` | `DATE` | Auto-computed: `created_at + 7 years` (SUDEASEG requirement) |
+| Column          | Type                             | Notes                                                        |
+| --------------- | -------------------------------- | ------------------------------------------------------------ |
+| `claim_number`  | `TEXT UNIQUE`                    | Auto-assigned: `SIN-{year}-{6-char-UUID-prefix}`             |
+| `incident_type` | `TEXT`                           | `'colision'` \| `'dano_tercero'` \| `'robo'` \| `'lesiones'` |
+| `location`      | `TEXT`                           | Free-text location of incident                               |
+| `has_injuries`  | `BOOLEAN NOT NULL DEFAULT false` | Whether people were injured                                  |
+| `incident_at`   | `TIMESTAMPTZ`                    | When the incident occurred (user-selected)                   |
+| `archived_at`   | `TIMESTAMPTZ`                    | Soft-delete timestamp                                        |
+| `retain_until`  | `DATE`                           | Auto-computed: `created_at + 7 years` (SUDEASEG requirement) |
 
 **`retain_until` trigger:**
 
@@ -448,10 +451,10 @@ CREATE INDEX IF NOT EXISTS idx_claims_policy  ON claims (policy_id) WHERE policy
 
 **`claim_evidence` table additions:**
 
-| Column | Type | Notes |
-|--------|------|-------|
+| Column          | Type                   | Notes                                  |
+| --------------- | ---------------------- | -------------------------------------- |
 | `evidence_type` | `TEXT DEFAULT 'photo'` | `'photo'` \| `'document'` \| `'video'` |
-| `file_url` | `TEXT` | Public URL from Supabase Storage |
+| `file_url`      | `TEXT`                 | Public URL from Supabase Storage       |
 
 ### 7.2 `ClaimRepository`
 
@@ -619,13 +622,13 @@ Future<List<Map<String, dynamic>>> fetchRiderTickets(String riderId)
 
 #### Category tiles
 
-| Category | Icon | Color | Priority label |
-|----------|------|-------|----------------|
-| Pago | `payment_rounded` | Red | CRÍTICO |
-| Póliza | `policy_rounded` | Orange | ALTO |
-| Siniestro | `car_crash_rounded` | Orange | ALTO |
-| App | `phone_android_rounded` | Teal | MEDIO |
-| Otro | `help_outline_rounded` | Grey | BAJO |
+| Category  | Icon                    | Color  | Priority label |
+| --------- | ----------------------- | ------ | -------------- |
+| Pago      | `payment_rounded`       | Red    | CRÍTICO        |
+| Póliza    | `policy_rounded`        | Orange | ALTO           |
+| Siniestro | `car_crash_rounded`     | Orange | ALTO           |
+| App       | `phone_android_rounded` | Teal   | MEDIO          |
+| Otro      | `help_outline_rounded`  | Grey   | BAJO           |
 
 Each tile shows the priority badge inline. Selecting a tile rebuilds the form with the corresponding `category` and `priority`.
 
@@ -686,17 +689,17 @@ static const sentryDsn = String.fromEnvironment('SENTRY_DSN', defaultValue: '');
 
 ### Configuration details
 
-| Option | Dev | Production |
-|--------|-----|------------|
-| `tracesSampleRate` | `1.0` (100% of transactions) | `0.1` (10%) |
-| `environment` | `'development'` | `'production'` |
-| `attachScreenshot` | `true` | `true` |
-| `attachViewHierarchy` | `true` | `true` |
+| Option                | Dev                          | Production     |
+| --------------------- | ---------------------------- | -------------- |
+| `tracesSampleRate`    | `1.0` (100% of transactions) | `0.1` (10%)    |
+| `environment`         | `'development'`              | `'production'` |
+| `attachScreenshot`    | `true`                       | `true`         |
+| `attachViewHierarchy` | `true`                       | `true`         |
 
 ### Credential table update
 
-| Secret | Location | Never in |
-|--------|----------|---------|
+| Secret       | Location             | Never in       |
+| ------------ | -------------------- | -------------- |
 | `SENTRY_DSN` | `.env` (dart-define) | Git, hardcoded |
 
 ---
@@ -742,15 +745,15 @@ Full `toMap()` / `fromMap()` roundtrip support.
 
 ### `TelemetryBufferService` API
 
-| Method | Description |
-|--------|-------------|
-| `init()` | Opens SQLite DB; idempotent (no-op if already open) |
-| `insertSample({gForce, latitude, longitude, altitudeM, speedKmh})` | Inserts one row; auto-prunes every 50 inserts |
-| `getWindow([Duration? window])` | Returns samples within `window` (default 15 min), sorted `recorded_at ASC` |
-| `pruneOlderThan(Duration maxAge)` | Deletes rows where `recorded_at < now() - maxAge` |
-| `clear()` | Truncates the table (call after successful upload) |
-| `sampleCount` getter | `SELECT COUNT(*) FROM anomaly_queue` |
-| `peakGForce` getter | `SELECT MAX(g_force) FROM anomaly_queue WHERE g_force IS NOT NULL` |
+| Method                                                             | Description                                                                |
+| ------------------------------------------------------------------ | -------------------------------------------------------------------------- |
+| `init()`                                                           | Opens SQLite DB; idempotent (no-op if already open)                        |
+| `insertSample({gForce, latitude, longitude, altitudeM, speedKmh})` | Inserts one row; auto-prunes every 50 inserts                              |
+| `getWindow([Duration? window])`                                    | Returns samples within `window` (default 15 min), sorted `recorded_at ASC` |
+| `pruneOlderThan(Duration maxAge)`                                  | Deletes rows where `recorded_at < now() - maxAge`                          |
+| `clear()`                                                          | Truncates the table (call after successful upload)                         |
+| `sampleCount` getter                                               | `SELECT COUNT(*) FROM anomaly_queue`                                       |
+| `peakGForce` getter                                                | `SELECT MAX(g_force) FROM anomaly_queue WHERE g_force IS NOT NULL`         |
 
 ### Auto-prune
 
@@ -878,7 +881,7 @@ static const String fnRenewalReminder  = 'renewal-reminder';
 
 ```typescript
 function callCarrierApi(policyId: string, plate: string): string {
-  return `ACL-${plate.replace(/-/g, '')}-${Math.floor(Date.now() / 1000)}`;
+  return `ACL-${plate.replace(/-/g, "")}-${Math.floor(Date.now() / 1000)}`;
 }
 ```
 
@@ -891,11 +894,11 @@ function callCarrierApi(policyId: string, plate: string): string {
 
 **Pago Móvil configuration (env vars):**
 
-| Var | Default | Description |
-|-----|---------|-------------|
-| `AZ_PAGO_MOVIL_PHONE` | `04120000000` | AZ Capital's Pago Móvil phone number |
-| `AZ_PAGO_MOVIL_BANK_CODE` | `0134` | AZ Capital's bank code |
-| `AZ_COMPANY_RIF` | `J-XXXXXXXXX-X` | AZ Capital's RIF |
+| Var                       | Default         | Description                          |
+| ------------------------- | --------------- | ------------------------------------ |
+| `AZ_PAGO_MOVIL_PHONE`     | `04120000000`   | AZ Capital's Pago Móvil phone number |
+| `AZ_PAGO_MOVIL_BANK_CODE` | `0134`          | AZ Capital's bank code               |
+| `AZ_COMPANY_RIF`          | `J-XXXXXXXXX-X` | AZ Capital's RIF                     |
 
 **Pago Móvil deep-link format:**
 
@@ -944,15 +947,15 @@ Decision recorded on 2026-03-24 in meeting with Diego, Fernando, Thony, Alex, Wi
 
 **What replaces it:** Thony's React + Node.js platform with 7 RuedaSeguro-branded portals:
 
-| Portal | Audience |
-|--------|----------|
-| Management Overview | Executive / founders |
-| Insurance Partner | Seguros Pirámide ops team |
-| Venemergencia Dispatch | Ambulance coordination |
-| Clinical Care | Triage + discharge tracking |
-| Broker Pipeline | Corredores de Seguros |
-| Customer Ops Desk | Call center / support agents |
-| Administration | System configuration |
+| Portal                 | Audience                     |
+| ---------------------- | ---------------------------- |
+| Management Overview    | Executive / founders         |
+| Insurance Partner      | Seguros Pirámide ops team    |
+| Venemergencia Dispatch | Ambulance coordination       |
+| Clinical Care          | Triage + discharge tracking  |
+| Broker Pipeline        | Corredores de Seguros        |
+| Customer Ops Desk      | Call center / support agents |
+| Administration         | System configuration         |
 
 **Our obligation:** The Flutter app and Supabase backend publish clean events via Supabase Realtime (and MQTT in Phase 1.5) that Thony's platform consumes. The event contract is in `docs/MVP_PLAN_v3.md` section 4.2.
 
@@ -1018,17 +1021,17 @@ auth.uid()::text = (storage.foldername(name))[1]
 
 All audit events use `AuditRepository.instance.logEvent()` — fire-and-forget, errors swallowed.
 
-| Event | Table | Emitter | Payload |
-|-------|-------|---------|---------|
-| `policy.provisional_created` | `policies` | `EmissionScreen._emit()` | `tier`, `premium_usd` |
-| `payment.submitted` | `payments` | `EmissionScreen._emit()` | `policy_id`, `method`, `amount_usd` |
-| `policy.api_submitted` | `policies` | `PolicyIssuanceService.attemptIssuance()` | `attempt_number` |
-| `policy.confirmed` | `policies` | `PolicyIssuanceService.attemptIssuance()` | `carrier_policy_number` |
-| `policy.issuance_failed` | `policies` | `PolicyIssuanceService.attemptIssuance()` | `reason` |
-| `claim.reported` | `claims` | `NewClaimScreen._submit()` | `type`, `has_injuries`, `photos` |
-| `policy.retry_confirmed` | `policies` | `policy-retry` Edge Function | `carrier_policy_number`, `attempt` |
-| `policy.retry_failed` | `policies` | `policy-retry` Edge Function | `attempt`, `max_attempts`, `ticket_id` |
-| `policy.renewal_link_created` | `policies` | `renewal-reminder` Edge Function | `days_remaining`, `tier`, `renewal_reference` |
+| Event                         | Table      | Emitter                                   | Payload                                       |
+| ----------------------------- | ---------- | ----------------------------------------- | --------------------------------------------- |
+| `policy.provisional_created`  | `policies` | `EmissionScreen._emit()`                  | `tier`, `premium_usd`                         |
+| `payment.submitted`           | `payments` | `EmissionScreen._emit()`                  | `policy_id`, `method`, `amount_usd`           |
+| `policy.api_submitted`        | `policies` | `PolicyIssuanceService.attemptIssuance()` | `attempt_number`                              |
+| `policy.confirmed`            | `policies` | `PolicyIssuanceService.attemptIssuance()` | `carrier_policy_number`                       |
+| `policy.issuance_failed`      | `policies` | `PolicyIssuanceService.attemptIssuance()` | `reason`                                      |
+| `claim.reported`              | `claims`   | `NewClaimScreen._submit()`                | `type`, `has_injuries`, `photos`              |
+| `policy.retry_confirmed`      | `policies` | `policy-retry` Edge Function              | `carrier_policy_number`, `attempt`            |
+| `policy.retry_failed`         | `policies` | `policy-retry` Edge Function              | `attempt`, `max_attempts`, `ticket_id`        |
+| `policy.renewal_link_created` | `policies` | `renewal-reminder` Edge Function          | `days_remaining`, `tier`, `renewal_reference` |
 
 ---
 
@@ -1036,17 +1039,17 @@ All audit events use `AuditRepository.instance.logEvent()` — fire-and-forget, 
 
 ### New automated tests (Sprint 3)
 
-| File | Test count | Coverage |
-|------|-----------|----------|
-| `test/features/policy/domain/issuance_result_test.dart` | 9 | `IssuanceResult.confirmed` / `.provisional` factories; `isConfirmed` getter; null/non-null fields |
-| `test/features/telemetry/services/telemetry_buffer_service_test.dart` | 18 | Empty buffer, insert, sampleCount, getWindow (wide + narrow window), ordering, pruneOlderThan (recent + old), clear, peakGForce (max, null, all-null), `TelemetrySample.fromMap/toMap` roundtrip |
+| File                                                                  | Test count | Coverage                                                                                                                                                                                         |
+| --------------------------------------------------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `test/features/policy/domain/issuance_result_test.dart`               | 9          | `IssuanceResult.confirmed` / `.provisional` factories; `isConfirmed` getter; null/non-null fields                                                                                                |
+| `test/features/telemetry/services/telemetry_buffer_service_test.dart` | 18         | Empty buffer, insert, sampleCount, getWindow (wide + narrow window), ordering, pruneOlderThan (recent + old), clear, peakGForce (max, null, all-null), `TelemetrySample.fromMap/toMap` roundtrip |
 
 **New dev dependency for telemetry tests:**
 
 ```yaml
 # pubspec.yaml
 dev_dependencies:
-  sqflite_common_ffi: ^2.3.4   # ← allows sqflite to run in Flutter test environment (no native plugin)
+  sqflite_common_ffi: ^2.3.4 # ← allows sqflite to run in Flutter test environment (no native plugin)
 ```
 
 **Test setup pattern:**
@@ -1081,17 +1084,17 @@ setUp(() async {
 
 ### Full test suite (cumulative)
 
-| Category | Files | Approx. test cases |
-|----------|-------|--------------------|
-| Core utils (Sprint 1) | 4 | ~50 |
-| OCR parsers (Sprint 1) | 3 + cross-validator | ~40 |
-| Onboarding widgets (Sprint 1) | 4 | ~20 |
-| Policy domain model (Sprint 2B) | 1 | ~18 |
-| PDF service (Sprint 2B) | 1 | ~5 |
-| Product selection screen (Sprint 2B) | 1 | ~4 |
-| `IssuanceResult` (Sprint 3) | 1 | 9 |
-| `TelemetryBufferService` (Sprint 3) | 1 | 18 |
-| **Total** | **16** | **~164** |
+| Category                             | Files               | Approx. test cases |
+| ------------------------------------ | ------------------- | ------------------ |
+| Core utils (Sprint 1)                | 4                   | ~50                |
+| OCR parsers (Sprint 1)               | 3 + cross-validator | ~40                |
+| Onboarding widgets (Sprint 1)        | 4                   | ~20                |
+| Policy domain model (Sprint 2B)      | 1                   | ~18                |
+| PDF service (Sprint 2B)              | 1                   | ~5                 |
+| Product selection screen (Sprint 2B) | 1                   | ~4                 |
+| `IssuanceResult` (Sprint 3)          | 1                   | 9                  |
+| `TelemetryBufferService` (Sprint 3)  | 1                   | 18                 |
+| **Total**                            | **16**              | **~164**           |
 
 Run all:
 
@@ -1107,14 +1110,14 @@ flutter test --reporter expanded
 
 ### New credentials (Sprint 3)
 
-| Secret | Location | Never in |
-|--------|----------|---------|
-| `SENTRY_DSN` | `.env` (dart-define) | Git, hardcoded |
-| `AZ_PAGO_MOVIL_PHONE` | Supabase project env vars | Mobile app |
-| `AZ_PAGO_MOVIL_BANK_CODE` | Supabase project env vars | Mobile app |
-| `AZ_COMPANY_RIF` | Supabase project env vars | Mobile app |
-| `CRON_SECRET` | Supabase project env vars | Mobile app |
-| `ACSEL_API_KEY` (future) | Supabase Vault | Any file, env var |
+| Secret                    | Location                  | Never in          |
+| ------------------------- | ------------------------- | ----------------- |
+| `SENTRY_DSN`              | `.env` (dart-define)      | Git, hardcoded    |
+| `AZ_PAGO_MOVIL_PHONE`     | Supabase project env vars | Mobile app        |
+| `AZ_PAGO_MOVIL_BANK_CODE` | Supabase project env vars | Mobile app        |
+| `AZ_COMPANY_RIF`          | Supabase project env vars | Mobile app        |
+| `CRON_SECRET`             | Supabase project env vars | Mobile app        |
+| `ACSEL_API_KEY` (future)  | Supabase Vault            | Any file, env var |
 
 ### Storage RLS — claim photos
 
@@ -1150,27 +1153,27 @@ const apiKey = await supabase.rpc('vault.decrypted_secret', { secret_name: 'ACSE
 
 ### Current limitations (as of Sprint 3)
 
-| Area | Limitation |
-|------|-----------|
-| Carrier API | `StubCarrierClient` always confirms. Real `AcselSirwayClient` implementation awaits William's sandbox docs and `ACSEL_API_KEY` / `SIRWAY_API_KEY` in Supabase Vault |
-| Carrier policy number in PDF | `PolicyDetailModel.displayNumber` falls back to `RS-{uuid8}` until `carrier_policy_number` is populated by the real carrier API |
-| Push notifications | Firebase `google-services.json` (Android) and `GoogleService-Info.plist` (iOS) not yet configured. The `renewal-reminder` Edge Function has the FCM call commented out |
-| MQTT | No client code — Thony's platform uses Supabase Realtime as fallback; MQTT guide at `docs/MQTT_INTEGRATION_GUIDE.md` |
-| Telemetry sensors | `sensors_plus`, `geolocator`, `background_fetch` commented out in `pubspec.yaml`. `TelemetryBufferService` is ready to receive data from these sensors once Alex confirms the spec |
-| Renewal cron | `renewal-reminder` must be manually invoked (`POST .../functions/v1/renewal-reminder`) until Supabase Pro cron (`pg_cron`) is activated |
-| Payment verification | Still manual — a broker/agent must check Pago Móvil references in Supabase dashboard. Phase 1.5 will wire Guía Pay C2P webhook |
-| Rider ticket visibility | `CreateTicketScreen` creates tickets; there is no "My Tickets" screen yet — riders cannot see their open tickets in the app |
+| Area                         | Limitation                                                                                                                                                                         |
+| ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Carrier API                  | `StubCarrierClient` always confirms. Real `AcselSirwayClient` implementation awaits William's sandbox docs and `ACSEL_API_KEY` / `SIRWAY_API_KEY` in Supabase Vault                |
+| Carrier policy number in PDF | `PolicyDetailModel.displayNumber` falls back to `RS-{uuid8}` until `carrier_policy_number` is populated by the real carrier API                                                    |
+| Push notifications           | Firebase `google-services.json` (Android) and `GoogleService-Info.plist` (iOS) not yet configured. The `renewal-reminder` Edge Function has the FCM call commented out             |
+| MQTT                         | No client code — Thony's platform uses Supabase Realtime as fallback; MQTT guide at `docs/MQTT_INTEGRATION_GUIDE.md`                                                               |
+| Telemetry sensors            | `sensors_plus`, `geolocator`, `background_fetch` commented out in `pubspec.yaml`. `TelemetryBufferService` is ready to receive data from these sensors once Alex confirms the spec |
+| Renewal cron                 | `renewal-reminder` must be manually invoked (`POST .../functions/v1/renewal-reminder`) until Supabase Pro cron (`pg_cron`) is activated                                            |
+| Payment verification         | Still manual — a broker/agent must check Pago Móvil references in Supabase dashboard. Phase 1.5 will wire Guía Pay C2P webhook                                                     |
+| Rider ticket visibility      | `CreateTicketScreen` creates tickets; there is no "My Tickets" screen yet — riders cannot see their open tickets in the app                                                        |
 
 ### Sprint 4 scope (preliminary)
 
-| Ticket | Description |
-|--------|-------------|
-| RS-065 | Firebase FCM — push notifications on policy confirmation and renewal reminder |
-| RS-059 | MQTT client — publish telemetry/SOS events to Thony's broker via GCP |
-| RS-072 | "My Tickets" screen — list open/in-progress tickets for rider |
-| RS-074 | Guía Pay C2P webhook — automated payment verification |
-| RS-075 | Real `AcselSirwayClient` — swap `StubCarrierClient` once William delivers docs |
-| RS-076 | Phase 1.5 sensor activation — `sensors_plus` + `geolocator` + impact detection |
+| Ticket | Description                                                                     |
+| ------ | ------------------------------------------------------------------------------- |
+| RS-065 | Firebase FCM — push notifications on policy confirmation and renewal reminder   |
+| RS-059 | MQTT client — publish telemetry/SOS events to Thony's broker via GCP            |
+| RS-072 | "My Tickets" screen — list open/in-progress tickets for rider                   |
+| RS-074 | Guía Pay C2P webhook — automated payment verification                           |
+| RS-075 | Real `AcselSirwayClient` — swap `StubCarrierClient` once William delivers docs  |
+| RS-076 | Phase 1.5 sensor activation — `sensors_plus` + `geolocator` + impact detection  |
 | RS-077 | ERC-721 NFT policy certificate — blockchain anchoring of `retain_until` records |
 
 ---

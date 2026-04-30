@@ -34,7 +34,9 @@ void main() {
 
     test('pruneOlderThan on empty buffer does not throw', () async {
       await expectLater(
-        TelemetryBufferService.instance.pruneOlderThan(const Duration(minutes: 15)),
+        TelemetryBufferService.instance.pruneOlderThan(
+          const Duration(minutes: 15),
+        ),
         completes,
       );
     });
@@ -59,8 +61,9 @@ void main() {
         speedKmh: 40.0,
       );
 
-      final samples = await TelemetryBufferService.instance
-          .getWindow(const Duration(minutes: 15));
+      final samples = await TelemetryBufferService.instance.getWindow(
+        const Duration(minutes: 15),
+      );
 
       expect(samples, hasLength(1));
       expect(samples.first.gForce, 1.5);
@@ -69,18 +72,23 @@ void main() {
       expect(samples.first.speedKmh, 40.0);
     });
 
-    test('samples with null fields are stored and retrieved correctly', () async {
-      await TelemetryBufferService.instance.insertSample();
-      final samples = await TelemetryBufferService.instance.getWindow();
+    test(
+      'samples with null fields are stored and retrieved correctly',
+      () async {
+        await TelemetryBufferService.instance.insertSample();
+        final samples = await TelemetryBufferService.instance.getWindow();
 
-      expect(samples, hasLength(1));
-      expect(samples.first.gForce, isNull);
-      expect(samples.first.latitude, isNull);
-    });
+        expect(samples, hasLength(1));
+        expect(samples.first.gForce, isNull);
+        expect(samples.first.latitude, isNull);
+      },
+    );
 
     test('samples are returned in ascending recordedAt order', () async {
       for (int i = 0; i < 5; i++) {
-        await TelemetryBufferService.instance.insertSample(gForce: i.toDouble());
+        await TelemetryBufferService.instance.insertSample(
+          gForce: i.toDouble(),
+        );
         // Small delay to ensure distinct timestamps.
         await Future<void>.delayed(const Duration(milliseconds: 2));
       }
@@ -107,14 +115,20 @@ void main() {
       await TelemetryBufferService.instance.insertSample(gForce: 4.8);
       await TelemetryBufferService.instance.insertSample(gForce: 3.1);
 
-      expect(await TelemetryBufferService.instance.peakGForce, closeTo(4.8, 0.001));
+      expect(
+        await TelemetryBufferService.instance.peakGForce,
+        closeTo(4.8, 0.001),
+      );
     });
 
     test('ignores samples with null gForce', () async {
       await TelemetryBufferService.instance.insertSample(gForce: null);
       await TelemetryBufferService.instance.insertSample(gForce: 2.5);
 
-      expect(await TelemetryBufferService.instance.peakGForce, closeTo(2.5, 0.001));
+      expect(
+        await TelemetryBufferService.instance.peakGForce,
+        closeTo(2.5, 0.001),
+      );
     });
 
     test('returns null when all gForce values are null', () async {
@@ -128,25 +142,32 @@ void main() {
   // ─── getWindow ────────────────────────────────────────────────────
 
   group('getWindow', () {
-    test('a very short window excludes samples inserted slightly before', () async {
-      await TelemetryBufferService.instance.insertSample(gForce: 1.0);
-      // Sleep so the sample's recordedAt is now in the "past" relative to cutoff.
-      await Future<void>.delayed(const Duration(milliseconds: 20));
+    test(
+      'a very short window excludes samples inserted slightly before',
+      () async {
+        await TelemetryBufferService.instance.insertSample(gForce: 1.0);
+        // Sleep so the sample's recordedAt is now in the "past" relative to cutoff.
+        await Future<void>.delayed(const Duration(milliseconds: 20));
 
-      // 1 ms window — only samples within the last millisecond qualify.
-      final samples = await TelemetryBufferService.instance
-          .getWindow(const Duration(milliseconds: 1));
+        // 1 ms window — only samples within the last millisecond qualify.
+        final samples = await TelemetryBufferService.instance.getWindow(
+          const Duration(milliseconds: 1),
+        );
 
-      expect(samples, isEmpty);
-    });
+        expect(samples, isEmpty);
+      },
+    );
 
     test('a wide window includes all samples', () async {
       for (int i = 0; i < 3; i++) {
-        await TelemetryBufferService.instance.insertSample(gForce: i.toDouble());
+        await TelemetryBufferService.instance.insertSample(
+          gForce: i.toDouble(),
+        );
       }
 
-      final samples = await TelemetryBufferService.instance
-          .getWindow(const Duration(days: 365));
+      final samples = await TelemetryBufferService.instance.getWindow(
+        const Duration(days: 365),
+      );
 
       expect(samples, hasLength(3));
     });
@@ -160,8 +181,9 @@ void main() {
       await TelemetryBufferService.instance.insertSample(gForce: 2.0);
 
       // Prune only things older than 1 year — nothing should go.
-      await TelemetryBufferService.instance
-          .pruneOlderThan(const Duration(days: 365));
+      await TelemetryBufferService.instance.pruneOlderThan(
+        const Duration(days: 365),
+      );
 
       expect(await TelemetryBufferService.instance.sampleCount, 2);
     });
@@ -171,8 +193,9 @@ void main() {
       await Future<void>.delayed(const Duration(milliseconds: 30));
 
       // 1 ms max age — the sample (30 ms old) must be pruned.
-      await TelemetryBufferService.instance
-          .pruneOlderThan(const Duration(milliseconds: 1));
+      await TelemetryBufferService.instance.pruneOlderThan(
+        const Duration(milliseconds: 1),
+      );
 
       expect(await TelemetryBufferService.instance.sampleCount, 0);
     });
@@ -223,7 +246,10 @@ void main() {
       final roundtripped = TelemetrySample.fromMap(original.toMap());
 
       expect(roundtripped.id, original.id);
-      expect(roundtripped.recordedAt, original.recordedAt);
+      expect(
+        roundtripped.recordedAt.isAtSameMomentAs(original.recordedAt),
+        isTrue,
+      );
       expect(roundtripped.gForce, original.gForce);
       expect(roundtripped.latitude, original.latitude);
       expect(roundtripped.longitude, original.longitude);
@@ -232,10 +258,7 @@ void main() {
     });
 
     test('handles all-null optional fields', () {
-      final sample = TelemetrySample(
-        id: 1,
-        recordedAt: DateTime.now(),
-      );
+      final sample = TelemetrySample(id: 1, recordedAt: DateTime.now());
 
       final roundtripped = TelemetrySample.fromMap(sample.toMap());
 

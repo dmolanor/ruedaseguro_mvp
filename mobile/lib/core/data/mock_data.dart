@@ -43,13 +43,14 @@ class MockPolicy {
   static const type = 'RCV Plus';
   static const tier = 'plus'; // basica, plus, ampliada
   static const status = 'Activa';
-  static const carrier = 'Seguros Pirámide';
+  static const carrier = 'Seguros Mercantil';
   static const broker = 'Correduría Nacional';
   static const issueDate = '23 Mar 2026';
   static const expiryDate = '23 Mar 2027';
   static const premiumUsd = 31.00;
   static const premiumVes = 2430.50;
-  static const sha256Hash = 'a7f3c8d2e1b4f6a9c0d5e8f7b2a1c4d6e3f0a9b8c7d6e5f4a3b2c1d0e9f8a7';
+  static const sha256Hash =
+      'a7f3c8d2e1b4f6a9c0d5e8f7b2a1c4d6e3f0a9b8c7d6e5f4a3b2c1d0e9f8a7';
   static const coverages = [
     'Responsabilidad Civil Vehicular (RCV)',
     'Daños a terceros hasta \$5,000',
@@ -81,9 +82,10 @@ class InsurancePlan {
   final Color accentColor;
   final IconData icon;
   // DB-backed fields (null for mock/demo data)
-  final String tier;           // 'basica' | 'plus' | 'ampliada'
-  final String? policyTypeId;  // UUID from policy_types table
-  final String? carrierId;     // UUID from carriers table
+  final String tier; // 'basica' | 'plus' | 'ampliada'
+  final String? policyTypeId; // UUID from policy_types table
+  final String? carrierId; // UUID from carriers table
+  final String? carrierName; // e.g. 'Seguros Pirámide'
 
   const InsurancePlan({
     required this.id,
@@ -100,6 +102,7 @@ class InsurancePlan {
     this.tier = '',
     this.policyTypeId,
     this.carrierId,
+    this.carrierName,
   });
 
   double get priceMonthlyUsd => priceUsd / 12;
@@ -120,11 +123,7 @@ class MockPlans {
       'Daños a terceros hasta \$3,000',
       'Cobertura legal mínima',
     ],
-    excluded: [
-      'Sin grúa',
-      'Sin gastos médicos',
-      'Sin defensa legal',
-    ],
+    excluded: ['Sin grúa', 'Sin gastos médicos', 'Sin defensa legal'],
     coverageItems: const [
       CoverageItem('Daños a cosas de terceros', '\$ 3,000 USD'),
       CoverageItem('Daños a personas de terceros', '\$ 5,000 USD'),
@@ -160,7 +159,7 @@ class MockPlans {
       CoverageItem('Gastos médicos conductor', '\$ 2,000 USD'),
     ],
     isRecommended: true,
-    accentColor: const Color(0xFFFF6D00),
+    accentColor: const Color(0xFFFF6A1A),
     icon: Icons.verified_user_rounded,
   );
 
@@ -191,7 +190,7 @@ class MockPlans {
       CoverageItem('Hospitalización (Red ALTEHA)', '\$ 5,000 USD'),
       CoverageItem('Robo y hurto', 'Valor de mercado'),
     ],
-    accentColor: const Color(0xFF1A237E),
+    accentColor: const Color(0xFF0A1B2A),
     icon: Icons.workspace_premium_rounded,
   );
 
@@ -226,7 +225,8 @@ class MockClaims {
       type: 'Colisión menor',
       status: 'En revisión',
       date: '15 Mar 2026',
-      description: 'Colisión lateral en Av. Bolívar con daños menores al espejo retrovisor.',
+      description:
+          'Colisión lateral en Av. Bolívar con daños menores al espejo retrovisor.',
       statusColor: Color(0xFFFFB300),
       statusIcon: Icons.hourglass_top_rounded,
     ),
@@ -235,7 +235,8 @@ class MockClaims {
       type: 'Daño a tercero',
       status: 'Liquidado',
       date: '08 Nov 2025',
-      description: 'Raspón en vehículo estacionado en CC Sambil. Liquidación completada.',
+      description:
+          'Raspón en vehículo estacionado en CC Sambil. Liquidación completada.',
       statusColor: Color(0xFF2E7D32),
       statusIcon: Icons.check_circle_rounded,
     ),
