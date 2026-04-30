@@ -131,6 +131,32 @@ Code is organized by feature under `mobile/lib/features/`:
 - Do not add speculative code, TODOs, or "future-proof" abstractions.
 - Do not log PII (cédulas, nombres, teléfonos, plates) anywhere — not in Sentry, not in console.
 
+### 5.4 GitHub CLI (`gh`)
+
+`gh` is available and should be used for all GitHub operations in this repo (PRs, issues, reviews, releases). Use it via the `Bash` tool.
+
+**Allowed freely:**
+
+- Read operations: `gh pr list`, `gh pr view`, `gh issue list`, `gh issue view`, `gh run list`, `gh run view`, `gh repo view`
+- Creating PRs and issues: `gh pr create`, `gh issue create`
+- Adding comments: `gh pr comment`, `gh issue comment`
+
+**Requires explicit confirmation before executing — always state the command and reason first:**
+
+- `gh pr merge` — merging a PR cannot be undone in shared history
+- `gh pr close` / `gh issue close` — closing discards review context
+- `gh release create` — publishes a release tag publicly
+- `gh repo delete` — destructive and irreversible
+- Any `gh api` call that writes or deletes data
+
+**Format for destructive-action requests:**
+
+> I'm about to run: `gh pr merge 42 --squash`
+> Reason: PR 42 passed all checks and is approved.
+> This will squash-merge the branch into `main` and close the PR. Confirm?
+
+Wait for explicit confirmation before proceeding.
+
 ## 6. Skill / Tooling Routing
 
 ### 6.1 Full Routing Rules (gstack)
