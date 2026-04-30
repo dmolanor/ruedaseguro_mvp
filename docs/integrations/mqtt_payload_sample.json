@@ -1,0 +1,295 @@
+{
+  "_description": "RuedaSeguro — Telemetry mockup payload for IoT/backend integration (Phase 1.5)",
+  "_notes": [
+    "Each 'event' represents a 15-minute buffer window flushed after a detected impact.",
+    "Samples are ordered oldest-first, newest-last within the window.",
+    "recorded_at is Unix timestamp in milliseconds (UTC).",
+    "g_force is scalar magnitude (m/s² normalized to g). Impact threshold TBD with Thony.",
+    "lat/lon are WGS-84 decimal degrees. Altitude in meters. Speed in km/h.",
+    "Transport: Supabase Realtime (MQTT deferred to Phase 2).",
+    "Table: telemetry_events"
+  ],
+
+  "schema": {
+    "telemetry_event": {
+      "policy_id": "uuid — FK to policies table",
+      "rider_id": "uuid — FK to auth.users",
+      "device_id": "string — phone hardware ID or IoT node ID",
+      "triggered_by": "string — 'impact' | 'periodic' | 'manual'",
+      "peak_g_force": "float — highest g_force in the window",
+      "samples": "array<TelemetrySample>",
+      "uploaded_at": "ISO-8601 UTC"
+    },
+    "TelemetrySample": {
+      "recorded_at": "integer — Unix ms UTC",
+      "g_force": "float | null — scalar g (1g ≈ 9.81 m/s²)",
+      "latitude": "float | null — WGS-84",
+      "longitude": "float | null — WGS-84",
+      "altitude_m": "float | null — meters above sea level",
+      "speed_kmh": "float | null"
+    }
+  },
+
+  "examples": [
+    {
+      "_scenario": "Normal riding — periodic flush, no impact",
+      "policy_id": "a1b2c3d4-0001-0000-0000-000000000001",
+      "rider_id": "u1000001-0000-0000-0000-000000000001",
+      "device_id": "android:a1b2c3d4e5f6",
+      "triggered_by": "periodic",
+      "peak_g_force": 1.3,
+      "uploaded_at": "2026-04-02T14:00:00.000Z",
+      "samples": [
+        {
+          "recorded_at": 1743598500000,
+          "g_force": 0.95,
+          "latitude": 10.4806,
+          "longitude": -66.9036,
+          "altitude_m": 880.0,
+          "speed_kmh": 0.0
+        },
+        {
+          "recorded_at": 1743598510000,
+          "g_force": 1.02,
+          "latitude": 10.4807,
+          "longitude": -66.9034,
+          "altitude_m": 880.1,
+          "speed_kmh": 12.5
+        },
+        {
+          "recorded_at": 1743598520000,
+          "g_force": 1.05,
+          "latitude": 10.4809,
+          "longitude": -66.9031,
+          "altitude_m": 880.3,
+          "speed_kmh": 28.0
+        },
+        {
+          "recorded_at": 1743598530000,
+          "g_force": 1.1,
+          "latitude": 10.4812,
+          "longitude": -66.9027,
+          "altitude_m": 880.5,
+          "speed_kmh": 41.2
+        },
+        {
+          "recorded_at": 1743598540000,
+          "g_force": 1.08,
+          "latitude": 10.4815,
+          "longitude": -66.9022,
+          "altitude_m": 880.4,
+          "speed_kmh": 45.0
+        },
+        {
+          "recorded_at": 1743598550000,
+          "g_force": 1.12,
+          "latitude": 10.4819,
+          "longitude": -66.9018,
+          "altitude_m": 880.6,
+          "speed_kmh": 47.3
+        },
+        {
+          "recorded_at": 1743598560000,
+          "g_force": 1.07,
+          "latitude": 10.4823,
+          "longitude": -66.9013,
+          "altitude_m": 880.7,
+          "speed_kmh": 48.1
+        },
+        {
+          "recorded_at": 1743598570000,
+          "g_force": 1.15,
+          "latitude": 10.4826,
+          "longitude": -66.9009,
+          "altitude_m": 880.8,
+          "speed_kmh": 50.0
+        },
+        {
+          "recorded_at": 1743598580000,
+          "g_force": 1.09,
+          "latitude": 10.483,
+          "longitude": -66.9004,
+          "altitude_m": 880.9,
+          "speed_kmh": 49.5
+        },
+        {
+          "recorded_at": 1743598590000,
+          "g_force": 1.13,
+          "latitude": 10.4834,
+          "longitude": -66.8999,
+          "altitude_m": 881.0,
+          "speed_kmh": 51.2
+        },
+        {
+          "recorded_at": 1743598800000,
+          "g_force": 1.3,
+          "latitude": 10.487,
+          "longitude": -66.895,
+          "altitude_m": 882.5,
+          "speed_kmh": 53.0
+        }
+      ]
+    },
+
+    {
+      "_scenario": "Impact detected — buffer flushed immediately after crash",
+      "policy_id": "a1b2c3d4-0001-0000-0000-000000000002",
+      "rider_id": "u1000001-0000-0000-0000-000000000002",
+      "device_id": "android:b2c3d4e5f6a1",
+      "triggered_by": "impact",
+      "peak_g_force": 8.7,
+      "uploaded_at": "2026-04-02T17:32:05.412Z",
+      "samples": [
+        {
+          "recorded_at": 1743611400000,
+          "g_force": 1.01,
+          "latitude": 10.5,
+          "longitude": -66.92,
+          "altitude_m": 900.0,
+          "speed_kmh": 0.0
+        },
+        {
+          "recorded_at": 1743611410000,
+          "g_force": 1.05,
+          "latitude": 10.5001,
+          "longitude": -66.9198,
+          "altitude_m": 900.1,
+          "speed_kmh": 15.0
+        },
+        {
+          "recorded_at": 1743611420000,
+          "g_force": 1.1,
+          "latitude": 10.5003,
+          "longitude": -66.9195,
+          "altitude_m": 900.2,
+          "speed_kmh": 35.0
+        },
+        {
+          "recorded_at": 1743611430000,
+          "g_force": 1.18,
+          "latitude": 10.5006,
+          "longitude": -66.9191,
+          "altitude_m": 900.3,
+          "speed_kmh": 52.0
+        },
+        {
+          "recorded_at": 1743611440000,
+          "g_force": 1.22,
+          "latitude": 10.5009,
+          "longitude": -66.9187,
+          "altitude_m": 900.4,
+          "speed_kmh": 58.0
+        },
+        {
+          "recorded_at": 1743611450000,
+          "g_force": 1.19,
+          "latitude": 10.5012,
+          "longitude": -66.9183,
+          "altitude_m": 900.5,
+          "speed_kmh": 60.0
+        },
+        {
+          "recorded_at": 1743611460000,
+          "g_force": 1.25,
+          "latitude": 10.5015,
+          "longitude": -66.9179,
+          "altitude_m": 900.5,
+          "speed_kmh": 61.5
+        },
+        {
+          "recorded_at": 1743611470000,
+          "g_force": 1.2,
+          "latitude": 10.5018,
+          "longitude": -66.9175,
+          "altitude_m": 900.6,
+          "speed_kmh": 59.0
+        },
+        {
+          "recorded_at": 1743611480000,
+          "g_force": 1.23,
+          "latitude": 10.5021,
+          "longitude": -66.9171,
+          "altitude_m": 900.6,
+          "speed_kmh": 57.0
+        },
+        {
+          "recorded_at": 1743611490000,
+          "g_force": 2.1,
+          "latitude": 10.5024,
+          "longitude": -66.9167,
+          "altitude_m": 900.7,
+          "speed_kmh": 55.0
+        },
+        {
+          "recorded_at": 1743611495000,
+          "g_force": 8.7,
+          "latitude": 10.5025,
+          "longitude": -66.9165,
+          "altitude_m": 900.7,
+          "speed_kmh": 18.0
+        },
+        {
+          "recorded_at": 1743611500000,
+          "g_force": 3.4,
+          "latitude": 10.5025,
+          "longitude": -66.9165,
+          "altitude_m": 900.7,
+          "speed_kmh": 0.0
+        },
+        {
+          "recorded_at": 1743611505000,
+          "g_force": 1.5,
+          "latitude": 10.5025,
+          "longitude": -66.9165,
+          "altitude_m": 900.7,
+          "speed_kmh": 0.0
+        }
+      ]
+    },
+
+    {
+      "_scenario": "Stationary / parked — low-movement window",
+      "policy_id": "a1b2c3d4-0001-0000-0000-000000000003",
+      "rider_id": "u1000001-0000-0000-0000-000000000003",
+      "device_id": "android:c3d4e5f6a1b2",
+      "triggered_by": "periodic",
+      "peak_g_force": 1.01,
+      "uploaded_at": "2026-04-02T09:15:00.000Z",
+      "samples": [
+        {
+          "recorded_at": 1743585000000,
+          "g_force": 1.0,
+          "latitude": 10.472,
+          "longitude": -66.889,
+          "altitude_m": 870.0,
+          "speed_kmh": 0.0
+        },
+        {
+          "recorded_at": 1743585060000,
+          "g_force": 1.01,
+          "latitude": 10.472,
+          "longitude": -66.889,
+          "altitude_m": 870.0,
+          "speed_kmh": 0.0
+        },
+        {
+          "recorded_at": 1743585120000,
+          "g_force": 1.0,
+          "latitude": 10.472,
+          "longitude": -66.889,
+          "altitude_m": 870.0,
+          "speed_kmh": 0.0
+        }
+      ]
+    }
+  ],
+
+  "open_questions_for_thony": [
+    "1. Sampling frequency: how often should we read sensors? (e.g. every 1s, 2s, 5s)",
+    "2. Impact threshold: minimum g_force to trigger an immediate flush (e.g. ≥4g, ≥6g)?",
+    "3. IoT node vs phone: will Phase 1.5 use the rider's smartphone only, or a dedicated device?",
+    "4. MQTT vs Supabase Realtime: Supabase RT is the current fallback — confirm or specify broker details.",
+    "5. Periodic flush interval: currently 15 min — is that the agreed window, or should it be shorter?",
+    "6. Fields needed beyond the current schema? (e.g. gyroscope x/y/z, RPM, fuel level from IoT)"
+  ]
+}

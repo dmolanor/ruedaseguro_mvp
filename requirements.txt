@@ -1,9 +1,0 @@
-# RuedaSeguro — Python Dependencies
-# Install: pip install -r requirements.txt
-# Activate venv first: source venv/Scripts/activate (Windows Git Bash)
-
-# No packages required for Sprint 0.
-# Future phases may add:
-# - paddleocr (Phase 1.5 — server-side OCR for Factura de Compra)
-# - pillow (image processing)
-# - requests (API scripts)
