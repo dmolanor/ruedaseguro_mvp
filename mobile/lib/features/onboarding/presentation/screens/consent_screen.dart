@@ -1,7 +1,9 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:ruedaseguro/core/data/mock_data.dart';
 import 'package:ruedaseguro/core/theme/colors.dart';
 import 'package:ruedaseguro/core/theme/spacing.dart';
 import 'package:ruedaseguro/core/theme/typography.dart';
@@ -22,6 +24,15 @@ class _ConsentScreenState extends ConsumerState<ConsentScreen> {
   bool _isSaving = false;
   String? _errorMessage;
 
+  // Resolve the plan chosen during onboarding from its stored code ('basica', etc.)
+  InsurancePlan _resolvePlan(String? planCode) {
+    if (planCode == null) return MockPlans.plus;
+    return MockPlans.all.firstWhere(
+      (p) => p.id == planCode || p.tier == planCode,
+      orElse: () => MockPlans.plus,
+    );
+  }
+
   Future<void> _finalize() async {
     final data = ref.read(onboardingProvider);
     if (!data.allConsentsGiven) return;
@@ -32,29 +43,29 @@ class _ConsentScreenState extends ConsumerState<ConsentScreen> {
     });
 
     // Stamp consent timestamp
-    ref.read(onboardingProvider.notifier).updateConsents(
-      rcv: data.consentRcv,
-      veracidad: data.consentVeracidad,
-      antifraude: data.consentAntifraude,
-      privacidad: data.consentPrivacidad,
-    );
+    ref
+        .read(onboardingProvider.notifier)
+        .updateConsents(
+          rcv: data.consentRcv,
+          veracidad: data.consentVeracidad,
+          antifraude: data.consentAntifraude,
+          privacidad: data.consentPrivacidad,
+        );
 
     try {
-      await OnboardingRepository.instance
-          .saveOnboardingData(ref.read(onboardingProvider));
-
-      // Mark profile as created so router redirects to home
-      ref.read(authProvider.notifier).markProfileCreated();
+      await OnboardingRepository.instance.saveOnboardingData(
+        ref.read(onboardingProvider),
+      );
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('¡Registro completado! Bienvenido a RuedaSeguro.'),
-            backgroundColor: RSColors.success,
-            duration: Duration(seconds: 3),
-          ),
+        final plan = _resolvePlan(ref.read(onboardingProvider).selectedPlan);
+        // Navigate first so the router sees /policy/quote (not the onboarding
+        // route) when markProfileCreated fires its redirect evaluation.
+        context.go(
+          '/policy/quote',
+          extra: {'plan': plan, 'fromOnboarding': true},
         );
-        context.go('/home');
+        ref.read(authProvider.notifier).markProfileCreated();
       }
     } catch (e, st) {
       debugPrint('❌ saveOnboardingData failed: $e');
@@ -79,11 +90,16 @@ class _ConsentScreenState extends ConsumerState<ConsentScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: RSColors.primary),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: RSColors.primary,
+          ),
           onPressed: () => context.pop(),
         ),
-        title: Text('Términos y condiciones',
-            style: RSTypography.titleLarge.copyWith(color: RSColors.primary)),
+        title: Text(
+          'Términos y condiciones',
+          style: RSTypography.titleLarge.copyWith(color: RSColors.primary),
+        ),
       ),
       body: Padding(
         padding: const EdgeInsets.all(RSSpacing.lg),
@@ -92,7 +108,9 @@ class _ConsentScreenState extends ConsumerState<ConsentScreen> {
           children: [
             Text(
               'Para emitir tu póliza necesitamos tu consentimiento',
-              style: RSTypography.bodyLarge.copyWith(color: RSColors.textSecondary),
+              style: RSTypography.bodyLarge.copyWith(
+                color: RSColors.textSecondary,
+              ),
             ),
             const SizedBox(height: RSSpacing.xl),
 
@@ -101,24 +119,27 @@ class _ConsentScreenState extends ConsumerState<ConsentScreen> {
                 children: [
                   RSConsentCheckbox(
                     label: Text.rich(
-                      TextSpan(children: [
-                        TextSpan(
-                          text: 'Acepto las ',
-                          style: RSTypography.bodyMedium,
-                        ),
-                        TextSpan(
-                          text: 'Condiciones Generales del RCV',
-                          style: RSTypography.bodyMedium.copyWith(
-                            color: RSColors.primary,
-                            decoration: TextDecoration.underline,
-                            decorationColor: RSColors.primary,
+                      TextSpan(
+                        children: [
+                          TextSpan(
+                            text: 'Acepto las ',
+                            style: RSTypography.bodyMedium,
                           ),
-                        ),
-                      ]),
+                          TextSpan(
+                            text: 'Condiciones Generales del RCV',
+                            style: RSTypography.bodyMedium.copyWith(
+                              color: RSColors.primary,
+                              decoration: TextDecoration.underline,
+                              decorationColor: RSColors.primary,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                     value: data.consentRcv,
-                    onChanged: (v) =>
-                        ref.read(onboardingProvider.notifier).updateConsents(rcv: v),
+                    onChanged: (v) => ref
+                        .read(onboardingProvider.notifier)
+                        .updateConsents(rcv: v),
                   ),
                   const SizedBox(height: RSSpacing.lg),
                   RSConsentCheckbox(
@@ -127,8 +148,9 @@ class _ConsentScreenState extends ConsumerState<ConsentScreen> {
                       style: RSTypography.bodyMedium,
                     ),
                     value: data.consentVeracidad,
-                    onChanged: (v) =>
-                        ref.read(onboardingProvider.notifier).updateConsents(veracidad: v),
+                    onChanged: (v) => ref
+                        .read(onboardingProvider.notifier)
+                        .updateConsents(veracidad: v),
                   ),
                   const SizedBox(height: RSSpacing.lg),
                   RSConsentCheckbox(
@@ -137,34 +159,34 @@ class _ConsentScreenState extends ConsumerState<ConsentScreen> {
                       style: RSTypography.bodyMedium,
                     ),
                     value: data.consentAntifraude,
-                    onChanged: (v) =>
-                        ref.read(onboardingProvider.notifier).updateConsents(
-                          antifraude: v,
-                        ),
+                    onChanged: (v) => ref
+                        .read(onboardingProvider.notifier)
+                        .updateConsents(antifraude: v),
                   ),
                   const SizedBox(height: RSSpacing.lg),
                   RSConsentCheckbox(
                     label: Text.rich(
-                      TextSpan(children: [
-                        TextSpan(
-                          text: 'Acepto la ',
-                          style: RSTypography.bodyMedium,
-                        ),
-                        TextSpan(
-                          text: 'Política de Privacidad',
-                          style: RSTypography.bodyMedium.copyWith(
-                            color: RSColors.primary,
-                            decoration: TextDecoration.underline,
-                            decorationColor: RSColors.primary,
+                      TextSpan(
+                        children: [
+                          TextSpan(
+                            text: 'Acepto la ',
+                            style: RSTypography.bodyMedium,
                           ),
-                        ),
-                      ]),
+                          TextSpan(
+                            text: 'Política de Privacidad',
+                            style: RSTypography.bodyMedium.copyWith(
+                              color: RSColors.primary,
+                              decoration: TextDecoration.underline,
+                              decorationColor: RSColors.primary,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                     value: data.consentPrivacidad,
-                    onChanged: (v) =>
-                        ref.read(onboardingProvider.notifier).updateConsents(
-                          privacidad: v,
-                        ),
+                    onChanged: (v) => ref
+                        .read(onboardingProvider.notifier)
+                        .updateConsents(privacidad: v),
                   ),
                 ],
               ),
@@ -181,7 +203,9 @@ class _ConsentScreenState extends ConsumerState<ConsentScreen> {
                 ),
                 child: Text(
                   _errorMessage!,
-                  style: RSTypography.bodyMedium.copyWith(color: RSColors.error),
+                  style: RSTypography.bodyMedium.copyWith(
+                    color: RSColors.error,
+                  ),
                 ),
               ),
             ],
@@ -192,6 +216,21 @@ class _ConsentScreenState extends ConsumerState<ConsentScreen> {
               onPressed: data.allConsentsGiven && !_isSaving ? _finalize : null,
               isLoading: _isSaving,
             ),
+            if (kDebugMode) ...[
+              const SizedBox(height: RSSpacing.sm),
+              Center(
+                child: TextButton(
+                  onPressed: () {
+                    context.go(
+                      '/policy/quote',
+                      extra: {'plan': MockPlans.plus, 'fromOnboarding': true},
+                    );
+                    ref.read(authProvider.notifier).markProfileCreated();
+                  },
+                  child: const Text('[DEV] Omitir a Cotización'),
+                ),
+              ),
+            ],
             const SizedBox(height: RSSpacing.xl),
           ],
         ),

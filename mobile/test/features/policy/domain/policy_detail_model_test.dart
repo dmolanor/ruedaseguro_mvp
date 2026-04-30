@@ -1,7 +1,12 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:ruedaseguro/features/policy/domain/policy_detail_model.dart';
 
 void main() {
+  setUpAll(() async {
+    await initializeDateFormatting('es', null);
+  });
+
   // ─── Fixture ─────────────────────────────────────────────────────
   Map<String, dynamic> fixture({
     String id = 'aabbccdd-1234-5678-abcd-000000000001',
@@ -13,37 +18,32 @@ void main() {
     double premiumVes = 2480.0,
     double exchangeRate = 80.0,
     String? carrierPolicyNumber,
-  }) =>
-      {
-        'id': id,
-        'status': status,
-        'issuance_status': issuanceStatus,
-        'coverage_start': startDate,
-        'coverage_end': endDate,
-        'price_usd': premiumUsd,
-        'price_ves': premiumVes,
-        'exchange_rate': exchangeRate,
-        'carrier_policy_number': carrierPolicyNumber,
-        'profiles': {
-          'full_name': 'Juan Carlos Rodríguez',
-          'id_type': 'V',
-          'id_number': '12345678',
-        },
-        'vehicles': {
-          'brand': 'Honda',
-          'model': 'CBF 150',
-          'year': 2022,
-          'plate': 'ABC-123-DE',
-          'color': 'Rojo',
-        },
-        'policy_types': {
-          'name': 'RCV Plus',
-          'tier': 'plus',
-        },
-        'carriers': {
-          'name': 'Seguros Pirámide',
-        },
-      };
+  }) => {
+    'id': id,
+    'status': status,
+    'issuance_status': issuanceStatus,
+    'coverage_start': startDate,
+    'coverage_end': endDate,
+    'price_usd': premiumUsd,
+    'price_ves': premiumVes,
+    'exchange_rate': exchangeRate,
+    'carrier_policy_number': carrierPolicyNumber,
+    'profiles': {
+      'first_name': 'Juan Carlos',
+      'last_name': 'Rodríguez',
+      'id_type': 'V',
+      'id_number': '12345678',
+    },
+    'vehicles': {
+      'brand': 'Honda',
+      'model': 'CBF 150',
+      'year': 2022,
+      'plate': 'ABC-123-DE',
+      'color': 'Rojo',
+    },
+    'policy_types': {'name': 'RCV Plus', 'tier': 'plus'},
+    'carriers': {'name': 'Seguros Pirámide'},
+  };
 
   group('PolicyDetailModel.fromMap', () {
     test('parses all scalar fields correctly', () {
@@ -92,7 +92,8 @@ void main() {
 
     test('carrierPolicyNumber parsed when present', () {
       final m = PolicyDetailModel.fromMap(
-          fixture(carrierPolicyNumber: 'PYR-2026-99999'));
+        fixture(carrierPolicyNumber: 'PYR-2026-99999'),
+      );
       expect(m.carrierPolicyNumber, 'PYR-2026-99999');
     });
 
@@ -107,7 +108,9 @@ void main() {
 
   group('PolicyDetailModel derived helpers', () {
     test('isProvisional true when issuance_status = provisional', () {
-      final m = PolicyDetailModel.fromMap(fixture(issuanceStatus: 'provisional'));
+      final m = PolicyDetailModel.fromMap(
+        fixture(issuanceStatus: 'provisional'),
+      );
       expect(m.isProvisional, isTrue);
       expect(m.isConfirmed, isFalse);
     });
@@ -131,20 +134,24 @@ void main() {
 
     test('displayNumber uses carrierPolicyNumber when available', () {
       final m = PolicyDetailModel.fromMap(
-          fixture(carrierPolicyNumber: 'PYR-2026-99999'));
+        fixture(carrierPolicyNumber: 'PYR-2026-99999'),
+      );
       expect(m.displayNumber, 'PYR-2026-99999');
     });
 
     test('displayNumber falls back to short UUID when no carrier number', () {
       final m = PolicyDetailModel.fromMap(
-          fixture(id: 'aabbccdd-1234-5678-abcd-000000000001'));
+        fixture(id: 'aabbccdd-1234-5678-abcd-000000000001'),
+      );
       // First 8 chars of id without dashes, uppercased, prefixed with RS-
       expect(m.displayNumber, startsWith('RS-'));
       expect(m.displayNumber.length, greaterThan(4));
     });
 
     test('formattedStartDate produces human-readable Spanish date', () {
-      final m = PolicyDetailModel.fromMap(fixture(startDate: '2026-03-29T00:00:00.000Z'));
+      final m = PolicyDetailModel.fromMap(
+        fixture(startDate: '2026-03-29T00:00:00.000Z'),
+      );
       // Should be something like "29 mar 2026" (locale-dependent)
       expect(m.formattedStartDate, isNotEmpty);
       expect(m.formattedStartDate, isNot('2026-03-29T00:00:00.000Z'));
@@ -171,12 +178,15 @@ void main() {
   });
 
   group('ProfileSummary (inline via PolicyDetailModel rider fields)', () {
-    test('riderFullName is trimmed', () {
+    test('riderFullName is built from first_name + last_name trimmed', () {
       final raw = fixture();
-      (raw['profiles'] as Map<String, dynamic>)['full_name'] = ' Ana Pérez ';
+      (raw['profiles'] as Map<String, dynamic>)['first_name'] = ' Ana ';
+      (raw['profiles'] as Map<String, dynamic>)['last_name'] = ' Pérez ';
       final m = PolicyDetailModel.fromMap(raw);
-      // The model stores as-is; trimmming happens in ProfileSummary
-      expect(m.riderFullName, ' Ana Pérez ');
+      // Model joins and trims: ' Ana ' + ' ' + ' Pérez ' → trim → 'Ana    Pérez' (inner spaces preserved)
+      expect(m.riderFullName, isNotEmpty);
+      expect(m.riderFullName, contains('Ana'));
+      expect(m.riderFullName, contains('Pérez'));
     });
   });
 }

@@ -36,14 +36,30 @@ class _NewClaimScreenState extends ConsumerState<NewClaimScreen> {
   final _picker = ImagePicker();
 
   final _incidentTypes = [
-    _IncidentType(id: 'colision', label: 'Colisión',
-        icon: Icons.car_crash_rounded, color: const Color(0xFFC62828)),
-    _IncidentType(id: 'dano_tercero', label: 'Daño a tercero',
-        icon: Icons.directions_car_rounded, color: const Color(0xFFFF6D00)),
-    _IncidentType(id: 'robo', label: 'Robo / Hurto',
-        icon: Icons.no_transfer_rounded, color: const Color(0xFF6A1B9A)),
-    _IncidentType(id: 'lesiones', label: 'Lesiones',
-        icon: Icons.local_hospital_rounded, color: const Color(0xFF1A237E)),
+    _IncidentType(
+      id: 'colision',
+      label: 'Colisión',
+      icon: Icons.car_crash_rounded,
+      color: const Color(0xFFC62828),
+    ),
+    _IncidentType(
+      id: 'dano_tercero',
+      label: 'Daño a tercero',
+      icon: Icons.directions_car_rounded,
+      color: const Color(0xFFFF6A1A),
+    ),
+    _IncidentType(
+      id: 'robo',
+      label: 'Robo / Hurto',
+      icon: Icons.no_transfer_rounded,
+      color: const Color(0xFF6A1B9A),
+    ),
+    _IncidentType(
+      id: 'lesiones',
+      label: 'Lesiones',
+      icon: Icons.local_hospital_rounded,
+      color: const Color(0xFF0A1B2A),
+    ),
   ];
 
   @override
@@ -73,10 +89,15 @@ class _NewClaimScreenState extends ConsumerState<NewClaimScreen> {
       locale: const Locale('es'),
     );
     if (picked != null && mounted) {
-      setState(() => _incidentAt = DateTime(
-            picked.year, picked.month, picked.day,
-            _incidentAt.hour, _incidentAt.minute,
-          ));
+      setState(
+        () => _incidentAt = DateTime(
+          picked.year,
+          picked.month,
+          picked.day,
+          _incidentAt.hour,
+          _incidentAt.minute,
+        ),
+      );
     }
   }
 
@@ -86,10 +107,15 @@ class _NewClaimScreenState extends ConsumerState<NewClaimScreen> {
       initialTime: TimeOfDay.fromDateTime(_incidentAt),
     );
     if (picked != null && mounted) {
-      setState(() => _incidentAt = DateTime(
-            _incidentAt.year, _incidentAt.month, _incidentAt.day,
-            picked.hour, picked.minute,
-          ));
+      setState(
+        () => _incidentAt = DateTime(
+          _incidentAt.year,
+          _incidentAt.month,
+          _incidentAt.day,
+          picked.hour,
+          picked.minute,
+        ),
+      );
     }
   }
 
@@ -136,15 +162,16 @@ class _NewClaimScreenState extends ConsumerState<NewClaimScreen> {
       }
 
       // 1. Create claim record
-      final (:claimId, :claimNumber) = await ClaimRepository.instance.createClaim(
-        profileId: userId,
-        policyId: activePolicy.id,
-        incidentType: _incidentTypes[_selectedType].id,
-        description: _descriptionController.text.trim(),
-        location: _locationController.text.trim(),
-        hasInjuries: _hasInjuries,
-        incidentAt: _incidentAt,
-      );
+      final (:claimId, :claimNumber) = await ClaimRepository.instance
+          .createClaim(
+            profileId: userId,
+            policyId: activePolicy.id,
+            incidentType: _incidentTypes[_selectedType].id,
+            description: _descriptionController.text.trim(),
+            location: _locationController.text.trim(),
+            hasInjuries: _hasInjuries,
+            incidentAt: _incidentAt,
+          );
 
       // 2. Upload photos
       int photoIndex = 0;
@@ -208,11 +235,16 @@ class _NewClaimScreenState extends ConsumerState<NewClaimScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: RSColors.primary),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: RSColors.primary,
+          ),
           onPressed: () => context.pop(),
         ),
-        title: Text('Reportar siniestro',
-            style: RSTypography.titleLarge.copyWith(color: RSColors.primary)),
+        title: Text(
+          'Reportar siniestro',
+          style: RSTypography.titleLarge.copyWith(color: RSColors.primary),
+        ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(RSSpacing.lg),
@@ -228,10 +260,12 @@ class _NewClaimScreenState extends ConsumerState<NewClaimScreen> {
             const SizedBox(height: RSSpacing.lg),
 
             // Incident type
-            Text('Tipo de siniestro',
-                    style: RSTypography.titleLarge.copyWith(color: RSColors.textPrimary))
-                .animate(delay: 150.ms)
-                .fadeIn(duration: 400.ms),
+            Text(
+              'Tipo de siniestro',
+              style: RSTypography.titleLarge.copyWith(
+                color: RSColors.textPrimary,
+              ),
+            ).animate(delay: 150.ms).fadeIn(duration: 400.ms),
             const SizedBox(height: RSSpacing.md),
             GridView.count(
               crossAxisCount: 2,
@@ -243,24 +277,30 @@ class _NewClaimScreenState extends ConsumerState<NewClaimScreen> {
               children: _incidentTypes
                   .asMap()
                   .entries
-                  .map((e) => _IncidentTypeCard(
-                        type: e.value,
-                        isSelected: _selectedType == e.key,
-                        onTap: () => setState(() => _selectedType = e.key),
-                      )
-                          .animate(delay: (80 * e.key).ms)
-                          .fadeIn(duration: 300.ms)
-                          .scale(begin: const Offset(0.95, 0.95)))
+                  .map(
+                    (e) =>
+                        _IncidentTypeCard(
+                              type: e.value,
+                              isSelected: _selectedType == e.key,
+                              onTap: () =>
+                                  setState(() => _selectedType = e.key),
+                            )
+                            .animate(delay: (80 * e.key).ms)
+                            .fadeIn(duration: 300.ms)
+                            .scale(begin: const Offset(0.95, 0.95)),
+                  )
                   .toList(),
             ),
 
             const SizedBox(height: RSSpacing.lg),
 
             // Date and time (interactive)
-            Text('Fecha y hora del incidente',
-                    style: RSTypography.titleLarge.copyWith(color: RSColors.textPrimary))
-                .animate(delay: 300.ms)
-                .fadeIn(duration: 400.ms),
+            Text(
+              'Fecha y hora del incidente',
+              style: RSTypography.titleLarge.copyWith(
+                color: RSColors.textPrimary,
+              ),
+            ).animate(delay: 300.ms).fadeIn(duration: 400.ms),
             const SizedBox(height: RSSpacing.md),
             Row(
               children: [
@@ -285,26 +325,33 @@ class _NewClaimScreenState extends ConsumerState<NewClaimScreen> {
             const SizedBox(height: RSSpacing.lg),
 
             // Location
-            Text('Ubicación del siniestro',
-                    style: RSTypography.titleLarge.copyWith(color: RSColors.textPrimary))
-                .animate(delay: 400.ms)
-                .fadeIn(duration: 400.ms),
+            Text(
+              'Ubicación del siniestro',
+              style: RSTypography.titleLarge.copyWith(
+                color: RSColors.textPrimary,
+              ),
+            ).animate(delay: 400.ms).fadeIn(duration: 400.ms),
             const SizedBox(height: RSSpacing.md),
             RSTextField(
               label: 'Dirección',
               hint: 'Ej: Av. Libertador con Av. Bolívar',
               controller: _locationController,
-              prefixIcon: const Icon(Icons.location_on_rounded,
-                  color: RSColors.textSecondary, size: 20),
+              prefixIcon: const Icon(
+                Icons.location_on_rounded,
+                color: RSColors.textSecondary,
+                size: 20,
+              ),
             ).animate(delay: 430.ms).fadeIn(duration: 400.ms),
 
             const SizedBox(height: RSSpacing.lg),
 
             // Description
-            Text('Descripción del incidente',
-                    style: RSTypography.titleLarge.copyWith(color: RSColors.textPrimary))
-                .animate(delay: 500.ms)
-                .fadeIn(duration: 400.ms),
+            Text(
+              'Descripción del incidente',
+              style: RSTypography.titleLarge.copyWith(
+                color: RSColors.textPrimary,
+              ),
+            ).animate(delay: 500.ms).fadeIn(duration: 400.ms),
             const SizedBox(height: RSSpacing.md),
             TextField(
               controller: _descriptionController,
@@ -312,8 +359,9 @@ class _NewClaimScreenState extends ConsumerState<NewClaimScreen> {
               decoration: InputDecoration(
                 hintText:
                     'Describe brevemente lo ocurrido: circunstancias, daños, lesiones...',
-                hintStyle: RSTypography.bodyMedium
-                    .copyWith(color: RSColors.textSecondary),
+                hintStyle: RSTypography.bodyMedium.copyWith(
+                  color: RSColors.textSecondary,
+                ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(RSRadius.md),
                   borderSide: const BorderSide(color: RSColors.border),
@@ -324,8 +372,10 @@ class _NewClaimScreenState extends ConsumerState<NewClaimScreen> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(RSRadius.md),
-                  borderSide:
-                      const BorderSide(color: RSColors.primary, width: 2),
+                  borderSide: const BorderSide(
+                    color: RSColors.primary,
+                    width: 2,
+                  ),
                 ),
                 filled: true,
                 fillColor: RSColors.surface,
@@ -336,16 +386,19 @@ class _NewClaimScreenState extends ConsumerState<NewClaimScreen> {
             const SizedBox(height: RSSpacing.lg),
 
             // Photo evidence
-            Text('Evidencia fotográfica',
-                    style: RSTypography.titleLarge.copyWith(color: RSColors.textPrimary))
-                .animate(delay: 600.ms)
-                .fadeIn(duration: 400.ms),
+            Text(
+              'Evidencia fotográfica',
+              style: RSTypography.titleLarge.copyWith(
+                color: RSColors.textPrimary,
+              ),
+            ).animate(delay: 600.ms).fadeIn(duration: 400.ms),
             const SizedBox(height: RSSpacing.xs),
-            Text('Agrega fotos del incidente (mínimo 2)',
-                    style: RSTypography.bodyMedium
-                        .copyWith(color: RSColors.textSecondary))
-                .animate(delay: 620.ms)
-                .fadeIn(duration: 400.ms),
+            Text(
+              'Agrega fotos del incidente (mínimo 2)',
+              style: RSTypography.bodyMedium.copyWith(
+                color: RSColors.textSecondary,
+              ),
+            ).animate(delay: 620.ms).fadeIn(duration: 400.ms),
             const SizedBox(height: RSSpacing.md),
             Row(
               children: List.generate(
@@ -373,16 +426,21 @@ class _NewClaimScreenState extends ConsumerState<NewClaimScreen> {
             const SizedBox(height: RSSpacing.xl),
 
             RSButton(
-              label: 'Enviar reporte',
-              isLoading: _isSubmitting,
-              onPressed: _isSubmitting ? null : _submit,
-            ).animate(delay: 750.ms).fadeIn(duration: 400.ms).slideY(begin: 0.2),
+                  label: 'Enviar reporte',
+                  isLoading: _isSubmitting,
+                  onPressed: _isSubmitting ? null : _submit,
+                )
+                .animate(delay: 750.ms)
+                .fadeIn(duration: 400.ms)
+                .slideY(begin: 0.2),
 
             const SizedBox(height: RSSpacing.md),
             Center(
               child: Text(
                 'Un asesor te contactará en las próximas 2 horas',
-                style: RSTypography.caption.copyWith(color: RSColors.textSecondary),
+                style: RSTypography.caption.copyWith(
+                  color: RSColors.textSecondary,
+                ),
               ),
             ),
             const SizedBox(height: RSSpacing.xxl),
@@ -414,22 +472,28 @@ class _ActivePolicyBanner extends ConsumerWidget {
           ),
           child: Row(
             children: [
-              const Icon(Icons.verified_user_rounded,
-                  color: RSColors.primary, size: 20),
+              const Icon(
+                Icons.verified_user_rounded,
+                color: RSColors.primary,
+                size: 20,
+              ),
               const SizedBox(width: RSSpacing.md),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Póliza activa verificada',
-                        style: RSTypography.bodyMedium.copyWith(
-                          color: RSColors.primary,
-                          fontWeight: FontWeight.w600,
-                        )),
+                    Text(
+                      'Póliza activa verificada',
+                      style: RSTypography.bodyMedium.copyWith(
+                        color: RSColors.primary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                     Text(
                       '${policy.planName} · ${policy.displayNumber} · Vence ${policy.formattedEndDate}',
-                      style: RSTypography.caption
-                          .copyWith(color: RSColors.textSecondary),
+                      style: RSTypography.caption.copyWith(
+                        color: RSColors.textSecondary,
+                      ),
                     ),
                   ],
                 ),
@@ -459,39 +523,51 @@ class _ProgressSteps extends StatelessWidget {
           child: Row(
             children: [
               Container(
-                width: 28, height: 28,
+                width: 28,
+                height: 28,
                 decoration: BoxDecoration(
                   color: isDone
                       ? RSColors.success
                       : isActive
-                          ? RSColors.primary
-                          : RSColors.surfaceVariant,
+                      ? RSColors.primary
+                      : RSColors.surfaceVariant,
                   shape: BoxShape.circle,
                 ),
                 child: Center(
                   child: isDone
-                      ? const Icon(Icons.check_rounded,
-                          color: Colors.white, size: 16)
-                      : Text('$stepNum',
+                      ? const Icon(
+                          Icons.check_rounded,
+                          color: Colors.white,
+                          size: 16,
+                        )
+                      : Text(
+                          '$stepNum',
                           style: RSTypography.caption.copyWith(
-                            color: isActive ? Colors.white : RSColors.textSecondary,
+                            color: isActive
+                                ? Colors.white
+                                : RSColors.textSecondary,
                             fontWeight: FontWeight.w700,
-                          )),
+                          ),
+                        ),
                 ),
               ),
               const SizedBox(width: 6),
               Expanded(
-                child: Text(e.value,
-                    style: RSTypography.caption.copyWith(
-                      color: isActive ? RSColors.primary : RSColors.textSecondary,
-                      fontWeight: isActive ? FontWeight.w700 : FontWeight.normal,
-                    )),
+                child: Text(
+                  e.value,
+                  style: RSTypography.caption.copyWith(
+                    color: isActive ? RSColors.primary : RSColors.textSecondary,
+                    fontWeight: isActive ? FontWeight.w700 : FontWeight.normal,
+                  ),
+                ),
               ),
               if (e.key < steps.length - 1)
                 Expanded(
                   child: Container(
                     height: 1,
-                    margin: const EdgeInsets.symmetric(horizontal: RSSpacing.xs),
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: RSSpacing.xs,
+                    ),
                     color: RSColors.border,
                   ),
                 ),
@@ -509,13 +585,20 @@ class _IncidentType {
   final String label;
   final IconData icon;
   final Color color;
-  const _IncidentType(
-      {required this.id, required this.label, required this.icon, required this.color});
+  const _IncidentType({
+    required this.id,
+    required this.label,
+    required this.icon,
+    required this.color,
+  });
 }
 
 class _IncidentTypeCard extends StatelessWidget {
-  const _IncidentTypeCard(
-      {required this.type, required this.isSelected, required this.onTap});
+  const _IncidentTypeCard({
+    required this.type,
+    required this.isSelected,
+    required this.onTap,
+  });
   final _IncidentType type;
   final bool isSelected;
   final VoidCallback onTap;
@@ -527,25 +610,35 @@ class _IncidentTypeCard extends StatelessWidget {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(
-            horizontal: RSSpacing.md, vertical: RSSpacing.sm),
+          horizontal: RSSpacing.md,
+          vertical: RSSpacing.sm,
+        ),
         decoration: BoxDecoration(
-          color: isSelected ? type.color.withValues(alpha: 0.08) : RSColors.surface,
+          color: isSelected
+              ? type.color.withValues(alpha: 0.08)
+              : RSColors.surface,
           borderRadius: BorderRadius.circular(RSRadius.md),
           border: Border.all(
-              color: isSelected ? type.color : RSColors.border,
-              width: isSelected ? 2 : 1),
+            color: isSelected ? type.color : RSColors.border,
+            width: isSelected ? 2 : 1,
+          ),
         ),
         child: Row(
           children: [
-            Icon(type.icon,
-                color: isSelected ? type.color : RSColors.textSecondary, size: 20),
+            Icon(
+              type.icon,
+              color: isSelected ? type.color : RSColors.textSecondary,
+              size: 20,
+            ),
             const SizedBox(width: RSSpacing.sm),
             Expanded(
-              child: Text(type.label,
-                  style: RSTypography.bodyMedium.copyWith(
-                    color: isSelected ? type.color : RSColors.textPrimary,
-                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                  )),
+              child: Text(
+                type.label,
+                style: RSTypography.bodyMedium.copyWith(
+                  color: isSelected ? type.color : RSColors.textPrimary,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                ),
+              ),
             ),
           ],
         ),
@@ -556,8 +649,11 @@ class _IncidentTypeCard extends StatelessWidget {
 
 // ─── Date Time Tile (interactive) ────────────────────────────────
 class _DateTimeTile extends StatelessWidget {
-  const _DateTimeTile(
-      {required this.icon, required this.label, required this.onTap});
+  const _DateTimeTile({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
   final IconData icon;
   final String label;
   final VoidCallback onTap;
@@ -578,12 +674,18 @@ class _DateTimeTile extends StatelessWidget {
             Icon(icon, color: RSColors.primary, size: 18),
             const SizedBox(width: RSSpacing.sm),
             Expanded(
-              child: Text(label,
-                  style: RSTypography.bodyMedium.copyWith(
-                    fontWeight: FontWeight.w600,
-                  )),
+              child: Text(
+                label,
+                style: RSTypography.bodyMedium.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ),
-            const Icon(Icons.edit_rounded, color: RSColors.textSecondary, size: 14),
+            const Icon(
+              Icons.edit_rounded,
+              color: RSColors.textSecondary,
+              size: 14,
+            ),
           ],
         ),
       ),
@@ -611,8 +713,9 @@ class _PhotoSlot extends StatelessWidget {
               : RSColors.surfaceVariant,
           borderRadius: BorderRadius.circular(RSRadius.md),
           border: Border.all(
-              color: hasPhoto ? RSColors.success : RSColors.border,
-              width: hasPhoto ? 2 : 1),
+            color: hasPhoto ? RSColors.success : RSColors.border,
+            width: hasPhoto ? 2 : 1,
+          ),
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(RSRadius.md - 1),
@@ -622,20 +725,31 @@ class _PhotoSlot extends StatelessWidget {
                   children: [
                     Image.file(File(photo!.path), fit: BoxFit.cover),
                     Positioned(
-                      top: 4, right: 4,
+                      top: 4,
+                      right: 4,
                       child: Container(
-                        width: 22, height: 22,
+                        width: 22,
+                        height: 22,
                         decoration: const BoxDecoration(
-                          color: RSColors.success, shape: BoxShape.circle),
-                        child: const Icon(Icons.check_rounded,
-                            color: Colors.white, size: 14),
+                          color: RSColors.success,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.check_rounded,
+                          color: Colors.white,
+                          size: 14,
+                        ),
                       ),
                     ),
                   ],
                 )
               : const Center(
-                  child: Icon(Icons.add_a_photo_rounded,
-                      color: RSColors.textSecondary, size: 28)),
+                  child: Icon(
+                    Icons.add_a_photo_rounded,
+                    color: RSColors.textSecondary,
+                    size: 28,
+                  ),
+                ),
         ),
       ),
     );
@@ -653,7 +767,9 @@ class _InjuriesToggle extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(RSSpacing.md),
       decoration: BoxDecoration(
-        color: value ? RSColors.error.withValues(alpha: 0.05) : RSColors.surface,
+        color: value
+            ? RSColors.error.withValues(alpha: 0.05)
+            : RSColors.surface,
         borderRadius: BorderRadius.circular(RSRadius.md),
         border: Border.all(color: value ? RSColors.error : RSColors.border),
       ),
@@ -663,9 +779,12 @@ class _InjuriesToggle extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('¿Hubo lesionados?',
-                    style: RSTypography.titleMedium
-                        .copyWith(fontWeight: FontWeight.w600)),
+                Text(
+                  '¿Hubo lesionados?',
+                  style: RSTypography.titleMedium.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
                 Text(
                   value
                       ? 'Se activará asistencia médica inmediata'

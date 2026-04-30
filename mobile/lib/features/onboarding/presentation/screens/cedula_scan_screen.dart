@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -16,7 +17,12 @@ import 'package:ruedaseguro/features/onboarding/domain/onboarding_state.dart';
 import 'package:ruedaseguro/shared/widgets/document_scanner.dart';
 
 class CedulaScanScreen extends ConsumerStatefulWidget {
-  const CedulaScanScreen({super.key});
+  const CedulaScanScreen({super.key, this.isOwnerScan = false});
+
+  /// When true, this scan captures the vehicle owner's cédula (conductor
+  /// habitual path). OCR result is stored via [setOwnerIdentity] instead of
+  /// [updateCedula], and navigation goes to the owner confirm screen.
+  final bool isOwnerScan;
 
   @override
   ConsumerState<CedulaScanScreen> createState() => _CedulaScanScreenState();
@@ -52,8 +58,10 @@ class _CedulaScanScreenState extends ConsumerState<CedulaScanScreen> {
     if (!quality.overallPass) {
       if (mounted) {
         setState(() => _isProcessing = false);
-        _showError(quality.failureReason ??
-            'La foto no es legible. Asegúrate de buena iluminación y sin reflejos.');
+        _showError(
+          quality.failureReason ??
+              'La foto no es legible. Asegúrate de buena iluminación y sin reflejos.',
+        );
       }
       return;
     }
@@ -73,11 +81,20 @@ class _CedulaScanScreenState extends ConsumerState<CedulaScanScreen> {
     final parsed = CedulaParser.parse(ocr.rawText, ocr.textBlocks);
 
     // 4. Save to onboarding state and navigate
-    ref.read(onboardingProvider.notifier).updateCedula(parsed, file);
+    if (widget.isOwnerScan) {
+      // Owner mode: store as owner identity, don't overwrite rider's cedula
+      ref.read(onboardingProvider.notifier).setOwnerIdentity(parsed, file);
+    } else {
+      ref.read(onboardingProvider.notifier).updateCedula(parsed, file);
+    }
+
+    final confirmRoute = widget.isOwnerScan
+        ? '/onboarding/cedula/confirm?ownerMode=true'
+        : '/onboarding/cedula/confirm';
 
     if (mounted) {
       setState(() => _isProcessing = false);
-      unawaited(context.push('/onboarding/cedula/confirm'));
+      unawaited(context.push(confirmRoute));
     }
   }
 
@@ -86,10 +103,12 @@ class _CedulaScanScreenState extends ConsumerState<CedulaScanScreen> {
     return Stack(
       children: [
         DocumentScanner(
-          instruction:
-              'Coloca el frente de tu cédula dentro del recuadro\nBuena iluminación, sin reflejos, bordes completos',
+          instruction: widget.isOwnerScan
+              ? 'Cédula del dueño de la moto\nBuena iluminación, sin reflejos, bordes completos'
+              : 'Coloca el frente de tu cédula dentro del recuadro\nBuena iluminación, sin reflejos, bordes completos',
           onCapture: _handleCapture,
-          onCancel: () => context.go('/welcome'),
+          onCancel: () =>
+              widget.isOwnerScan ? context.pop() : context.go('/welcome'),
         ),
 
         // Progress indicator overlay
@@ -99,9 +118,11 @@ class _CedulaScanScreenState extends ConsumerState<CedulaScanScreen> {
             child: Padding(
               padding: const EdgeInsets.only(top: 72),
               child: _StepIndicator(
-                currentStep: 1,
+                currentStep: widget.isOwnerScan ? 2 : 1,
                 totalSteps: 4,
-                label: 'Cédula de identidad',
+                label: widget.isOwnerScan
+                    ? 'Cédula del dueño'
+                    : 'Cédula de identidad',
               ),
             ),
           ),
@@ -118,13 +139,18 @@ class _CedulaScanScreenState extends ConsumerState<CedulaScanScreen> {
                   Shimmer.fromColors(
                     baseColor: Colors.white24,
                     highlightColor: Colors.white54,
-                    child: const Icon(Icons.document_scanner,
-                        color: Colors.white, size: 64),
+                    child: const Icon(
+                      Icons.document_scanner,
+                      color: Colors.white,
+                      size: 64,
+                    ),
                   ),
                   const SizedBox(height: RSSpacing.lg),
                   Text(
                     'Leyendo documento...',
-                    style: RSTypography.titleMedium.copyWith(color: Colors.white),
+                    style: RSTypography.titleMedium.copyWith(
+                      color: Colors.white,
+                    ),
                   ),
                 ],
               ),
@@ -152,12 +178,42 @@ class _CedulaScanScreenState extends ConsumerState<CedulaScanScreen> {
                     Expanded(
                       child: Text(
                         _errorMessage!,
-                        style: RSTypography.bodyMedium
-                            .copyWith(color: Colors.white),
+                        style: RSTypography.bodyMedium.copyWith(
+                          color: Colors.white,
+                        ),
                       ),
                     ),
                     const Icon(Icons.close, color: Colors.white70, size: 18),
                   ],
+                ),
+              ),
+            ),
+          ),
+
+        // DEV Skip Button
+        if (kDebugMode && !_isProcessing)
+          Positioned(
+            top: 48,
+            right: 16,
+            child: GestureDetector(
+              onTap: () {
+                final confirmRoute = widget.isOwnerScan
+                    ? '/onboarding/cedula/confirm?ownerMode=true'
+                    : '/onboarding/cedula/confirm';
+                context.push(confirmRoute);
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.3),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  'omitir',
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.5),
+                    fontSize: 12,
+                  ),
                 ),
               ),
             ),

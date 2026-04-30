@@ -13,6 +13,11 @@ import 'package:ruedaseguro/core/config/env_config.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  assert(
+    EnvConfig.supabaseUrl.isNotEmpty && EnvConfig.supabaseAnonKey.isNotEmpty,
+    'SUPABASE_URL and SUPABASE_ANON_KEY must be provided via --dart-define',
+  );
+
   await Supabase.initialize(
     url: EnvConfig.supabaseUrl,
     anonKey: EnvConfig.supabaseAnonKey,
@@ -25,16 +30,13 @@ Future<void> main() async {
   // the platform thread for 1.5–4s on MIUI devices, stalling MethodChannel
   // replies (including Supabase SecureStorage) and freezing the splash screen.
   if (!kDebugMode && EnvConfig.sentryDsn.isNotEmpty) {
-    await SentryFlutter.init(
-      (options) {
-        options.dsn = EnvConfig.sentryDsn;
-        options.environment = 'production';
-        options.tracesSampleRate = 0.1;
-        options.attachScreenshot = true;
-        options.attachViewHierarchy = true;
-      },
-      appRunner: () => runApp(const ProviderScope(child: App())),
-    );
+    await SentryFlutter.init((options) {
+      options.dsn = EnvConfig.sentryDsn;
+      options.environment = 'production';
+      options.tracesSampleRate = 0.1;
+      options.attachScreenshot = true;
+      options.attachViewHierarchy = true;
+    }, appRunner: () => runApp(const ProviderScope(child: App())));
   } else {
     runApp(const ProviderScope(child: App()));
   }

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -12,11 +13,21 @@ import 'package:ruedaseguro/shared/widgets/rs_button.dart';
 import 'package:ruedaseguro/shared/widgets/rs_text_field.dart';
 
 class CedulaConfirmScreen extends ConsumerStatefulWidget {
-  const CedulaConfirmScreen({super.key, this.ocrData});
+  const CedulaConfirmScreen({
+    super.key,
+    this.ocrData,
+    this.isOwnerScan = false,
+  });
   final Map<String, dynamic>? ocrData;
 
+  /// When true, this screen confirms the vehicle owner's cédula data
+  /// (conductor habitual path). Pre-fills from ownerCedulaOcr, calls
+  /// setOwnerIdentity on submit, and navigates to /onboarding/address.
+  final bool isOwnerScan;
+
   @override
-  ConsumerState<CedulaConfirmScreen> createState() => _CedulaConfirmScreenState();
+  ConsumerState<CedulaConfirmScreen> createState() =>
+      _CedulaConfirmScreenState();
 }
 
 class _CedulaConfirmScreenState extends ConsumerState<CedulaConfirmScreen> {
@@ -40,20 +51,36 @@ class _CedulaConfirmScreenState extends ConsumerState<CedulaConfirmScreen> {
   void initState() {
     super.initState();
     final data = ref.read(onboardingProvider);
-    _idType = data.idType ?? 'V';
-    _sex = data.sex;
-    _nationality = data.nationality;
-    _selectedDob = data.dateOfBirth;
-    _idNumberCtrl = TextEditingController(text: data.idNumber ?? '');
-    _firstNameCtrl = TextEditingController(text: data.firstName ?? '');
-    _lastNameCtrl = TextEditingController(text: data.lastName ?? '');
-    _dobCtrl = TextEditingController(
-      text: data.dateOfBirth != null
-          ? DateFormat('dd/MM/yyyy').format(data.dateOfBirth!)
-          : '',
+    if (widget.isOwnerScan) {
+      // Pre-fill from owner OCR fields
+      _idType = data.ownerIdType ?? 'V';
+      _sex = null; // owner sex not stored, leave blank
+      _nationality = null;
+      _selectedDob = null;
+      _idNumberCtrl = TextEditingController(text: data.ownerIdNumber ?? '');
+      _firstNameCtrl = TextEditingController(text: data.ownerFirstName ?? '');
+      _lastNameCtrl = TextEditingController(text: data.ownerLastName ?? '');
+      _dobCtrl = TextEditingController();
+    } else {
+      _idType = data.idType ?? 'V';
+      _sex = data.sex;
+      _nationality = data.nationality;
+      _selectedDob = data.dateOfBirth;
+      _idNumberCtrl = TextEditingController(text: data.idNumber ?? '');
+      _firstNameCtrl = TextEditingController(text: data.firstName ?? '');
+      _lastNameCtrl = TextEditingController(text: data.lastName ?? '');
+      _dobCtrl = TextEditingController(
+        text: data.dateOfBirth != null
+            ? DateFormat('dd/MM/yyyy').format(data.dateOfBirth!)
+            : '',
+      );
+    }
+    _emergContactCtrl = TextEditingController(
+      text: data.emergencyContactName ?? '',
     );
-    _emergContactCtrl = TextEditingController(text: data.emergencyContactName ?? '');
-    _emergPhoneCtrl = TextEditingController(text: data.emergencyContactPhone ?? '');
+    _emergPhoneCtrl = TextEditingController(
+      text: data.emergencyContactPhone ?? '',
+    );
   }
 
   @override
@@ -68,7 +95,9 @@ class _CedulaConfirmScreenState extends ConsumerState<CedulaConfirmScreen> {
   }
 
   double _fieldConf(String field) {
-    return ref.read(onboardingProvider).cedulaOcr?.fieldConfidences[field] ?? 0.0;
+    final data = ref.read(onboardingProvider);
+    final ocr = widget.isOwnerScan ? data.ownerCedulaOcr : data.cedulaOcr;
+    return ocr?.fieldConfidences[field] ?? 0.0;
   }
 
   Future<void> _pickDate() async {
@@ -89,22 +118,44 @@ class _CedulaConfirmScreenState extends ConsumerState<CedulaConfirmScreen> {
 
   void _submit() {
     if (!_formKey.currentState!.validate()) return;
-    ref.read(onboardingProvider.notifier).confirmIdentity(
-      idType: _idType,
-      idNumber: _idNumberCtrl.text.trim(),
-      firstName: _firstNameCtrl.text.trim(),
-      lastName: _lastNameCtrl.text.trim(),
-      dateOfBirth: _selectedDob,
-      nationality: _nationality,
-      sex: _sex,
-      emergencyContactName: _emergContactCtrl.text.trim().isEmpty
-          ? null
-          : _emergContactCtrl.text.trim(),
-      emergencyContactPhone: _emergPhoneCtrl.text.trim().isEmpty
-          ? null
-          : _emergPhoneCtrl.text.trim(),
-      emergencyContactRelation: _emergRelation,
-    );
+
+    if (widget.isOwnerScan) {
+      // Owner mode: update owner fields only and navigate to address
+      final data = ref.read(onboardingProvider);
+      final ownerOcr = data.ownerCedulaOcr;
+      if (ownerOcr != null) {
+        final updatedOcr = ownerOcr.copyWith(
+          idType: _idType,
+          idNumber: _idNumberCtrl.text.trim(),
+          firstName: _firstNameCtrl.text.trim(),
+          lastName: _lastNameCtrl.text.trim(),
+        );
+        ref
+            .read(onboardingProvider.notifier)
+            .setOwnerIdentity(updatedOcr, data.ownerCedulaImage!);
+      }
+      context.go('/onboarding/address');
+      return;
+    }
+
+    ref
+        .read(onboardingProvider.notifier)
+        .confirmIdentity(
+          idType: _idType,
+          idNumber: _idNumberCtrl.text.trim(),
+          firstName: _firstNameCtrl.text.trim(),
+          lastName: _lastNameCtrl.text.trim(),
+          dateOfBirth: _selectedDob,
+          nationality: _nationality,
+          sex: _sex,
+          emergencyContactName: _emergContactCtrl.text.trim().isEmpty
+              ? null
+              : _emergContactCtrl.text.trim(),
+          emergencyContactPhone: _emergPhoneCtrl.text.trim().isEmpty
+              ? null
+              : _emergPhoneCtrl.text.trim(),
+          emergencyContactRelation: _emergRelation,
+        );
     context.push('/onboarding/certificado');
   }
 
@@ -118,11 +169,16 @@ class _CedulaConfirmScreenState extends ConsumerState<CedulaConfirmScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: RSColors.primary),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: RSColors.primary,
+          ),
           onPressed: () => context.pop(),
         ),
-        title: Text('Confirma tus datos',
-            style: RSTypography.titleLarge.copyWith(color: RSColors.primary)),
+        title: Text(
+          widget.isOwnerScan ? 'Datos del dueño' : 'Confirma tus datos',
+          style: RSTypography.titleLarge.copyWith(color: RSColors.primary),
+        ),
       ),
       body: Form(
         key: _formKey,
@@ -131,170 +187,211 @@ class _CedulaConfirmScreenState extends ConsumerState<CedulaConfirmScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-            // Scanned image thumbnail
-            if (data.cedulaImage != null)
-              GestureDetector(
-                onTap: () => _showFullImage(context, data),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(RSRadius.md),
-                  child: Image.file(
-                    data.cedulaImage!,
-                    height: 140,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
+              // Scanned image thumbnail
+              if ((widget.isOwnerScan
+                      ? data.ownerCedulaImage
+                      : data.cedulaImage) !=
+                  null)
+                GestureDetector(
+                  onTap: () => _showFullImage(context, data),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(RSRadius.md),
+                    child: Image.file(
+                      (widget.isOwnerScan
+                          ? data.ownerCedulaImage!
+                          : data.cedulaImage!),
+                      height: 140,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                    ),
                   ),
+                ),
+
+              const SizedBox(height: RSSpacing.xl),
+              Text(
+                'Verifica que la información sea correcta',
+                style: RSTypography.bodyMedium.copyWith(
+                  color: RSColors.textSecondary,
                 ),
               ),
+              const SizedBox(height: RSSpacing.lg),
 
-            const SizedBox(height: RSSpacing.xl),
-            Text('Verifica que la información sea correcta',
-                style: RSTypography.bodyMedium.copyWith(color: RSColors.textSecondary)),
-            const SizedBox(height: RSSpacing.lg),
+              // ID Type + Number
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(
+                    width: 90,
+                    child: _RSDropdownField(
+                      label: 'Tipo',
+                      value: _idType,
+                      items: const ['V', 'E'],
+                      onChanged: (v) => setState(() => _idType = v!),
+                    ),
+                  ),
+                  const SizedBox(width: RSSpacing.md),
+                  Expanded(
+                    child: _ConfidenceField(
+                      label: 'Número de cédula',
+                      controller: _idNumberCtrl,
+                      confidence: _fieldConf('idNumber'),
+                      keyboardType: TextInputType.number,
+                      validator: (v) {
+                        if (v == null || v.trim().isEmpty) return 'Requerido';
+                        if (!RegExp(r'^\d{6,10}$').hasMatch(v.trim())) {
+                          return 'Formato inválido (6-10 dígitos)';
+                        }
+                        return null;
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: RSSpacing.md),
 
-            // ID Type + Number
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(
-                  width: 90,
-                  child: _RSDropdownField(
-                    label: 'Tipo',
-                    value: _idType,
-                    items: const ['V', 'E', 'CC'],
-                    onChanged: (v) => setState(() => _idType = v!),
+              // Names
+              _ConfidenceField(
+                label: 'Nombre(s)',
+                controller: _firstNameCtrl,
+                confidence: _fieldConf('firstName'),
+                textCapitalization: TextCapitalization.words,
+                validator: (v) {
+                  if (v == null || v.trim().length < 2)
+                    return 'Requerido (mín. 2 letras)';
+                  return null;
+                },
+              ),
+              const SizedBox(height: RSSpacing.md),
+              _ConfidenceField(
+                label: 'Apellido(s)',
+                controller: _lastNameCtrl,
+                confidence: _fieldConf('lastName'),
+                textCapitalization: TextCapitalization.words,
+                validator: (v) {
+                  if (v == null || v.trim().length < 2)
+                    return 'Requerido (mín. 2 letras)';
+                  return null;
+                },
+              ),
+              const SizedBox(height: RSSpacing.md),
+
+              // Date of birth
+              RSTextField(
+                label: 'Fecha de nacimiento',
+                controller: _dobCtrl,
+                readOnly: true,
+                suffixIcon: const Icon(
+                  Icons.calendar_today,
+                  color: RSColors.primary,
+                ),
+                onTap: _pickDate,
+                validator: (v) {
+                  if (_selectedDob == null) return null; // optional
+                  if (!Validators.isAdult(_selectedDob))
+                    return 'Debes ser mayor de 18 años';
+                  return null;
+                },
+              ),
+              const SizedBox(height: RSSpacing.md),
+
+              // Nationality
+              _RSDropdownField(
+                label: 'Nacionalidad',
+                value: _nationality,
+                items: const ['VENEZOLANO', 'EXTRANJERO'],
+                hint: 'Seleccionar',
+                onChanged: (v) => setState(() => _nationality = v),
+              ),
+              const SizedBox(height: RSSpacing.md),
+
+              // Sex
+              _RSDropdownField(
+                label: 'Sexo',
+                value: _sex,
+                items: const ['M', 'F'],
+                itemLabels: const {'M': 'Masculino', 'F': 'Femenino'},
+                hint: 'Seleccionar',
+                onChanged: (v) => setState(() => _sex = v),
+              ),
+
+              const SizedBox(height: RSSpacing.xl),
+
+              // Emergency contact (collapsible) — hidden in owner scan mode
+              if (!widget.isOwnerScan) ...[
+                InkWell(
+                  onTap: () => setState(() => _showEmergency = !_showEmergency),
+                  borderRadius: BorderRadius.circular(RSRadius.md),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: RSSpacing.sm),
+                    child: Row(
+                      children: [
+                        Icon(
+                          _showEmergency
+                              ? Icons.expand_less
+                              : Icons.expand_more,
+                          color: RSColors.primary,
+                        ),
+                        const SizedBox(width: RSSpacing.sm),
+                        Text(
+                          'Contacto de emergencia (opcional)',
+                          style: RSTypography.bodyLarge.copyWith(
+                            color: RSColors.primary,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-                const SizedBox(width: RSSpacing.md),
-                Expanded(
-                  child: _ConfidenceField(
-                    label: 'Número de cédula',
-                    controller: _idNumberCtrl,
-                    confidence: _fieldConf('idNumber'),
-                    keyboardType: TextInputType.number,
-                    validator: (v) {
-                      if (v == null || v.trim().isEmpty) return 'Requerido';
-                      if (!RegExp(r'^\d{6,10}$').hasMatch(v.trim())) {
-                        return 'Formato inválido (6-10 dígitos)';
+                if (_showEmergency) ...[
+                  const SizedBox(height: RSSpacing.md),
+                  RSTextField(
+                    label: 'Nombre del contacto',
+                    controller: _emergContactCtrl,
+                  ),
+                  const SizedBox(height: RSSpacing.md),
+                  RSTextField(
+                    label: 'Teléfono',
+                    controller: _emergPhoneCtrl,
+                    keyboardType: TextInputType.phone,
+                  ),
+                  const SizedBox(height: RSSpacing.md),
+                  _RSDropdownField(
+                    label: 'Parentesco',
+                    value: _emergRelation,
+                    items: const [
+                      'Padre/Madre',
+                      'Esposo/a',
+                      'Hijo/a',
+                      'Hermano/a',
+                      'Amigo/a',
+                      'Otro',
+                    ],
+                    hint: 'Seleccionar',
+                    onChanged: (v) => setState(() => _emergRelation = v),
+                  ),
+                ],
+              ],
+
+              const SizedBox(height: RSSpacing.xxl),
+
+              RSButton(label: 'Continuar', onPressed: _submit),
+              if (kDebugMode) ...[
+                const SizedBox(height: RSSpacing.sm),
+                Center(
+                  child: TextButton(
+                    onPressed: () {
+                      if (widget.isOwnerScan) {
+                        context.push('/onboarding/address');
+                      } else {
+                        context.push('/onboarding/certificado');
                       }
-                      return null;
                     },
+                    child: const Text('[DEV] Omitir confirmación'),
                   ),
                 ),
               ],
-            ),
-            const SizedBox(height: RSSpacing.md),
-
-            // Names
-            _ConfidenceField(
-              label: 'Nombre(s)',
-              controller: _firstNameCtrl,
-              confidence: _fieldConf('firstName'),
-              textCapitalization: TextCapitalization.words,
-              validator: (v) {
-                if (v == null || v.trim().length < 2) return 'Requerido (mín. 2 letras)';
-                return null;
-              },
-            ),
-            const SizedBox(height: RSSpacing.md),
-            _ConfidenceField(
-              label: 'Apellido(s)',
-              controller: _lastNameCtrl,
-              confidence: _fieldConf('lastName'),
-              textCapitalization: TextCapitalization.words,
-              validator: (v) {
-                if (v == null || v.trim().length < 2) return 'Requerido (mín. 2 letras)';
-                return null;
-              },
-            ),
-            const SizedBox(height: RSSpacing.md),
-
-            // Date of birth
-            RSTextField(
-              label: 'Fecha de nacimiento',
-              controller: _dobCtrl,
-              readOnly: true,
-              suffixIcon: const Icon(Icons.calendar_today, color: RSColors.primary),
-              onTap: _pickDate,
-              validator: (v) {
-                if (_selectedDob == null) return null; // optional
-                if (!Validators.isAdult(_selectedDob)) return 'Debes ser mayor de 18 años';
-                return null;
-              },
-            ),
-            const SizedBox(height: RSSpacing.md),
-
-            // Nationality
-            _RSDropdownField(
-              label: 'Nacionalidad',
-              value: _nationality,
-              items: const ['VENEZOLANO', 'EXTRANJERO'],
-              hint: 'Seleccionar',
-              onChanged: (v) => setState(() => _nationality = v),
-            ),
-            const SizedBox(height: RSSpacing.md),
-
-            // Sex
-            _RSDropdownField(
-              label: 'Sexo',
-              value: _sex,
-              items: const ['M', 'F'],
-              itemLabels: const {'M': 'Masculino', 'F': 'Femenino'},
-              hint: 'Seleccionar',
-              onChanged: (v) => setState(() => _sex = v),
-            ),
-
-            const SizedBox(height: RSSpacing.xl),
-
-            // Emergency contact (collapsible)
-            InkWell(
-              onTap: () => setState(() => _showEmergency = !_showEmergency),
-              borderRadius: BorderRadius.circular(RSRadius.md),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: RSSpacing.sm),
-                child: Row(
-                  children: [
-                    Icon(
-                      _showEmergency
-                          ? Icons.expand_less
-                          : Icons.expand_more,
-                      color: RSColors.primary,
-                    ),
-                    const SizedBox(width: RSSpacing.sm),
-                    Text(
-                      'Contacto de emergencia (opcional)',
-                      style: RSTypography.bodyLarge.copyWith(color: RSColors.primary),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            if (_showEmergency) ...[
-              const SizedBox(height: RSSpacing.md),
-              RSTextField(label: 'Nombre del contacto', controller: _emergContactCtrl),
-              const SizedBox(height: RSSpacing.md),
-              RSTextField(
-                label: 'Teléfono',
-                controller: _emergPhoneCtrl,
-                keyboardType: TextInputType.phone,
-              ),
-              const SizedBox(height: RSSpacing.md),
-              _RSDropdownField(
-                label: 'Parentesco',
-                value: _emergRelation,
-                items: const [
-                  'Padre/Madre', 'Esposo/a', 'Hijo/a', 'Hermano/a', 'Amigo/a', 'Otro',
-                ],
-                hint: 'Seleccionar',
-                onChanged: (v) => setState(() => _emergRelation = v),
-              ),
+              const SizedBox(height: RSSpacing.xl),
             ],
-
-            const SizedBox(height: RSSpacing.xxl),
-
-            RSButton(label: 'Continuar', onPressed: _submit),
-            const SizedBox(height: RSSpacing.xl),
-          ],
           ),
         ),
       ),
@@ -304,9 +401,8 @@ class _CedulaConfirmScreenState extends ConsumerState<CedulaConfirmScreen> {
   void _showFullImage(BuildContext context, OnboardingData data) {
     showDialog(
       context: context,
-      builder: (_) => Dialog(
-        child: Image.file(data.cedulaImage!, fit: BoxFit.contain),
-      ),
+      builder: (_) =>
+          Dialog(child: Image.file(data.cedulaImage!, fit: BoxFit.contain)),
     );
   }
 }
@@ -381,8 +477,12 @@ class _RSDropdownField<T> extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label,
-            style: RSTypography.bodyMedium.copyWith(color: RSColors.textSecondary)),
+        Text(
+          label,
+          style: RSTypography.bodyMedium.copyWith(
+            color: RSColors.textSecondary,
+          ),
+        ),
         const SizedBox(height: 4),
         DropdownButtonFormField<T>(
           value: value,
@@ -405,13 +505,15 @@ class _RSDropdownField<T> extends StatelessWidget {
             fillColor: RSColors.surface,
           ),
           items: items
-              .map((item) => DropdownMenuItem<T>(
-                    value: item,
-                    child: Text(
-                      itemLabels?[item] ?? item.toString(),
-                      style: RSTypography.bodyLarge,
-                    ),
-                  ))
+              .map(
+                (item) => DropdownMenuItem<T>(
+                  value: item,
+                  child: Text(
+                    itemLabels?[item] ?? item.toString(),
+                    style: RSTypography.bodyLarge,
+                  ),
+                ),
+              )
               .toList(),
           onChanged: onChanged,
         ),

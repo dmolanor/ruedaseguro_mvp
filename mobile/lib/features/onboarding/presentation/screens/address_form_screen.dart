@@ -1,11 +1,13 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:ruedaseguro/core/services/supabase_service.dart';
 import 'package:ruedaseguro/core/theme/colors.dart';
 import 'package:ruedaseguro/core/theme/spacing.dart';
 import 'package:ruedaseguro/core/theme/typography.dart';
@@ -16,11 +18,12 @@ import 'package:ruedaseguro/shared/widgets/rs_text_field.dart';
 // ---------------------------------------------------------------------------
 // Async provider: loads estados_municipios.json
 // Returns List<{nombre, municipios}>
-final _locationDataProvider =
-    FutureProvider<List<_EstadoData>>((ref) async {
+/// Exposed for widget testing — override with fake data via ProviderScope.
+final locationDataProvider = FutureProvider<List<_EstadoData>>((ref) async {
   try {
-    final raw = await rootBundle
-        .loadString('assets/data/estados_municipios.json');
+    final raw = await rootBundle.loadString(
+      'assets/data/estados_municipios.json',
+    );
     final json = jsonDecode(raw) as Map<String, dynamic>;
     return (json['estados'] as List)
         .cast<Map<String, dynamic>>()
@@ -36,22 +39,37 @@ class _EstadoData {
   final List<String> municipios;
   const _EstadoData({required this.nombre, required this.municipios});
   factory _EstadoData.fromJson(Map<String, dynamic> j) => _EstadoData(
-        nombre: j['nombre'] as String,
-        municipios: (j['municipios'] as List).cast<String>(),
-      );
+    nombre: j['nombre'] as String,
+    municipios: (j['municipios'] as List).cast<String>(),
+  );
 }
 
 // Minimal fallback if asset loading fails
 const _fallbackEstados = [
   _EstadoData(nombre: 'Distrito Capital', municipios: ['Libertador']),
-  _EstadoData(nombre: 'Miranda', municipios: ['Baruta', 'Chacao', 'El Hatillo', 'Sucre']),
-  _EstadoData(nombre: 'Carabobo', municipios: ['Valencia', 'Naguanagua', 'San Diego']),
-  _EstadoData(nombre: 'Zulia', municipios: ['Maracaibo', 'San Francisco', 'Cabimas']),
-  _EstadoData(nombre: 'Aragua', municipios: ['Girardot', 'Mario Briceño Iragorry']),
+  _EstadoData(
+    nombre: 'Miranda',
+    municipios: ['Baruta', 'Chacao', 'El Hatillo', 'Sucre'],
+  ),
+  _EstadoData(
+    nombre: 'Carabobo',
+    municipios: ['Valencia', 'Naguanagua', 'San Diego'],
+  ),
+  _EstadoData(
+    nombre: 'Zulia',
+    municipios: ['Maracaibo', 'San Francisco', 'Cabimas'],
+  ),
+  _EstadoData(
+    nombre: 'Aragua',
+    municipios: ['Girardot', 'Mario Briceño Iragorry'],
+  ),
   _EstadoData(nombre: 'Lara', municipios: ['Iribarren', 'Palavecino']),
   _EstadoData(nombre: 'Táchira', municipios: ['San Cristóbal', 'Cárdenas']),
   _EstadoData(nombre: 'Bolívar', municipios: ['Heres', 'Caroní']),
-  _EstadoData(nombre: 'Anzoátegui', municipios: ['Juan Antonio Sotillo', 'Simón Bolívar']),
+  _EstadoData(
+    nombre: 'Anzoátegui',
+    municipios: ['Juan Antonio Sotillo', 'Simón Bolívar'],
+  ),
   _EstadoData(nombre: 'Monagas', municipios: ['Maturín', 'Cedeño']),
 ];
 
@@ -76,6 +94,7 @@ class _AddressFormScreenState extends ConsumerState<AddressFormScreen> {
 
   late final TextEditingController _urbCtrl;
   late final TextEditingController _cpCtrl;
+  late final TextEditingController _emailCtrl;
 
   String? _estado;
   String? _municipio;
@@ -90,6 +109,10 @@ class _AddressFormScreenState extends ConsumerState<AddressFormScreen> {
     final data = ref.read(onboardingProvider);
     _urbCtrl = TextEditingController(text: data.urbanizacion ?? '');
     _cpCtrl = TextEditingController(text: data.codigoPostal ?? '');
+    // Pre-fill email from saved state, or fall back to Supabase Auth email
+    final savedEmail =
+        data.email ?? SupabaseService.auth.currentUser?.email ?? '';
+    _emailCtrl = TextEditingController(text: savedEmail);
     _estado = data.estado;
     _municipio = data.municipio;
     _latitude = data.latitude;
@@ -101,6 +124,7 @@ class _AddressFormScreenState extends ConsumerState<AddressFormScreen> {
   void dispose() {
     _urbCtrl.dispose();
     _cpCtrl.dispose();
+    _emailCtrl.dispose();
     super.dispose();
   }
 
@@ -115,7 +139,8 @@ class _AddressFormScreenState extends ConsumerState<AddressFormScreen> {
       final serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
         _showLocationError(
-            'El servicio de ubicación está desactivado. Actívalo en la configuración.');
+          'El servicio de ubicación está desactivado. Actívalo en la configuración.',
+        );
         return;
       }
 
@@ -125,21 +150,21 @@ class _AddressFormScreenState extends ConsumerState<AddressFormScreen> {
         permission = await Geolocator.requestPermission();
         if (permission == LocationPermission.denied) {
           _showLocationError(
-              'Permiso de ubicación denegado. Puedes escribir tu dirección manualmente.');
+            'Permiso de ubicación denegado. Puedes escribir tu dirección manualmente.',
+          );
           return;
         }
       }
       if (permission == LocationPermission.deniedForever) {
         _showLocationError(
-            'Permiso de ubicación bloqueado permanentemente. Actívalo en Configuración > Privacidad.');
+          'Permiso de ubicación bloqueado permanentemente. Actívalo en Configuración > Privacidad.',
+        );
         return;
       }
 
       final pos = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-          timeLimit: Duration(seconds: 10),
-        ),
+        desiredAccuracy: LocationAccuracy.high,
+        timeLimit: const Duration(seconds: 10),
       );
 
       setState(() {
@@ -174,8 +199,9 @@ class _AddressFormScreenState extends ConsumerState<AddressFormScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-            'Ubicación detectada (${lat.toStringAsFixed(4)}, ${lon.toStringAsFixed(4)}). '
-            'Selecciona tu estado y municipio.'),
+          'Ubicación detectada (${lat.toStringAsFixed(4)}, ${lon.toStringAsFixed(4)}). '
+          'Selecciona tu estado y municipio.',
+        ),
         backgroundColor: RSColors.success,
         behavior: SnackBarBehavior.floating,
         duration: const Duration(seconds: 4),
@@ -187,17 +213,21 @@ class _AddressFormScreenState extends ConsumerState<AddressFormScreen> {
 
   void _submit() {
     if (!_formKey.currentState!.validate()) return;
-    ref.read(onboardingProvider.notifier).updateAddress(
+    ref
+        .read(onboardingProvider.notifier)
+        .updateAddress(
           urbanizacion: _urbCtrl.text.trim(),
           municipio: _municipio!,
           estado: _estado!,
-          codigoPostal:
-              _cpCtrl.text.trim().isEmpty ? null : _cpCtrl.text.trim(),
+          codigoPostal: _cpCtrl.text.trim().isEmpty
+              ? null
+              : _cpCtrl.text.trim(),
+          email: _emailCtrl.text.trim().isEmpty ? null : _emailCtrl.text.trim(),
           latitude: _latitude,
           longitude: _longitude,
           addressFromGps: _addressFromGps,
         );
-    context.push('/onboarding/consent');
+    context.push('/onboarding/emergency-contacts');
   }
 
   // ---------------------------------------------------------------------------
@@ -210,18 +240,22 @@ class _AddressFormScreenState extends ConsumerState<AddressFormScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded,
-              color: RSColors.primary),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: RSColors.primary,
+          ),
           onPressed: () => context.pop(),
         ),
-        title: Text('Tu dirección',
-            style:
-                RSTypography.titleLarge.copyWith(color: RSColors.primary)),
+        title: Text(
+          'Tu dirección',
+          style: RSTypography.titleLarge.copyWith(color: RSColors.primary),
+        ),
       ),
-      body: ref.watch(_locationDataProvider).when(
+      body: ref
+          .watch(locationDataProvider)
+          .when(
             data: (estados) => _buildForm(estados),
-            loading: () =>
-                const Center(child: CircularProgressIndicator()),
+            loading: () => const Center(child: CircularProgressIndicator()),
             error: (_, __) => _buildForm(_fallbackEstados),
           ),
     );
@@ -230,10 +264,11 @@ class _AddressFormScreenState extends ConsumerState<AddressFormScreen> {
   Widget _buildForm(List<_EstadoData> estados) {
     final municipios = _estado != null
         ? estados
-            .firstWhere((e) => e.nombre == _estado,
-                orElse: () =>
-                    const _EstadoData(nombre: '', municipios: []))
-            .municipios
+              .firstWhere(
+                (e) => e.nombre == _estado,
+                orElse: () => const _EstadoData(nombre: '', municipios: []),
+              )
+              .municipios
         : <String>[];
 
     return Form(
@@ -245,8 +280,9 @@ class _AddressFormScreenState extends ConsumerState<AddressFormScreen> {
           children: [
             Text(
               'Necesitamos tu dirección para emitir la póliza',
-              style: RSTypography.bodyLarge
-                  .copyWith(color: RSColors.textSecondary),
+              style: RSTypography.bodyLarge.copyWith(
+                color: RSColors.textSecondary,
+              ),
             ),
             const SizedBox(height: RSSpacing.md),
 
@@ -268,37 +304,39 @@ class _AddressFormScreenState extends ConsumerState<AddressFormScreen> {
                 _isLocating
                     ? 'Detectando ubicación...'
                     : _addressFromGps
-                        ? 'Ubicación detectada — actualizar'
-                        : 'Detectar mi ubicación',
-                style: RSTypography.bodyMedium
-                    .copyWith(color: RSColors.primary),
+                    ? 'Ubicación detectada — actualizar'
+                    : 'Detectar mi ubicación',
+                style: RSTypography.bodyMedium.copyWith(
+                  color: RSColors.primary,
+                ),
               ),
               style: OutlinedButton.styleFrom(
                 side: BorderSide(
-                  color: _addressFromGps
-                      ? RSColors.success
-                      : RSColors.primary,
+                  color: _addressFromGps ? RSColors.success : RSColors.primary,
                 ),
                 padding: const EdgeInsets.symmetric(
                   vertical: RSSpacing.md,
                   horizontal: RSSpacing.lg,
                 ),
               ),
-              onPressed:
-                  _isLocating ? null : () => _detectLocation(estados),
+              onPressed: _isLocating ? null : () => _detectLocation(estados),
             ),
 
             if (_addressFromGps && _latitude != null) ...[
               const SizedBox(height: RSSpacing.sm),
               Row(
                 children: [
-                  const Icon(Icons.check_circle,
-                      color: RSColors.success, size: 16),
+                  const Icon(
+                    Icons.check_circle,
+                    color: RSColors.success,
+                    size: 16,
+                  ),
                   const SizedBox(width: 4),
                   Text(
                     'GPS: ${_latitude!.toStringAsFixed(4)}, ${_longitude!.toStringAsFixed(4)}',
-                    style: RSTypography.caption
-                        .copyWith(color: RSColors.success),
+                    style: RSTypography.caption.copyWith(
+                      color: RSColors.success,
+                    ),
                   ),
                 ],
               ),
@@ -312,8 +350,7 @@ class _AddressFormScreenState extends ConsumerState<AddressFormScreen> {
               value: _estado,
               hint: 'Selecciona tu estado',
               items: {for (final e in estados) e.nombre: e.nombre},
-              validator: (v) =>
-                  v == null ? 'Selecciona un estado' : null,
+              validator: (v) => v == null ? 'Selecciona un estado' : null,
               onChanged: (v) => setState(() {
                 _estado = v;
                 _municipio = null; // Reset municipio when estado changes
@@ -329,8 +366,7 @@ class _AddressFormScreenState extends ConsumerState<AddressFormScreen> {
                   ? 'Primero selecciona el estado'
                   : 'Selecciona tu municipio',
               items: {for (final m in municipios) m: m},
-              validator: (v) =>
-                  v == null ? 'Selecciona un municipio' : null,
+              validator: (v) => v == null ? 'Selecciona un municipio' : null,
               onChanged: _estado == null
                   ? null
                   : (v) => setState(() => _municipio = v),
@@ -353,9 +389,28 @@ class _AddressFormScreenState extends ConsumerState<AddressFormScreen> {
               controller: _cpCtrl,
               keyboardType: TextInputType.number,
             ),
+            const SizedBox(height: RSSpacing.md),
+
+            // ── Correo electrónico ────────────────────────────────
+            RSTextField(
+              label: 'Correo electrónico (opcional)',
+              controller: _emailCtrl,
+              keyboardType: TextInputType.emailAddress,
+              hint: 'Para recibir tu póliza por correo',
+            ),
 
             const SizedBox(height: RSSpacing.xxl),
             RSButton(label: 'Continuar', onPressed: _submit),
+            if (kDebugMode) ...[
+              const SizedBox(height: RSSpacing.sm),
+              Center(
+                child: TextButton(
+                  onPressed: () =>
+                      context.push('/onboarding/emergency-contacts'),
+                  child: const Text('[DEV] Omitir a Contactos'),
+                ),
+              ),
+            ],
             const SizedBox(height: RSSpacing.xl),
           ],
         ),
@@ -374,9 +429,12 @@ class _AddressFormScreenState extends ConsumerState<AddressFormScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label,
-            style: RSTypography.bodyMedium
-                .copyWith(color: RSColors.textSecondary)),
+        Text(
+          label,
+          style: RSTypography.bodyMedium.copyWith(
+            color: RSColors.textSecondary,
+          ),
+        ),
         const SizedBox(height: 4),
         DropdownButtonFormField<T>(
           value: value,
@@ -384,7 +442,9 @@ class _AddressFormScreenState extends ConsumerState<AddressFormScreen> {
           isExpanded: true,
           decoration: InputDecoration(
             contentPadding: const EdgeInsets.symmetric(
-                horizontal: RSSpacing.md, vertical: RSSpacing.md),
+              horizontal: RSSpacing.md,
+              vertical: RSSpacing.md,
+            ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(RSRadius.md),
               borderSide: const BorderSide(color: RSColors.border),
@@ -396,7 +456,8 @@ class _AddressFormScreenState extends ConsumerState<AddressFormScreen> {
             disabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(RSRadius.md),
               borderSide: BorderSide(
-                  color: RSColors.border.withValues(alpha: 0.5)),
+                color: RSColors.border.withValues(alpha: 0.5),
+              ),
             ),
             filled: true,
             fillColor: onChanged == null
@@ -404,11 +465,12 @@ class _AddressFormScreenState extends ConsumerState<AddressFormScreen> {
                 : RSColors.surface,
           ),
           items: items.entries
-              .map((e) => DropdownMenuItem<T>(
-                    value: e.key,
-                    child: Text(e.value,
-                        style: RSTypography.bodyLarge),
-                  ))
+              .map(
+                (e) => DropdownMenuItem<T>(
+                  value: e.key,
+                  child: Text(e.value, style: RSTypography.bodyLarge),
+                ),
+              )
               .toList(),
           validator: validator,
           onChanged: onChanged,

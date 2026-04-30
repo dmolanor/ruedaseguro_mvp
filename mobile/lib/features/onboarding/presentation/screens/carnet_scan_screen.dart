@@ -53,8 +53,10 @@ class _CarnetScanScreenState extends ConsumerState<CarnetScanScreen> {
     if (!quality.overallPass) {
       if (mounted) {
         setState(() => _isProcessing = false);
-        _showError(quality.failureReason ??
-            'La foto no es legible. Asegúrate de buena iluminación y sin reflejos.');
+        _showError(
+          quality.failureReason ??
+              'La foto no es legible. Asegúrate de buena iluminación y sin reflejos.',
+        );
       }
       return;
     }
@@ -65,7 +67,9 @@ class _CarnetScanScreenState extends ConsumerState<CarnetScanScreen> {
     if (ocr.isEmpty || ocr.confidence < 0.3) {
       if (mounted) {
         setState(() => _isProcessing = false);
-        _showError('No pudimos leer el certificado. Intenta con mejor iluminación.');
+        _showError(
+          'No pudimos leer el certificado. Intenta con mejor iluminación.',
+        );
       }
       return;
     }
@@ -76,22 +80,25 @@ class _CarnetScanScreenState extends ConsumerState<CarnetScanScreen> {
     // 4. Cross-validate with cédula data
     final cedulaData = ref.read(onboardingProvider).cedulaOcr;
     CrossValidationResult? crossResult;
+    // Cross-validation requires CertificadoParseResult — skip for deprecated carnet path
     if (cedulaData != null) {
-      crossResult = CrossValidator.validate(cedulaData, parsed);
+      crossResult = null;
     }
 
     // 5. Save and navigate (deprecated path — use certificado_scan_screen instead)
     if (crossResult != null) {
-      ref.read(onboardingProvider.notifier).confirmVehicle(
-        plate: parsed.plate ?? '',
-        brand: parsed.brand ?? '',
-        model: parsed.model ?? '',
-        year: parsed.year ?? DateTime.now().year,
-        vehicleUse: parsed.vehicleUse ?? 'particular',
-        serialMotor: parsed.serialMotor,
-        serialCarroceria: parsed.serialCarroceria,
-        crossValidation: crossResult,
-      );
+      ref
+          .read(onboardingProvider.notifier)
+          .confirmVehicle(
+            plate: parsed.plate ?? '',
+            brand: parsed.brand ?? '',
+            model: parsed.model ?? '',
+            year: parsed.year ?? DateTime.now().year,
+            vehicleUse: parsed.vehicleUse ?? 'particular',
+            serialMotor: parsed.serialMotor,
+            serialCarroceria: parsed.serialCarroceria,
+            crossValidation: crossResult,
+          );
     }
 
     if (mounted) {
@@ -105,7 +112,8 @@ class _CarnetScanScreenState extends ConsumerState<CarnetScanScreen> {
     return Stack(
       children: [
         DocumentScanner(
-          instruction: 'Coloca tu certificado de registro de vehículo dentro del recuadro',
+          instruction:
+              'Coloca tu certificado de registro de vehículo dentro del recuadro',
           onCapture: _handleCapture,
           onCancel: () => context.pop(),
         ),
@@ -134,13 +142,18 @@ class _CarnetScanScreenState extends ConsumerState<CarnetScanScreen> {
                   Shimmer.fromColors(
                     baseColor: Colors.white24,
                     highlightColor: Colors.white54,
-                    child: const Icon(Icons.directions_car,
-                        color: Colors.white, size: 64),
+                    child: const Icon(
+                      Icons.directions_car,
+                      color: Colors.white,
+                      size: 64,
+                    ),
                   ),
                   const SizedBox(height: RSSpacing.lg),
                   Text(
                     'Leyendo certificado...',
-                    style: RSTypography.titleMedium.copyWith(color: Colors.white),
+                    style: RSTypography.titleMedium.copyWith(
+                      color: Colors.white,
+                    ),
                   ),
                 ],
               ),
@@ -167,8 +180,9 @@ class _CarnetScanScreenState extends ConsumerState<CarnetScanScreen> {
                     Expanded(
                       child: Text(
                         _errorMessage!,
-                        style: RSTypography.bodyMedium
-                            .copyWith(color: Colors.white),
+                        style: RSTypography.bodyMedium.copyWith(
+                          color: Colors.white,
+                        ),
                       ),
                     ),
                     const Icon(Icons.close, color: Colors.white70, size: 18),
@@ -197,7 +211,9 @@ class _StepIndicator extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(
-          horizontal: RSSpacing.md, vertical: RSSpacing.sm),
+        horizontal: RSSpacing.md,
+        vertical: RSSpacing.sm,
+      ),
       decoration: BoxDecoration(
         color: Colors.black54,
         borderRadius: BorderRadius.circular(RSRadius.xl),
@@ -218,8 +234,10 @@ class _StepIndicator extends StatelessWidget {
             );
           }),
           const SizedBox(width: 8),
-          Text('$currentStep/$totalSteps — $label',
-              style: RSTypography.caption.copyWith(color: Colors.white)),
+          Text(
+            '$currentStep/$totalSteps — $label',
+            style: RSTypography.caption.copyWith(color: Colors.white),
+          ),
         ],
       ),
     );

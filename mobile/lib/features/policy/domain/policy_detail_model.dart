@@ -2,10 +2,12 @@ import 'package:intl/intl.dart';
 
 class PolicyDetailModel {
   final String id;
-  final String status;         // 'pending_payment' | 'pending_emission' | 'active' | ...
-  final String issuanceStatus; // 'pending' | 'provisional' | 'confirmed' | 'rejected'
-  final String startDate;      // 'YYYY-MM-DD'
-  final String endDate;        // 'YYYY-MM-DD'
+  final String
+  status; // 'pending_payment' | 'pending_emission' | 'active' | ...
+  final String
+  issuanceStatus; // 'pending' | 'provisional' | 'confirmed' | 'rejected'
+  final String startDate; // 'YYYY-MM-DD'
+  final String endDate; // 'YYYY-MM-DD'
   final double premiumUsd;
   final double premiumVes;
   final double exchangeRate;
@@ -56,21 +58,22 @@ class PolicyDetailModel {
   });
 
   factory PolicyDetailModel.fromMap(Map<String, dynamic> m) {
-    final profile = m['profiles'] as Map<String, dynamic>;
-    final vehicle = m['vehicles'] as Map<String, dynamic>;
-    final policyType = m['policy_types'] as Map<String, dynamic>;
-    final carrier = m['carriers'] as Map<String, dynamic>;
+    final profile = (m['profiles'] as Map<String, dynamic>?) ?? {};
+    final vehicle = (m['vehicles'] as Map<String, dynamic>?) ?? {};
+    final policyType = (m['policy_types'] as Map<String, dynamic>?) ?? {};
+    final carrier = (m['carriers'] as Map<String, dynamic>?) ?? {};
 
     return PolicyDetailModel(
       id: m['id'] as String,
       status: m['status'] as String,
       issuanceStatus: m['issuance_status'] as String,
-      startDate: m['coverage_start'] as String,
-      endDate: m['coverage_end'] as String,
+      startDate: (m['coverage_start'] as String).substring(0, 10),
+      endDate: (m['coverage_end'] as String).substring(0, 10),
       premiumUsd: (m['price_usd'] as num).toDouble(),
       premiumVes: (m['price_ves'] as num).toDouble(),
       exchangeRate: (m['exchange_rate'] as num).toDouble(),
-      riderFullName: '${profile['first_name'] ?? ''} ${profile['last_name'] ?? ''}'.trim(),
+      riderFullName:
+          '${profile['first_name'] ?? ''} ${profile['last_name'] ?? ''}'.trim(),
       riderIdType: profile['id_type'] as String,
       riderIdNumber: profile['id_number'] as String,
       vehicleBrand: vehicle['brand'] as String,

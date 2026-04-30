@@ -70,3 +70,9 @@ research_docs/
 mobile/lib/core/config/env_config.dart
 
 mbird_codes.txt
+
+# Large binary files — store in cloud storage, not git
+docs/pantallas_app_v1.zip
+docs/screenshots/*.png
+docs/original_docs/*.pdf
+docs/original_docs/*.docx

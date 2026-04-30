@@ -1,9 +1,32 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ruedaseguro/features/onboarding/domain/onboarding_state.dart';
 import 'package:ruedaseguro/features/onboarding/presentation/screens/address_form_screen.dart';
 
 import 'helpers/test_helpers.dart';
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+/// Builds the AddressFormScreen with locationDataProvider forced into error
+/// state so the screen immediately renders the fallback form (Distrito Capital
+/// + Libertador) without showing CircularProgressIndicator (which never
+/// settles in pumpAndSettle).
+Widget _buildAddressWidget({OnboardingData? initialData}) {
+  final container = ProviderContainer(
+    overrides: [
+      locationDataProvider.overrideWith((ref) => Future.error('test')),
+      if (initialData != null)
+        onboardingProvider.overrideWith(
+          () => TestOnboardingNotifier(initialData),
+        ),
+    ],
+  );
+  return buildTestableWidget(
+    const AddressFormScreen(),
+    providerContainer: container,
+  );
+}
 
 /// Scrolls down and taps the "Continuar" button.
 Future<void> _tapContinuar(WidgetTester tester) async {
@@ -17,12 +40,12 @@ Future<void> _tapContinuar(WidgetTester tester) async {
   await tester.pumpAndSettle();
 }
 
+// ── Tests ─────────────────────────────────────────────────────────────────────
+
 void main() {
   group('AddressFormScreen', () {
     testWidgets('renders header and required fields', (tester) async {
-      await tester.pumpWidget(
-        buildTestableWidget(const AddressFormScreen()),
-      );
+      await tester.pumpWidget(_buildAddressWidget());
       await tester.pumpAndSettle();
 
       expect(find.text('Tu dirección'), findsOneWidget);
@@ -32,19 +55,16 @@ void main() {
     });
 
     testWidgets('shows GPS detect button', (tester) async {
-      await tester.pumpWidget(
-        buildTestableWidget(const AddressFormScreen()),
-      );
+      await tester.pumpWidget(_buildAddressWidget());
       await tester.pumpAndSettle();
 
       expect(find.text('Detectar mi ubicación'), findsOneWidget);
     });
 
-    testWidgets('shows validation errors when submitting empty form',
-        (tester) async {
-      await tester.pumpWidget(
-        buildTestableWidget(const AddressFormScreen()),
-      );
+    testWidgets('shows validation errors when submitting empty form', (
+      tester,
+    ) async {
+      await tester.pumpWidget(_buildAddressWidget());
       await tester.pumpAndSettle();
 
       await _tapContinuar(tester);
@@ -54,26 +74,23 @@ void main() {
       expect(find.text('Requerido'), findsOneWidget); // urbanización
     });
 
-    testWidgets('valid form navigates to consent screen', (tester) async {
+    testWidgets('valid form navigates to emergency-contacts screen', (
+      tester,
+    ) async {
       await tester.binding.setSurfaceSize(const Size(411, 900));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
-      await tester.pumpWidget(
-        buildTestableWidget(const AddressFormScreen()),
-      );
+      await tester.pumpWidget(_buildAddressWidget());
       await tester.pumpAndSettle();
 
-      // Enter urbanización
       await tester.enterText(find.byType(TextFormField).first, 'El Paraíso');
 
-      // Select Estado
       final dropdowns = find.byType(DropdownButtonFormField<String>);
       await tester.tap(dropdowns.first);
       await tester.pumpAndSettle();
       await tester.tap(find.text('Distrito Capital').last);
       await tester.pumpAndSettle();
 
-      // Select Municipio (now enabled after estado selected)
       await tester.tap(dropdowns.last);
       await tester.pumpAndSettle();
       await tester.tap(find.text('Libertador').last);
@@ -81,30 +98,25 @@ void main() {
 
       await _tapContinuar(tester);
 
-      expect(find.text('NAVIGATED_TO_consent'), findsOneWidget);
+      expect(find.text('NAVIGATED_TO_emergency_contacts'), findsOneWidget);
     });
 
     testWidgets('pre-fills urbanización from existing state', (tester) async {
-      await tester.pumpWidget(
-        buildTestableWidget(
-          const AddressFormScreen(),
-          initialData: const OnboardingData(
-            urbanizacion: 'La Candelaria',
-            municipio: 'Libertador',
-            estado: 'Distrito Capital',
-            codigoPostal: '1010',
-          ),
-        ),
+      const data = OnboardingData(
+        urbanizacion: 'La Candelaria',
+        municipio: 'Libertador',
+        estado: 'Distrito Capital',
+        codigoPostal: '1010',
       );
+
+      await tester.pumpWidget(_buildAddressWidget(initialData: data));
       await tester.pumpAndSettle();
 
       expect(find.text('La Candelaria'), findsOneWidget);
     });
 
     testWidgets('estado and municipio dropdowns are present', (tester) async {
-      await tester.pumpWidget(
-        buildTestableWidget(const AddressFormScreen()),
-      );
+      await tester.pumpWidget(_buildAddressWidget());
       await tester.pumpAndSettle();
 
       expect(find.byType(DropdownButtonFormField<String>), findsNWidgets(2));
@@ -115,31 +127,25 @@ void main() {
       await tester.binding.setSurfaceSize(const Size(411, 900));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
-      await tester.pumpWidget(
-        buildTestableWidget(const AddressFormScreen()),
-      );
+      await tester.pumpWidget(_buildAddressWidget());
       await tester.pumpAndSettle();
 
-      // Enter urbanización only (no postal code)
       await tester.enterText(find.byType(TextFormField).first, 'Centro');
 
-      // Select Estado
       final dropdowns = find.byType(DropdownButtonFormField<String>);
       await tester.tap(dropdowns.first);
       await tester.pumpAndSettle();
       await tester.tap(find.text('Distrito Capital').last);
       await tester.pumpAndSettle();
 
-      // Select Municipio
       await tester.tap(dropdowns.last);
       await tester.pumpAndSettle();
       await tester.tap(find.text('Libertador').last);
       await tester.pumpAndSettle();
 
-      // Leave postal code empty and submit
       await _tapContinuar(tester);
 
-      expect(find.text('NAVIGATED_TO_consent'), findsOneWidget);
+      expect(find.text('NAVIGATED_TO_emergency_contacts'), findsOneWidget);
     });
   });
 }

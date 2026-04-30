@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -40,22 +42,22 @@ PolicyTypeModel fakePolicyType(InsurancePlan plan) {
 }
 
 GoRouter _router(Widget child) => GoRouter(
-      initialLocation: '/test',
-      routes: [
-        GoRoute(path: '/test', builder: (_, __) => child),
-        GoRoute(
-            path: '/policy/quote',
-            builder: (_, __) =>
-                const Scaffold(body: Center(child: Text('QUOTE')))),
-      ],
-    );
+  initialLocation: '/test',
+  routes: [
+    GoRoute(path: '/test', builder: (_, __) => child),
+    GoRoute(
+      path: '/policy/quote',
+      builder: (_, __) => const Scaffold(body: Center(child: Text('QUOTE'))),
+    ),
+  ],
+);
 
 // ─── Fake notifiers (extend real notifier to satisfy Riverpod 3.x) ──
 
 class AlwaysLoadingPolicyTypes extends PolicyTypesNotifier {
   @override
   Future<List<PolicyTypeModel>> build() =>
-      Future.delayed(const Duration(hours: 1), () => []);
+      Completer<List<PolicyTypeModel>>().future; // never completes, no pending timer
 }
 
 class FixedPolicyTypes extends PolicyTypesNotifier {
@@ -90,51 +92,66 @@ class DemoAuth extends AuthNotifier {
 void main() {
   group('ProductSelectionScreen', () {
     testWidgets('shows shimmer while policy types are loading', (tester) async {
-      await tester.pumpWidget(ProviderScope(
-        overrides: [
-          policyTypesProvider.overrideWith(AlwaysLoadingPolicyTypes.new),
-          bcvRateProvider.overrideWith(() => FixedBcvRate(kFakeBcvRate)),
-          authProvider.overrideWith(DemoAuth.new),
-        ],
-        child: MaterialApp.router(
-            routerConfig: _router(const ProductSelectionScreen())),
-      ));
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            policyTypesProvider.overrideWith(AlwaysLoadingPolicyTypes.new),
+            bcvRateProvider.overrideWith(() => FixedBcvRate(kFakeBcvRate)),
+            authProvider.overrideWith(DemoAuth.new),
+          ],
+          child: MaterialApp.router(
+            routerConfig: _router(const ProductSelectionScreen()),
+          ),
+        ),
+      );
 
       await tester.pump();
 
       expect(find.byType(Shimmer), findsWidgets);
     });
 
-    testWidgets('shows plan cards when policy types are loaded', (tester) async {
+    testWidgets('shows plan cards when policy types are loaded', (
+      tester,
+    ) async {
+      // Tall viewport so all 3 plan cards are rendered by the ListView.
+      await tester.binding.setSurfaceSize(const Size(411, 2400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
       final plans = MockPlans.all.map(fakePolicyType).toList();
 
-      await tester.pumpWidget(ProviderScope(
-        overrides: [
-          policyTypesProvider.overrideWith(() => FixedPolicyTypes(plans)),
-          bcvRateProvider.overrideWith(() => FixedBcvRate(kFakeBcvRate)),
-          authProvider.overrideWith(DemoAuth.new),
-        ],
-        child: MaterialApp.router(
-            routerConfig: _router(const ProductSelectionScreen())),
-      ));
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            policyTypesProvider.overrideWith(() => FixedPolicyTypes(plans)),
+            bcvRateProvider.overrideWith(() => FixedBcvRate(kFakeBcvRate)),
+            authProvider.overrideWith(DemoAuth.new),
+          ],
+          child: MaterialApp.router(
+            routerConfig: _router(const ProductSelectionScreen()),
+          ),
+        ),
+      );
 
       await tester.pumpAndSettle();
 
-      expect(find.text('Básica'), findsOneWidget);
-      expect(find.text('Plus'), findsOneWidget);
-      expect(find.text('Ampliada'), findsOneWidget);
+      expect(find.text('RCV Básica'), findsOneWidget);
+      expect(find.text('RCV Plus'), findsOneWidget);
+      expect(find.text('Cobertura Ampliada'), findsOneWidget);
     });
 
     testWidgets('falls back to mock plans on provider error', (tester) async {
-      await tester.pumpWidget(ProviderScope(
-        overrides: [
-          policyTypesProvider.overrideWith(ErrorPolicyTypes.new),
-          bcvRateProvider.overrideWith(() => FixedBcvRate(kFakeBcvRate)),
-          authProvider.overrideWith(DemoAuth.new),
-        ],
-        child: MaterialApp.router(
-            routerConfig: _router(const ProductSelectionScreen())),
-      ));
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            policyTypesProvider.overrideWith(ErrorPolicyTypes.new),
+            bcvRateProvider.overrideWith(() => FixedBcvRate(kFakeBcvRate)),
+            authProvider.overrideWith(DemoAuth.new),
+          ],
+          child: MaterialApp.router(
+            routerConfig: _router(const ProductSelectionScreen()),
+          ),
+        ),
+      );
 
       await tester.pumpAndSettle();
 
@@ -142,15 +159,18 @@ void main() {
     });
 
     testWidgets('shows live BCV rate label', (tester) async {
-      await tester.pumpWidget(ProviderScope(
-        overrides: [
-          policyTypesProvider.overrideWith(() => FixedPolicyTypes([])),
-          bcvRateProvider.overrideWith(() => FixedBcvRate(kFakeBcvRate)),
-          authProvider.overrideWith(DemoAuth.new),
-        ],
-        child: MaterialApp.router(
-            routerConfig: _router(const ProductSelectionScreen())),
-      ));
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            policyTypesProvider.overrideWith(() => FixedPolicyTypes([])),
+            bcvRateProvider.overrideWith(() => FixedBcvRate(kFakeBcvRate)),
+            authProvider.overrideWith(DemoAuth.new),
+          ],
+          child: MaterialApp.router(
+            routerConfig: _router(const ProductSelectionScreen()),
+          ),
+        ),
+      );
 
       await tester.pumpAndSettle();
 

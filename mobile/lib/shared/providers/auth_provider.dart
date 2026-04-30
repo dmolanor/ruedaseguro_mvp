@@ -6,7 +6,13 @@ import 'package:supabase_flutter/supabase_flutter.dart' as supa;
 
 import 'package:ruedaseguro/features/auth/data/auth_repository.dart';
 
-enum AuthStatus { initial, loading, authenticated, authenticatedWithProfile, unauthenticated }
+enum AuthStatus {
+  initial,
+  loading,
+  authenticated,
+  authenticatedWithProfile,
+  unauthenticated,
+}
 
 class RSAuthState {
   final AuthStatus status;
@@ -60,7 +66,9 @@ class AuthNotifier extends Notifier<RSAuthState> {
     // Runs in parallel; cancelled implicitly once the try block sets state first.
     Future.delayed(const Duration(seconds: 12)).then((_) {
       if (state.status == AuthStatus.initial) {
-        debugPrint('[AuthNotifier] hard timeout fired — forcing unauthenticated');
+        debugPrint(
+          '[AuthNotifier] hard timeout fired — forcing unauthenticated',
+        );
         final s = repo.getCurrentSession();
         state = s != null
             ? RSAuthState(
@@ -138,9 +146,12 @@ class AuthNotifier extends Notifier<RSAuthState> {
 
   /// Enter demo mode — skip auth entirely, jump to full app experience.
   void enterDemoMode() {
-    state = const RSAuthState(
-      status: AuthStatus.authenticatedWithProfile,
-    );
+    state = const RSAuthState(status: AuthStatus.authenticatedWithProfile);
+  }
+
+  /// Enter onboarding demo mode — jump directly to onboarding flow.
+  void enterOnboardingDemoMode() {
+    state = const RSAuthState(status: AuthStatus.authenticated);
   }
 
   Future<void> signOut() async {
@@ -153,4 +164,6 @@ class AuthNotifier extends Notifier<RSAuthState> {
   }
 }
 
-final authProvider = NotifierProvider<AuthNotifier, RSAuthState>(AuthNotifier.new);
+final authProvider = NotifierProvider<AuthNotifier, RSAuthState>(
+  AuthNotifier.new,
+);

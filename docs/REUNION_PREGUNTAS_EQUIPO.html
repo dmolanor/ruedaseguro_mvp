@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pre-Reunión RuedaSeguro — Preguntas por miembro</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #f4f6f9;
+    color: #1a2b3c;
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+  .page {
+    max-width: 820px;
+    margin: 0 auto;
+    padding: 44px 52px 64px;
+    background: white;
+    min-height: 100vh;
+  }
+
+  /* ── Header ─────────────────── */
+  .header {
+    border-bottom: 3px solid #FF6A1A;
+    padding-bottom: 22px;
+    margin-bottom: 22px;
+  }
+  .header-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  .logo-badge {
+    background: #1A3A52;
+    color: white;
+    font-weight: 800;
+    font-size: 15px;
+    padding: 6px 13px;
+    border-radius: 6px;
+  }
+  .logo-sub {
+    font-size: 10px;
+    color: #8899aa;
+    font-weight: 500;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-top: 3px;
+  }
+  .meta { text-align: right; }
+  .meta-date { font-size: 11px; color: #8899aa; font-weight: 500; }
+  .meta-title {
+    font-size: 21px;
+    font-weight: 800;
+    color: #1A3A52;
+    margin-top: 3px;
+    line-height: 1.2;
+  }
+  .meta-sub {
+    font-size: 10px;
+    color: #FF6A1A;
+    font-weight: 700;
+    margin-top: 3px;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+  }
+
+  /* ── Intro box ─────────────────── */
+  .intro-box {
+    background: #1A3A52;
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin-bottom: 26px;
+    color: rgba(255,255,255,0.85);
+    font-size: 12px;
+    line-height: 1.75;
+  }
+  .intro-box strong { color: white; }
+  .intro-box .intro-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 6px;
+  }
+
+  /* ── Timing strip ─────────────────── */
+  .timing-strip {
+    background: #fff8f2;
+    border: 1px solid #ffd5b5;
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin-bottom: 26px;
+  }
+  .timing-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: #FF6A1A;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    margin-bottom: 10px;
+  }
+  .timing-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+  }
+  .timing-item {
+    background: white;
+    border-radius: 6px;
+    padding: 8px 10px;
+    border-left: 3px solid #FF6A1A;
+  }
+  .timing-val {
+    font-size: 16px;
+    font-weight: 800;
+    color: #1A3A52;
+    line-height: 1;
+  }
+  .timing-label {
+    font-size: 9.5px;
+    color: #6b7f93;
+    margin-top: 3px;
+    line-height: 1.3;
+  }
+
+  /* ── Person section ─────────────────── */
+  .person-section { margin-bottom: 30px; break-inside: avoid; }
+
+  .person-header {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    margin-bottom: 12px;
+  }
+  .person-avatar {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 15px; color: white;
+    flex-shrink: 0;
+  }
+  .person-name { font-size: 15px; font-weight: 700; color: #1A3A52; line-height: 1.2; }
+  .person-role { font-size: 11px; color: #8899aa; margin-top: 1px; }
+  .person-note {
+    font-size: 10.5px;
+    color: #FF6A1A;
+    font-weight: 600;
+    margin-top: 2px;
+  }
+  .person-badge {
+    font-size: 9px; font-weight: 700;
+    padding: 3px 9px; border-radius: 20px;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    margin-left: auto; flex-shrink: 0;
+  }
+
+  /* ── Question items ─────────────────── */
+  .questions { display: flex; flex-direction: column; gap: 3px; }
+
+  .q-item {
+    display: flex; gap: 12px;
+    padding: 11px 14px;
+    border-radius: 8px;
+    border-left: 3px solid transparent;
+  }
+  .q-num {
+    width: 20px; height: 20px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 9.5px; font-weight: 800;
+    flex-shrink: 0; margin-top: 1px;
+  }
+  .q-text { flex: 1; }
+  .q-main { font-size: 12.5px; font-weight: 600; color: #1a2b3c; line-height: 1.5; }
+  .q-detail { font-size: 11px; color: #6b7f93; margin-top: 3px; line-height: 1.6; }
+  .q-tag {
+    font-size: 9px; font-weight: 700;
+    padding: 2px 7px; border-radius: 4px;
+    text-transform: uppercase; letter-spacing: 0.3px;
+    white-space: nowrap; align-self: flex-start; margin-top: 2px;
+  }
+
+  /* Priority colours */
+  .p-critico { background: #fef2f2; border-left-color: #ef4444; }
+  .p-critico .q-num { background: #ef4444; color: white; }
+  .p-alto { background: #fff7ed; border-left-color: #f97316; }
+  .p-alto .q-num { background: #f97316; color: white; }
+  .p-medio { background: #f0fdf4; border-left-color: #22c55e; }
+  .p-medio .q-num { background: #22c55e; color: white; }
+
+  /* Tags */
+  .tag-bloqueante { background: #fef2f2; color: #dc2626; }
+  .tag-decision   { background: #eff6ff; color: #2563eb; }
+  .tag-deteccion  { background: #f5f3ff; color: #7c3aed; }
+  .tag-vene       { background: #fdf4ff; color: #a21caf; }
+  .tag-negocio    { background: #fefce8; color: #a16207; }
+  .tag-timing     { background: #fff7ed; color: #c2410c; }
+
+  /* ── Divider ─────────────────── */
+  .section-divider {
+    height: 1px;
+    background: linear-gradient(to right, #e2e8f0, transparent);
+    margin: 6px 0 22px;
+  }
+
+  /* ── Dark group box ─────────────────── */
+  .group-box {
+    background: #1A3A52;
+    border-radius: 10px;
+    padding: 18px 20px;
+    margin-top: 6px;
+  }
+  .group-box .person-name,
+  .group-box .timing-title { color: white; }
+  .group-box .person-role { color: rgba(255,255,255,0.5); }
+  .group-box .q-item { border-left-color: rgba(255,255,255,0.12); background: rgba(255,255,255,0.06); }
+  .group-box .q-main { color: rgba(255,255,255,0.95); }
+  .group-box .q-detail { color: rgba(255,255,255,0.55); }
+  .group-box .q-num { background: rgba(255,255,255,0.15); color: white; }
+  .group-box .p-critico { background: rgba(239,68,68,0.12); border-left-color: #f87171; }
+  .group-box .p-critico .q-num { background: #f87171; color: white; }
+  .group-box .p-alto { background: rgba(249,115,22,0.1); border-left-color: #fb923c; }
+  .group-box .p-alto .q-num { background: #fb923c; color: white; }
+
+  /* ── Footer ─────────────────── */
+  .footer {
+    margin-top: 44px;
+    border-top: 1px solid #e2e8f0;
+    padding-top: 14px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .footer-left { font-size: 10px; color: #aab8c6; line-height: 1.6; }
+  .footer-right { font-size: 10px; color: #aab8c6; font-weight: 700; }
+
+  @media print {
+    body { background: white; font-size: 11px; }
+    .page { padding: 20px 28px 36px; }
+    .person-section, .group-box { break-inside: avoid; page-break-inside: avoid; }
+    @page { margin: 1.2cm; size: A4; }
+    .timing-grid { grid-template-columns: repeat(4, 1fr); }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ── HEADER ── -->
+  <div class="header">
+    <div class="header-top">
+      <div>
+        <div class="logo-badge">RuedaSeguro</div>
+        <div class="logo-sub">AZ Capital · InsurTech</div>
+      </div>
+      <div class="meta">
+        <div class="meta-date">Reunión de equipo · 2026-04-23</div>
+        <div class="meta-title">Agenda y preguntas<br>por participante</div>
+        <div class="meta-sub">Módulo de Detección · Pagos · Partners · Integraciones</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── INTRO ── -->
+  <div class="intro-box">
+    <div class="intro-title">Para cada participante — por favor prepara tus respuestas antes de la reunión</div>
+    Se revisará la <strong>Conceptualización del Módulo de Detección de Accidentes</strong> (28 pp.).
+    El equipo ya tuvo reunión con <strong>Venemergencia</strong> — mañana nos presentarán los resultados.
+    Las etapas 1–2 están parcialmente construidas en la app, pero las <strong>etapas 3–10</strong>
+    (comunicaciones reales, despacho, cobertura médica) dependen de decisiones que necesitamos cerrar.
+    <strong>El énfasis de esta reunión es en pagos, partners y detalles del módulo de detección.</strong>
+  </div>
+
+  <!-- ── TIMING STRIP ── -->
+  <div class="timing-strip">
+    <div class="timing-title">Tiempos críticos del módulo — definidos en el documento (validar con el equipo)</div>
+    <div class="timing-grid">
+      <div class="timing-item">
+        <div class="timing-val">30 s</div>
+        <div class="timing-label">Countdown antes de activación automática (configurable 30s–3min)</div>
+      </div>
+      <div class="timing-item">
+        <div class="timing-val">5 min</div>
+        <div class="timing-label">Proveedor intenta contacto saliente (3 llamadas en 5 min)</div>
+      </div>
+      <div class="timing-item">
+        <div class="timing-val">5 min</div>
+        <div class="timing-label">Notificación WhatsApp/SMS al contacto de emergencia</div>
+      </div>
+      <div class="timing-item">
+        <div class="timing-val">10 min</div>
+        <div class="timing-label">Despacho en sitio si no hubo contacto</div>
+      </div>
+      <div class="timing-item">
+        <div class="timing-val">10 min</div>
+        <div class="timing-label">Reenvío de ubicación GPS si el asegurado cambia de posición</div>
+      </div>
+      <div class="timing-item">
+        <div class="timing-val">24 h</div>
+        <div class="timing-label">Pago del 60% de gastos médicos (activado por proveedor)</div>
+      </div>
+      <div class="timing-item">
+        <div class="timing-val">50 s</div>
+        <div class="timing-label">Inmovilidad mínima posterior para confirmar incidente</div>
+      </div>
+      <div class="timing-item">
+        <div class="timing-val">80 km/h</div>
+        <div class="timing-label">Velocidad límite — posible causal de no pago de cobertura</div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════════════════════════════
+       ALEX + FERNANDO ÁNGELES + LETICIA
+       (reunión presencial — foco principal)
+       ══════════════════════════════════════════════ -->
+
+  <!-- ─── ALEX ─── -->
+  <div class="person-section">
+    <div class="person-header">
+      <div class="person-avatar" style="background:#1A3A52;">AL</div>
+      <div class="person-info">
+        <div class="person-name">Alex</div>
+        <div class="person-role">Líder de negocio · Decisiones de producto, partnerships y operaciones</div>
+        <div class="person-note">Reunión presencial con Fernando Ángeles y Leticia — énfasis en producto y tiempos</div>
+      </div>
+      <div class="person-badge" style="background:#e8f0f8; color:#1A3A52;">Negocio</div>
+    </div>
+
+    <div class="questions">
+
+      <div class="q-item p-critico">
+        <div class="q-num">1</div>
+        <div class="q-text">
+          <div class="q-main">¿Qué acordaron en la reunión con Venemergencia? — resultado técnico</div>
+          <div class="q-detail">
+            Tras el encuentro, necesitamos confirmar estos puntos para avanzar en Sprint 5:<br>
+            · ¿Tienen API REST documentada, webhook, o el canal de despacho es solo telefónico?<br>
+              - Aun no
+            · ¿Compartieron especificaciones técnicas (Swagger, Postman, PDF de endpoints)?<br>
+              - Aun no
+            · ¿Hay ambiente de pruebas (sandbox) disponible o solo producción?<br>
+              - Aun no
+            · ¿Cuál es el formato mínimo que necesitan para activar un despacho? (ej. número de placa + GPS + teléfono)<br>
+              - Aun no
+            · ¿Hay un acuerdo operativo firmado, o aún estamos en conversación?
+              - No hay contrato pero un acuerdo de palabra. Vamos a acordar una reunión con una persona técnica de Venemergencia para poder ver todo lo relacionado a la API.
+          </div>
+        </div>
+        <div class="q-tag tag-vene">Venemergencia</div>
+      </div>
+
+      <div class="q-item p-critico">
+        <div class="q-num">2</div>
+        <div class="q-text">
+          <div class="q-main">¿Quién recibe el despacho: Venemergencia directamente o pasa primero por Quasar (Thony)?</div>
+          <div class="q-detail">
+            El documento define que el payload de emergencia debe llegar al <em>proveedor de asistencia</em>
+            y al <em>Centro de Control</em> de forma simultánea. ¿Son dos endpoints distintos?
+            ¿O Quasar enruta hacia Venemergencia? Esto define si la app hace una llamada o dos.
+              - Evalua tu primero. Acordamos que el despacho lo realiza el centro de control. Este se encarga de la comunicación con Venemergencias a través de API. Ellos ya manejan una plataforma con las clinicas/doctores, por lo que no quieren una nueva herramienta a los cuales deban adaptarse. Por eso realizaremos todos hasta entregarselos. Es posible que despues recibamos notificaciones o updates por los endpoints.
+          </div>
+        </div>
+        <div class="q-tag tag-deteccion">Detección</div>
+      </div>
+
+      <div class="q-item p-critico">
+        <div class="q-num">3</div>
+        <div class="q-text">
+          <div class="q-main">Casos borde de detección: ¿qué ocurre si el asegurado está detenido y lo chocan?</div>
+          <div class="q-detail">
+            Escenarios que el documento no cubre explícitamente y necesitan decisión de negocio:<br>
+            · <strong>Quieto en semáforo y lo impactan:</strong> velocidad GPS = 0, sin desaceleración — sólo el acelerómetro detecta el golpe. ¿La detección automática debe activarse? ¿O el usuario debe abrir la app manualmente?<br>
+              - El usuario debe abrir manualmente la app, si el usuario no abre la app, no se realizará el despacho.
+            · <strong>Caída lenta (aceite, barro, velocidad baja):</strong> el impacto G-force puede ser bajo. ¿Se activa igual?<br>
+            · <strong>El teléfono sale volando:</strong> el asegurado no puede responder el countdown. ¿La app activa automáticamente al llegar al timeout?<br>
+            · <strong>Sin conectividad en el momento:</strong> ¿la app guarda el evento y lo envía cuando recupere señal?<br>
+              - En las carreteras existen los ángeles (carros/paramédicos voluntarios que ayudan a los accidentados). Pueden existir escenarios donde el celular se destruya o se pierda, y en los cuales de ser recogidos por alguien más y llevados a una clínica que no haga parte de Venemergencias, tendrá que contactarnos y se evaluará el caso para determinar si aplica el pago.
+            · <strong>Pasajero/acompañante herido:</strong> el documento de conceptualización <em>no menciona al pasajero en ninguna página</em>. ¿La póliza RCV cubre al acompañante? Si sí, ¿la app debe preguntar al activar el protocolo si hay pasajero y capturar sus datos? ¿Se activan gastos médicos para ambas personas o solo para el asegurado titular?
+              - En un principio no cubre al acompañante, en un futuro se considerará para algunos planes. Se debe confirmar esto con los abogados de Mercantil Seguros para estar seguros.
+          </div>
+        </div>
+        <div class="q-tag tag-deteccion">Detección</div>
+      </div>
+
+      <div class="q-item p-critico">
+        <div class="q-num">4</div>
+        <div class="q-text">
+          <div class="q-main">¿Confirmaron los tiempos críticos con Venemergencia?</div>
+          <div class="q-detail">
+            El documento define tiempos muy específicos. Necesitamos saber si los validaron en la reunión:<br>
+            · ¿3 intentos de llamada saliente dentro de los <strong>5 minutos</strong> de activación? ¿Operativo 24/7?<br>
+            · ¿Despacho en sitio en <strong>10 minutos</strong> si no hubo contacto? ¿Solo en Caracas?<br>
+            · ¿Pago del 60% de gastos médicos en <strong>24 horas</strong>? ¿Quién lo financia?<br>
+            Si no pueden cumplirlos, los tiempos del documento deben ajustarse antes de publicar los términos al asegurado.
+          </div>
+        </div>
+        <div class="q-tag tag-timing">Timing</div>
+      </div>
+
+      <div class="q-item p-critico">
+        <div class="q-num">5</div>
+        <div class="q-text">
+          <div class="q-main">Confirmar los parámetros de negocio del módulo de detección</div>
+          <div class="q-detail">
+            Tres reglas del documento que necesitan validación formal:<br>
+            · <strong>Velocidad &gt;80 km/h:</strong> ¿es una exclusión dura en el contrato del carrier, o sólo un factor de riesgo que el Centro de Control evalúa caso a caso?<br>
+              - La ley establece que si el conductor excede 80 km/h es responsable del accidente, por lo tanto no aplica para el pago de gastos médicos. Pero son situaciones que deben evaluarse con Mercantil Seguros.
+            · <strong>Límite de eventos:</strong> 3 por período anual (1 con indemnización, 2 solo asistencia) — ¿confirmado para todos los tiers?<br>
+              - Si, si se tiene un accidente que requiere de indemnización, se gastarán todos los fondos (evaluar si hay escenarios con gastos parciales, como una bolsa de gastos médicos). El plan seguirá vigente pero en escenarios futuros, tendrá asistencia pero no desembolso. Se evaluará la posibilidad de agregar fondos al plan activo, de tal manera que aun pueda tener el desembolso, pero no para la primera fase.
+            · <strong>Split de gastos médicos:</strong> 60% en &lt;24h + 40% post-documentación — ¿quién financia el 60% inicial: RuedaSeguro con su reserva, o el carrier directamente?
+              - RuedaSeguro manejará esos fondos, aunque queda volver a evaluarlo dada la alianza con Mercantil Seguros.
+          </div>
+        </div>
+        <div class="q-tag tag-negocio">Negocio</div>
+      </div>
+
+      <div class="q-item p-alto">
+        <div class="q-num">6</div>
+        <div class="q-text">
+          <div class="q-main">Cobertura geográfica: ¿el lanzamiento es sólo Caracas o toda Venezuela?</div>
+          <div class="q-detail">
+            Específicamente para el módulo de detección: ¿Venemergencia tiene cobertura de despacho en sitio
+            fuera del Área Metropolitana? ¿Qué mensaje muestra la app si el accidente ocurre en una zona
+            sin cobertura — el asegurado llama directamente al 171 o la app gestiona la redirección?
+              - Venemergencias tiene creo que 24 centros de atención a nivel nacional. Es posible que en una fase temprana de pruebas se lanze para Caracas, pero el objetivo es escalarlo rápidamente a nivel nacional. Se pueden evaluar alianzas de centros adicionales. El objetivo a largo plazo es ofrecerlo en multiples paises de latinoamerica y el caribe.
+              - El mensaje que se muestra es que no hay cobertura de despacho en sitio, pero se muestra la información de contacto de emergencias más cercana. Esto también aplicaría para las personas con la aplicación pero sin un plan activo, donde podríamos contactar a asistencia médica, pero hasta ahí.
+          </div>
+        </div>
+        <div class="q-tag tag-vene">Venemergencia</div>
+      </div>
+
+      <div class="q-item p-alto">
+        <div class="q-num">7</div>
+        <div class="q-text">
+          <div class="q-main">¿Cuándo es la primera póliza real de punta a punta?</div>
+          <div class="q-detail">
+            App → pago → API del carrier → confirmación → carnet digital con QR.
+            Esta fecha define la priorización completa de Sprint 5 y 6.
+            ¿Tenemos una fecha objetivo? ¿Hay pilotos internos del equipo como primeros asegurados?
+          </div>
+        </div>
+        <div class="q-tag tag-negocio">Negocio</div>
+      </div>
+
+      <div class="q-item p-alto">
+        <div class="q-num">8</div>
+        <div class="q-text">
+          <div class="q-main">¿Qué incluye exactamente cada tier de póliza hoy? Respuesta: aun no se sabe al 100%</div>
+          <div class="q-detail">
+            Necesitamos confirmar el detalle final de coberturas para Básica / Plus / Ampliada, ya que
+            afecta directamente qué funciones del módulo de detección se activan por plan:<br>
+            · ¿<strong>Básica</strong> incluye detección automática pero solo pago en efectivo, sin despacho médico?<br>
+            · ¿<strong>Plus</strong> incluye Venemergencia telemedicina + despacho, sin hospitalización?<br>
+            · ¿<strong>Ampliada</strong> incluye hospitalización Red ALTEHA + reembolso completo?<br>
+            El documento asume que el módulo de detección está disponible para todos los planes, pero el nivel de respuesta varía.<br>
+            · <strong>Cobertura de acompañante:</strong> ¿en cuál(es) tier(s) está cubierto el pasajero? ¿Solo en Ampliada o desde Plus? Respuesta: En un principio, ningun plan lo cubre. Se debe evaluar su viabilidad legal y tecnica.
+          </div>
+        </div>
+        <div class="q-tag tag-negocio">Negocio</div>
+      </div>
+
+      <div class="q-item p-medio">
+        <div class="q-num">9</div>
+        <div class="q-text">
+          <div class="q-main">¿Quién configura el proyecto Firebase para las notificaciones push?</div>
+          <div class="q-detail">
+            La app necesita el archivo <code>google-services.json</code> para enviar notificaciones de emergencia
+            cuando la app está en background (accidente detectado, caso actualizado, póliza confirmada).
+            Thony gestiona la infraestructura GCP — ¿lo crea él o lo hacemos nosotros?
+              - Thony ya tiene configuradas algunas cosas, proximamente nos reuniremos para detallar credenciales y configuraciones.
+          </div>
+        </div>
+        <div class="q-tag tag-bloqueante">Bloqueante</div>
+      </div>
+
+      <div class="q-item p-critico">
+        <div class="q-num">10</div>
+        <div class="q-text">
+          <div class="q-main">¿Cuáles son los carriers activos y cómo se asigna el carrier al usuario?</div>
+          <div class="q-detail">
+            Sabemos que Seguros Pirámide, Seguros Caracas y Seguros Mercantil están involucrados.
+            Necesitamos definir esto antes de construir el flujo de selección de planes:<br>
+            · ¿El <strong>cliente elige la aseguradora</strong>, o el sistema asigna automáticamente según algún criterio (zona, moto, perfil)?<br>
+            · ¿Cada carrier ofrece los tres tiers (Básica/Plus/Ampliada), o cada uno cubre solo ciertos tiers?<br>
+            · ¿Se muestra el nombre del carrier en la pantalla de selección de planes? Actualmente no se muestra.<br>
+            · ¿Puede un broker trabajar con cualquier carrier o tiene un carrier asignado?
+              - Vamos a trabajar exclusivamente con Mercantil Seguros. Lo que facilita ligeramente la selección de planes.
+          </div>
+        </div>
+        <div class="q-tag tag-decision">Decisión</div>
+      </div>
+
+    </div>
+  </div>
+  <div class="section-divider"></div>
+
+
+  <!-- ─── FERNANDO ÁNGELES ─── -->
+  <div class="person-section">
+    <div class="person-header">
+      <div class="person-avatar" style="background:#0891b2;">FA</div>
+      <div class="person-info">
+        <div class="person-name">Fernando Ángeles — Vareca</div>
+        <div class="person-role">Corredor / Broker · Canal de ventas, emisión de pólizas, integraciones de pago</div>
+        <div class="person-note">Reunión presencial con Alex y Leticia — preguntas críticas de integración</div>
+      </div>
+      <div class="person-badge" style="background:#ecfeff; color:#0891b2;">Broker</div>
+    </div>
+
+    <div class="questions">
+
+      <div class="q-item p-critico">
+        <div class="q-num">1</div>
+        <div class="q-text">
+          <div class="q-main">¿Para qué se usará exactamente cada canal de pago?</div>
+          <div class="q-detail">
+            Mañana debe quedar claro el mapa definitivo de cada método — son flujos distintos en la app:<br>
+            · <strong>Pago Móvil P2P</strong> → cobro de prima al asegurado (ya implementado en la app)<br>
+            · <strong>Débito Inmediato</strong> → cobro de prima recurrente automático. ¿En qué banco/red? ¿Cuándo está disponible la API?<br>
+            · <strong>GuiaPay</strong> → ¿es para <em>indemnizaciones al asegurado</em> (pagos de siniestros), no cobro de primas? Confirmar — si es así, es un flujo completamente separado.<br>
+            · <strong>Biopago</strong> → ¿solo para puntos de venta físicos (no impacta la app móvil)?<br>
+            · <strong>Zelle / USD transfer</strong> → ¿aplica para algún canal o perfil de asegurado?<br>
+            Sin este mapa definitivo no podemos diseñar el flujo financiero completo.
+            Respuesta: Fernando tiene un sistema desarrollado inhouse para integrarse con multiples bancos en venezuela. Quedó en mostrarnos y conectarnos con su desarrollador, para integrarlo con RuedaSeguro y ahorrarnos trabajo.
+          </div>
+        </div>
+        <div class="q-tag tag-bloqueante">Bloqueante</div>
+      </div>
+
+      <div class="q-item p-critico">
+        <div class="q-num">2</div>
+        <div class="q-text">
+          <div class="q-main">¿Hay avance con la API del carrier (Acsel/Sirway) para emisión en tiempo real?</div>
+          <div class="q-detail">
+            Hoy la emisión es por lotes al cierre del día. La meta es API en tiempo real.
+            ¿William tiene disponibles las credenciales de sandbox de Acsel/Sirway?
+            ¿Hay documentación del endpoint? Sin esto, todas las pólizas siguen siendo provisionales.
+            Respuesta: Mercantil será el único carrier, y estamos a la espera de reunirnos con su equipo.
+          </div>
+        </div>
+        <div class="q-tag tag-bloqueante">Bloqueante</div>
+      </div>
+
+      <div class="q-item p-critico">
+        <div class="q-num">3</div>
+        <div class="q-text">
+          <div class="q-main">Condiciones de la póliza: exclusión por velocidad &gt;80 km/h y límite de eventos</div>
+          <div class="q-detail">
+            El documento de conceptualización establece que circular a más de 80 km/h en el momento del
+            accidente puede ser causal de no pago. ¿Está esto en las condiciones reales del contrato RCV?
+            Respuesta: Investigar legislación.
+            Igualmente: ¿el límite de 3 eventos por año (1 con indemnización, 2 solo asistencia)
+            es una condición del carrier o una política interna de RuedaSeguro?
+          </div>
+        </div>
+        <div class="q-tag tag-deteccion">Detección</div>
+      </div>
+
+      <div class="q-item p-alto">
+        <div class="q-num">4</div>
+        <div class="q-text">
+          <div class="q-main">¿Tenemos el flujo de ventas comercial documentado?</div>
+          <div class="q-detail">
+            El flujo técnico de punta a punta existe (app → pago → carrier → carnet).
+            Falta el flujo comercial: ¿cómo llega un broker a su cliente? ¿Genera el link de cotización
+            desde el portal? ¿El cliente recibe un link de activación por WhatsApp?
+            Sin este documento, no podemos construir el canal de activación por broker en la app.
+          </div>
+        </div>
+        <div class="q-tag tag-decision">Decisión</div>
+      </div>
+
+      <div class="q-item p-alto">
+        <div class="q-num">5</div>
+        <div class="q-text">
+          <div class="q-main">¿Cuando la app detecta un accidente de un cliente de Vareca, quieres ser notificado?</div>
+          <div class="q-detail">
+            El módulo notifica al asegurado, a sus contactos de emergencia y al proveedor médico.
+            ¿El broker que emitió la póliza también debe recibir una alerta? Si es sí:
+            ¿por qué canal (WhatsApp, email, dashboard) y con qué información (solo que hubo un evento, o detalles del caso)?
+            Respuesta: Puede aparecerle en el centro de control, donde tendrá acceso, pero no es prioridad.
+          </div>
+        </div>
+        <div class="q-tag tag-deteccion">Detección</div>
+      </div>
+
+      <div class="q-item p-alto">
+        <div class="q-num">6</div>
+        <div class="q-text">
+          <div class="q-main">¿Quién construye el portal del broker y qué prioridad tiene?</div>
+          <div class="q-detail">
+            Hay tres opciones actualmente: (a) Módulo "Broker/Sales" del dashboard de Thony,
+            (b) portal Next.js independiente que teníamos congelado en el repo,
+            (c) Vareca opera desde el dashboard de Thony directamente.
+            Sin un portal broker funcional, el canal de ventas por corredor queda bloqueado.
+            ¿Cuándo necesita Vareca una herramienta operativa?
+              - El centro de control servirá para múltiples usuarios (brokers, venmergencias, mercantil, etc) y conexiones API. Se debe establecer un buen manejo de roles y permisos para que cada corredor vea solo lo que debe ver.
+          </div>
+        </div>
+        <div class="q-tag tag-decision">Decisión</div>
+      </div>
+
+      <div class="q-item p-alto">
+        <div class="q-num">7</div>
+        <div class="q-text">
+          <div class="q-main">¿Hay preguntas de elegibilidad que el usuario debe responder antes de ver los planes?</div>
+          <div class="q-detail">
+            En la reunión del 30/03 mencionaste que podría haber preguntas previas — quedó como "lo voy a verificar".
+            Si el carrier las requiere, necesitamos una pantalla de elegibilidad antes de mostrar Básica/Plus/Ampliada.
+            Proponemos las siguientes candidatas, ¿cuáles aplican?<br>
+            · ¿El vehículo es de <strong>uso particular o comercial</strong> (mensajería, delivery)?<br>
+            · ¿El vehículo <strong>transporta materiales peligrosos, corrosivos o inflamables</strong>?<br>
+            · ¿El conductor ha tenido <strong>siniestros en los últimos 12 meses</strong>?<br>
+            · ¿El conductor tiene <strong>licencia de conducir vigente</strong>?<br>
+            · ¿El vehículo tiene <strong>modificaciones no estándar</strong> (motor tuneado, etc.)?
+            Respuesta: Debemos listarlas todas, por ejemplo se mencionó el escenario para funcionarios publicos o de la policia, donde se les puede cobrar mas.
+          </div>
+        </div>
+        <div class="q-tag tag-negocio">Negocio</div>
+      </div>
+
+    </div>
+  </div>
+  <div class="section-divider"></div>
+
+
+  <!-- ─── THONY ─── -->
+  <div class="person-section">
+    <div class="person-header">
+      <div class="person-avatar" style="background:#7c3aed;">TH</div>
+      <div class="person-info">
+        <div class="person-name">Thony — Quasar Infotech</div>
+        <div class="person-role">Tech partner · Plataforma GCP, dashboard, MQTT broker, API de carrier</div>
+        <div class="person-note">Posiblemente por separado — preguntas de detalles técnicos de integración</div>
+      </div>
+      <div class="person-badge" style="background:#f5f3ff; color:#7c3aed;">Técnico</div>
+    </div>
+
+    <div class="questions">
+
+      <div class="q-item p-critico">
+        <div class="q-num">1</div>
+        <div class="q-text">
+          <div class="q-main">¿Podemos obtener URL base + API key de staging hoy?</div>
+          <div class="q-detail">
+            El <code>QuasarInfotechClient</code> está implementado y esperando credenciales reales.
+            Sin esto no se puede emitir la primera póliza real. Lleva pendiente desde el 30/03.
+            Si no hay sandbox aún, ¿cuándo estará disponible?
+            Respuesta: Reunion esta semana que viene.
+          </div>
+        </div>
+        <div class="q-tag tag-bloqueante">Bloqueante</div>
+      </div>
+
+      <div class="q-item p-critico">
+        <div class="q-num">2</div>
+        <div class="q-text">
+          <div class="q-main">¿El módulo "First Responders Dispatch" del dashboard ya recibe el payload de emergencia?</div>
+          <div class="q-detail">
+            La app ya genera el payload completo: GPS, G-force, datos del asegurado, nivel de urgencia,
+            contactos de emergencia. ¿Hay un endpoint activo que lo reciba? ¿Qué formato espera?
+            ¿Es el mismo topic MQTT de telemetría o un endpoint REST separado?
+          </div>
+        </div>
+        <div class="q-tag tag-deteccion">Detección</div>
+      </div>
+
+      <div class="q-item p-critico">
+        <div class="q-num">3</div>
+        <div class="q-text">
+          <div class="q-main">MQTT: URL del broker, protocolo, autenticación y topics</div>
+          <div class="q-detail">
+            El <code>CrashMonitorScreen</code> genera el payload en tiempo real y lo muestra en pantalla.
+            Sólo falta el destino. Necesitamos: URL + puerto, protocolo (MQTT/TLS o WebSocket),
+            método de autenticación, estructura de topics y si hay broker de staging separado de producción.
+          </div>
+        </div>
+        <div class="q-tag tag-bloqueante">Bloqueante</div>
+      </div>
+
+      <div class="q-item p-critico">
+        <div class="q-num">4</div>
+        <div class="q-text">
+          <div class="q-main">Flujo KYC: ¿existe un endpoint de documentos antes de emitir la póliza?</div>
+          <div class="q-detail">
+            ¿Hay un <code>POST /kyc/documents</code> al que llamar antes de <code>issue_policy</code>?
+            ¿Qué documentos recibe (cédula, certificado de circulación, ambos)?
+            ¿Es obligatorio el <code>kyc_document_id</code> para que la respuesta de emisión sea exitosa?
+          </div>
+        </div>
+        <div class="q-tag tag-bloqueante">Bloqueante</div>
+      </div>
+
+      <div class="q-item p-alto">
+        <div class="q-num">5</div>
+        <div class="q-text">
+          <div class="q-main">¿Quasar genera el PDF de la póliza y el carnet digital, o lo hace RuedaSeguro?</div>
+          <div class="q-detail">
+            Ya tenemos <code>PolicyPdfService</code> y <code>PolicyCardService</code> generando ambos documentos.
+            ¿Los de Quasar incluyen el QR de verificación policial? ¿Son los que hay que entregar al asegurado?
+            Necesitamos definir quién es la fuente primaria para evitar duplicar documentos con datos distintos.
+          </div>
+        </div>
+        <div class="q-tag tag-decision">Decisión</div>
+      </div>
+
+    </div>
+  </div>
+  <div class="section-divider"></div>
+
+
+  <!-- ─── GRUPO / CIERRE ─── -->
+  <div class="person-section">
+    <div class="group-box">
+      <div class="person-header">
+        <div class="person-avatar" style="background:rgba(255,255,255,0.15);">GR</div>
+        <div class="person-info">
+          <div class="person-name">Para cerrar en reunión — decisiones que necesitan consenso</div>
+          <div class="person-role">No pueden tomarse unilateralmente</div>
+        </div>
+      </div>
+
+      <div class="questions">
+
+        <div class="q-item p-critico">
+          <div class="q-num">!</div>
+          <div class="q-text">
+            <div class="q-main">¿Existe un Centro de Control operativo hoy? ¿Quién lo opera y en qué horario?</div>
+            <div class="q-detail">
+              El documento menciona el "Centro de Control de RuedaSeguro" como actor que recibe notificaciones
+              en casi todas las etapas del módulo de detección. Sin un equipo humano detrás, las alertas
+              de emergencia llegan a ningún lado. ¿Es el dashboard de Thony? ¿Es el equipo de Vareca?
+              ¿Hay guardia 24/7 o solo horario de oficina?
+              Respuesta: Thony es el responsable del desarrollo del dashboard. Está en proceso, con un primer demo listo.
+            </div>
+          </div>
+          <div class="q-tag tag-vene">Venemergencia</div>
+        </div>
+
+        <div class="q-item p-critico">
+          <div class="q-num">!</div>
+          <div class="q-text">
+            <div class="q-main">¿Cómo maneja el asegurado una emergencia si no tiene conectividad en el momento del accidente?</div>
+            <div class="q-detail">
+              El documento no lo especifica explícitamente. Opciones a decidir:
+              (a) La app guarda el evento localmente y lo envía cuando recupere señal — ¿sigue siendo útil con minutos de retraso?
+              (b) La app usa SMS como canal de respaldo (más costoso pero más confiable).
+              (c) La app llama directamente al número de emergencias de Venemergencia sin datos.
+              Respuesta:  La app usa SMS como canal de respaldo (más costoso pero más confiable) o podria llamar al numero de emergencias.
+            </div>
+          </div>
+          <div class="q-tag tag-deteccion">Detección</div>
+        </div>
+
+        <div class="q-item p-critico">
+          <div class="q-num">!</div>
+          <div class="q-text">
+            <div class="q-main">¿Quién valida y aprueba el pago del 40% restante de gastos médicos?</div>
+            <div class="q-detail">
+              El 40% se desembolsa después de que el asegurado entregue:
+              informe policial, fotos de la moto (placa, serial, frente, ambos lados) y declaración de hechos.
+              ¿Quién revisa estos documentos? ¿Es un proceso manual del equipo de RuedaSeguro,
+              lo hace el carrier, o Venemergencia certifica el caso?
+              Respuesta: tanto venemergencia como Ruedaseguro deben aprobar el pago del 40% restante. Se debe hacer una revision manual de los documentos.
+            </div>
+          </div>
+          <div class="q-tag tag-negocio">Negocio</div>
+        </div>
+
+        <div class="q-item p-alto">
+          <div class="q-num">!</div>
+          <div class="q-text">
+            <div class="q-main">¿Qué proveedor de email transaccional usamos?</div>
+            <div class="q-detail">
+              El módulo requiere envío automático de PDF + carnet digital post-emisión, y actualizaciones
+              del estado del caso médico por correo. Supabase tiene límite de 3 correos/hora en plan gratuito,
+              insuficiente para operaciones reales. Opciones: Resend, SendGrid, AWS SES.
+              ¿Hay presupuesto y quién configura el dominio de envío?
+              Respuesta: No se
+            </div>
+          </div>
+          <div class="q-tag tag-decision">Decisión</div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ── FOOTER ── -->
+  <div class="footer">
+    <div class="footer-left">
+      Preparado por Engineering · RuedaSeguro · 2026-04-22<br>
+      Fuentes: Conceptualización del Módulo de Detección (28 pp.) · MEETING_ANALYSIS_30_03 · ROADMAP_SPRINTS_5_TO_8
+    </div>
+    <div class="footer-right">CONFIDENCIAL</div>
+  </div>
+
+</div>
+</body>
+</html>

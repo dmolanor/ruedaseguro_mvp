@@ -22,16 +22,25 @@ class ProductSelectionScreen extends ConsumerWidget {
     final bcvRateAsync = ref.watch(bcvRateProvider);
     final isDemoMode = ref.watch(authProvider).user == null;
 
-    // Resolve plans: DB data → mapped InsurancePlans, fallback to mock
+    // Resolve plans: DB data → mapped InsurancePlans, fallback to mock.
+    // Deduplicate by tier so multi-carrier DB rows never show as separate cards.
     final plans = policyTypesAsync.when(
-      data: (types) => types.map((t) => t.toInsurancePlan()).toList(),
+      data: (types) {
+        final seen = <String>{};
+        return types
+            .where((t) => seen.add(t.tier))
+            .map((t) => t.toInsurancePlan())
+            .toList();
+      },
       error: (_, __) => MockPlans.all,
       loading: () => null, // null → show shimmer
     );
 
     final rateLabel = bcvRateAsync.when(
-      data: (r) => '1 USD = ${r.rate.toStringAsFixed(2)} VES${r.stale ? ' (aprox.)' : ''}',
-      error: (_, __) => '1 USD = ${MockPlans.exchangeRate.toStringAsFixed(2)} VES (aprox.)',
+      data: (r) =>
+          '1 USD = ${r.rate.toStringAsFixed(2)} VES${r.stale ? ' (aprox.)' : ''}',
+      error: (_, __) =>
+          '1 USD = ${MockPlans.exchangeRate.toStringAsFixed(2)} VES (aprox.)',
       loading: () => '...',
     );
 
@@ -41,12 +50,16 @@ class ProductSelectionScreen extends ConsumerWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded,
-              color: RSColors.primary),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: RSColors.primary,
+          ),
           onPressed: () => context.pop(),
         ),
-        title: Text('Selecciona tu plan',
-            style: RSTypography.titleLarge.copyWith(color: RSColors.primary)),
+        title: Text(
+          'Selecciona tu plan',
+          style: RSTypography.titleLarge.copyWith(color: RSColors.primary),
+        ),
       ),
       body: Column(
         children: [
@@ -60,27 +73,38 @@ class ProductSelectionScreen extends ConsumerWidget {
                 else
                   Row(
                     children: [
-                      const Icon(Icons.two_wheeler_rounded,
-                          color: RSColors.textSecondary, size: 20),
+                      const Icon(
+                        Icons.two_wheeler_rounded,
+                        color: RSColors.textSecondary,
+                        size: 20,
+                      ),
                       const SizedBox(width: RSSpacing.sm),
-                      Text(
-                        '${MockVehicle.brand} ${MockVehicle.model} ${MockVehicle.year}',
-                        style: RSTypography.bodyMedium
-                            .copyWith(color: RSColors.textSecondary),
+                      Flexible(
+                        child: Text(
+                          '${MockVehicle.brand} ${MockVehicle.model} ${MockVehicle.year}',
+                          style: RSTypography.bodyMedium.copyWith(
+                            color: RSColors.textSecondary,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
                       const SizedBox(width: RSSpacing.sm),
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 2),
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
                         decoration: BoxDecoration(
                           color: RSColors.surfaceVariant,
                           borderRadius: BorderRadius.circular(6),
                         ),
-                        child: Text(MockVehicle.plate,
-                            style: RSTypography.mono.copyWith(
-                              fontSize: 11,
-                              color: RSColors.textSecondary,
-                            )),
+                        child: Text(
+                          MockVehicle.plate,
+                          style: RSTypography.mono.copyWith(
+                            fontSize: 11,
+                            color: RSColors.textSecondary,
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -92,8 +116,9 @@ class ProductSelectionScreen extends ConsumerWidget {
             child: plans == null
                 ? _PlanShimmer()
                 : ListView.separated(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: RSSpacing.lg),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: RSSpacing.lg,
+                    ),
                     itemCount: plans.length,
                     separatorBuilder: (_, __) =>
                         const SizedBox(height: RSSpacing.md),
@@ -109,8 +134,9 @@ class ProductSelectionScreen extends ConsumerWidget {
             padding: const EdgeInsets.all(RSSpacing.lg),
             child: Text(
               'Tasa BCV: $rateLabel',
-              style: RSTypography.caption
-                  .copyWith(color: RSColors.textSecondary),
+              style: RSTypography.caption.copyWith(
+                color: RSColors.textSecondary,
+              ),
               textAlign: TextAlign.center,
             ),
           ),
@@ -129,13 +155,17 @@ class _VehicleBadge extends ConsumerWidget {
     // TODO RS-056: fetch vehicle from DB using vehicleProvider
     return Row(
       children: [
-        const Icon(Icons.two_wheeler_rounded,
-            color: RSColors.textSecondary, size: 20),
+        const Icon(
+          Icons.two_wheeler_rounded,
+          color: RSColors.textSecondary,
+          size: 20,
+        ),
         const SizedBox(width: RSSpacing.sm),
         Text(
           '${MockVehicle.brand} ${MockVehicle.model} ${MockVehicle.year}',
-          style:
-              RSTypography.bodyMedium.copyWith(color: RSColors.textSecondary),
+          style: RSTypography.bodyMedium.copyWith(
+            color: RSColors.textSecondary,
+          ),
         ),
       ],
     );
@@ -223,31 +253,44 @@ class _PlanCard extends StatelessWidget {
                     children: [
                       Row(
                         children: [
-                          Text(plan.name,
+                          Flexible(
+                            child: Text(
+                              plan.name,
                               style: RSTypography.titleLarge.copyWith(
-                                  color: RSColors.textPrimary)),
+                                color: RSColors.textPrimary,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
                           if (plan.isRecommended) ...[
                             const SizedBox(width: RSSpacing.sm),
                             Container(
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 2),
+                                horizontal: 8,
+                                vertical: 2,
+                              ),
                               decoration: BoxDecoration(
                                 color: plan.accentColor,
                                 borderRadius: BorderRadius.circular(10),
                               ),
-                              child: Text('Recomendado',
-                                  style: RSTypography.caption.copyWith(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 10,
-                                  )),
+                              child: Text(
+                                'Recomendado',
+                                style: RSTypography.caption.copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 10,
+                                ),
+                              ),
                             ),
                           ],
                         ],
                       ),
-                      Text(plan.targetMarket,
-                          style: RSTypography.caption
-                              .copyWith(color: RSColors.textSecondary)),
+                      Text(
+                        plan.targetMarket,
+                        style: RSTypography.caption.copyWith(
+                          color: RSColors.textSecondary,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -275,9 +318,12 @@ class _PlanCard extends StatelessWidget {
                     const SizedBox(width: 4),
                     Padding(
                       padding: const EdgeInsets.only(bottom: 4),
-                      child: Text('USD/año',
-                          style: RSTypography.bodyMedium
-                              .copyWith(color: RSColors.textSecondary)),
+                      child: Text(
+                        'USD/año',
+                        style: RSTypography.bodyMedium.copyWith(
+                          color: RSColors.textSecondary,
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -285,48 +331,64 @@ class _PlanCard extends StatelessWidget {
                 const Divider(height: 1),
                 const SizedBox(height: RSSpacing.md),
                 // Coverages
-                ...plan.coverages.map((c) => Padding(
-                      padding: const EdgeInsets.only(bottom: 6),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Icon(Icons.check_circle_rounded,
-                              color: plan.accentColor, size: 18),
-                          const SizedBox(width: RSSpacing.sm),
-                          Expanded(
-                              child: Text(c,
-                                  style: RSTypography.bodyMedium.copyWith(
-                                      color: RSColors.textPrimary))),
-                        ],
-                      ),
-                    )),
+                ...plan.coverages.map(
+                  (c) => Padding(
+                    padding: const EdgeInsets.only(bottom: 6),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(
+                          Icons.check_circle_rounded,
+                          color: plan.accentColor,
+                          size: 18,
+                        ),
+                        const SizedBox(width: RSSpacing.sm),
+                        Expanded(
+                          child: Text(
+                            c,
+                            style: RSTypography.bodyMedium.copyWith(
+                              color: RSColors.textPrimary,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
                 // Excluded
-                ...plan.excluded.map((c) => Padding(
-                      padding: const EdgeInsets.only(bottom: 6),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Icon(Icons.cancel_rounded,
-                              color: RSColors.textSecondary
-                                  .withValues(alpha: 0.4),
-                              size: 18),
-                          const SizedBox(width: RSSpacing.sm),
-                          Expanded(
-                              child: Text(c,
-                                  style: RSTypography.bodyMedium.copyWith(
-                                      color: RSColors.textSecondary
-                                          .withValues(alpha: 0.6)))),
-                        ],
-                      ),
-                    )),
+                ...plan.excluded.map(
+                  (c) => Padding(
+                    padding: const EdgeInsets.only(bottom: 6),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(
+                          Icons.cancel_rounded,
+                          color: RSColors.textSecondary.withValues(alpha: 0.4),
+                          size: 18,
+                        ),
+                        const SizedBox(width: RSSpacing.sm),
+                        Expanded(
+                          child: Text(
+                            c,
+                            style: RSTypography.bodyMedium.copyWith(
+                              color: RSColors.textSecondary.withValues(
+                                alpha: 0.6,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
                 const SizedBox(height: RSSpacing.md),
                 RSButton(
                   label: 'Seleccionar ${plan.shortName}',
                   variant: plan.isRecommended
                       ? RSButtonVariant.primary
                       : RSButtonVariant.secondary,
-                  onPressed: () =>
-                      context.push('/policy/quote', extra: plan),
+                  onPressed: () => context.push('/policy/quote', extra: plan),
                 ),
               ],
             ),

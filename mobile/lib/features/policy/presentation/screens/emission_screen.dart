@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:share_plus/share_plus.dart';
 
 import 'package:ruedaseguro/core/data/mock_data.dart';
 import 'package:ruedaseguro/core/services/supabase_service.dart';
@@ -8,6 +10,7 @@ import 'package:ruedaseguro/core/theme/colors.dart';
 import 'package:ruedaseguro/core/theme/spacing.dart';
 import 'package:ruedaseguro/core/theme/typography.dart';
 import 'package:ruedaseguro/features/audit/data/audit_repository.dart';
+import 'package:ruedaseguro/features/onboarding/domain/onboarding_state.dart';
 import 'package:ruedaseguro/features/payment/data/payment_repository.dart';
 import 'package:ruedaseguro/features/policy/data/carrier_api_client.dart';
 import 'package:ruedaseguro/features/policy/data/policy_issuance_service.dart';
@@ -16,7 +19,7 @@ import 'package:ruedaseguro/shared/widgets/rs_button.dart';
 
 enum _EmissionState { loading, success, confirmed, observed, rejected }
 
-class EmissionScreen extends StatefulWidget {
+class EmissionScreen extends ConsumerStatefulWidget {
   const EmissionScreen({super.key, this.payload});
 
   /// Keys expected in payload:
@@ -30,16 +33,19 @@ class EmissionScreen extends StatefulWidget {
   final Map<String, dynamic>? payload;
 
   @override
-  State<EmissionScreen> createState() => _EmissionScreenState();
+  ConsumerState<EmissionScreen> createState() => _EmissionScreenState();
 }
 
-class _EmissionScreenState extends State<EmissionScreen> {
+class _EmissionScreenState extends ConsumerState<EmissionScreen> {
   _EmissionState _state = _EmissionState.loading;
   String? _policyId;
   String? _errorMessage;
 
   InsurancePlan get _plan =>
       (widget.payload?['plan'] as InsurancePlan?) ?? MockPlans.plus;
+
+  bool get _fromOnboarding =>
+      widget.payload?['fromOnboarding'] as bool? ?? false;
 
   @override
   void initState() {
@@ -53,35 +59,39 @@ class _EmissionScreenState extends State<EmissionScreen> {
     // Demo mode — no real session
     if (user == null || widget.payload == null) {
       await Future.delayed(const Duration(milliseconds: 2800));
-      if (mounted) setState(() => _state = _EmissionState.success);
+      if (mounted) {
+        if (_fromOnboarding) {
+          ref.read(onboardingProvider.notifier).reset();
+        }
+        setState(() => _state = _EmissionState.success);
+      }
       return;
     }
 
     try {
       final profileId = user.id;
       final amountUsd =
-          (widget.payload!['amountUsd'] as num?)?.toDouble() ??
-              _plan.priceUsd;
+          (widget.payload!['amountUsd'] as num?)?.toDouble() ?? _plan.priceUsd;
       final amountVes =
           (widget.payload!['amountVes'] as num?)?.toDouble() ?? 0.0;
       final exchangeRate =
           (widget.payload!['exchangeRate'] as num?)?.toDouble() ?? 0.0;
       final paymentMethod =
           widget.payload!['paymentMethod'] as String? ?? 'pago_movil_p2p';
-      final reference =
-          widget.payload!['pagoMovilReference'] as String?;
-      final bankCode =
-          widget.payload!['pagoMovilBankCode'] as String?;
+      final reference = widget.payload!['pagoMovilReference'] as String?;
+      final bankCode = widget.payload!['pagoMovilBankCode'] as String?;
 
       // Fetch vehicle
-      final vehicleId =
-          await PolicyRepository.instance.fetchVehicleId(profileId);
+      final vehicleId = await PolicyRepository.instance.fetchVehicleId(
+        profileId,
+      );
       if (vehicleId == null) throw Exception('Vehículo no registrado');
       final vehiclePlate =
           await PolicyRepository.instance.fetchVehiclePlate(vehicleId) ?? '';
 
       // Determine carrier — use plan.carrierId or fallback to seed carrier
-      final carrierId = _plan.carrierId ??
+      final carrierId =
+          _plan.carrierId ??
           '11111111-1111-1111-1111-111111111111'; // Seguros Pirámide seed
       final policyTypeId = _plan.policyTypeId ?? _plan.id;
 
@@ -128,21 +138,63 @@ class _EmissionScreenState extends State<EmissionScreen> {
         },
       );
 
-      // RS-061: Attempt carrier API issuance (15 s budget; stays provisional on failure)
+      // RS-061 / RS-090: Build carrier payload from onboarding state
+      final onboarding = ref.read(onboardingProvider);
+      final riderFullName =
+          '${onboarding.firstName ?? ''} ${onboarding.lastName ?? ''}'.trim();
+
+      // Guard: carrier API requires non-empty address. Missing fields mean the
+      // address step was skipped — skip carrier submission and go provisional.
+      final hasAddress =
+          (onboarding.estado?.isNotEmpty ?? false) &&
+          (onboarding.municipio?.isNotEmpty ?? false) &&
+          (onboarding.urbanizacion?.isNotEmpty ?? false);
+      if (!hasAddress) {
+        await AuditRepository.instance.logEvent(
+          actorId: profileId,
+          eventType: 'policy.carrier_provisional',
+          targetId: policyId,
+          targetTable: 'policies',
+          payload: const {'reason': 'missing_address'},
+        );
+        if (mounted) {
+          if (_fromOnboarding) ref.read(onboardingProvider.notifier).reset();
+          setState(() {
+            _policyId = policyId;
+            _state = _EmissionState.success;
+          });
+        }
+        return;
+      }
+
       final issuancePayload = CarrierSubmissionPayload(
         policyId: policyId,
-        riderCedula: profileId, // real cedula fetched by service in Phase 1.5
-        riderIdType: 'V',
-        riderFullName: '',
-        riderPhone: '',
+        riderCedula: onboarding.idNumber ?? profileId,
+        riderIdType: onboarding.idType ?? 'V',
+        riderFullName: riderFullName.isNotEmpty ? riderFullName : profileId,
+        riderPhone: SupabaseService.auth.currentUser?.phone ?? '',
+        riderEmail: SupabaseService.auth.currentUser?.email ?? '',
+        riderDateOfBirth: onboarding.dateOfBirth,
+        estado: onboarding.estado!,
+        municipio: onboarding.municipio!,
+        urbanizacion: onboarding.urbanizacion!,
         vehiclePlate: vehiclePlate,
-        vehicleBrand: '',
-        vehicleModel: '',
-        vehicleYear: DateTime.now().year,
+        vehicleBrand: onboarding.brand ?? '',
+        vehicleModel: onboarding.model ?? '',
+        vehicleYear: onboarding.year ?? DateTime.now().year,
+        vehicleType: onboarding.vehicleType ?? 'MOTO PARTICULAR',
+        serialNiv: onboarding.serialNiv,
         startDate: DateTime.now(),
         endDate: DateTime.now().add(const Duration(days: 365)),
-        premiumUsd: amountUsd,
-        productCode: _plan.tier,
+        premiumUsd: onboarding.premiumUsd ?? amountUsd,
+        productCode: onboarding.selectedPlan ?? _plan.tier,
+        isHabitualDriver: onboarding.isHabitualDriver,
+        ownerIdType: onboarding.ownerIdType,
+        ownerIdNumber: onboarding.ownerIdNumber,
+        ownerFullName: onboarding.ownerFirstName != null
+            ? '${onboarding.ownerFirstName} ${onboarding.ownerLastName ?? ''}'
+                  .trim()
+            : null,
       );
 
       final issuance = await PolicyIssuanceService.instance
@@ -157,6 +209,9 @@ class _EmissionScreenState extends State<EmissionScreen> {
           );
 
       if (mounted) {
+        if (_fromOnboarding) {
+          ref.read(onboardingProvider.notifier).reset();
+        }
         setState(() {
           _policyId = policyId;
           _state = issuance.isConfirmed
@@ -185,8 +240,10 @@ class _EmissionScreenState extends State<EmissionScreen> {
               elevation: 0,
               leading: _state != _EmissionState.success
                   ? IconButton(
-                      icon: const Icon(Icons.arrow_back_ios_new_rounded,
-                          color: RSColors.primary),
+                      icon: const Icon(
+                        Icons.arrow_back_ios_new_rounded,
+                        color: RSColors.primary,
+                      ),
                       onPressed: () => context.pop(),
                     )
                   : null,
@@ -194,43 +251,49 @@ class _EmissionScreenState extends State<EmissionScreen> {
                 _state == _EmissionState.confirmed
                     ? 'Póliza confirmada'
                     : _state == _EmissionState.success
-                        ? 'Póliza registrada'
-                        : _state == _EmissionState.observed
-                            ? 'Requiere corrección'
-                            : 'Error de emisión',
+                    ? 'Póliza registrada'
+                    : _state == _EmissionState.observed
+                    ? 'Requiere corrección'
+                    : 'Error de emisión',
                 style: RSTypography.titleLarge.copyWith(
-                  color: (_state == _EmissionState.success ||
+                  color:
+                      (_state == _EmissionState.success ||
                           _state == _EmissionState.confirmed)
                       ? RSColors.success
                       : _state == _EmissionState.observed
-                          ? const Color(0xFFE65100)
-                          : RSColors.error,
+                      ? const Color(0xFFE65100)
+                      : RSColors.error,
                 ),
               ),
             ),
       body: AnimatedSwitcher(
         duration: const Duration(milliseconds: 400),
         child: switch (_state) {
-          _EmissionState.loading =>
-            _LoadingView(key: const ValueKey('loading'), plan: _plan),
+          _EmissionState.loading => _LoadingView(
+            key: const ValueKey('loading'),
+            plan: _plan,
+          ),
           _EmissionState.confirmed => _SuccessView(
-              key: const ValueKey('confirmed'),
-              plan: _plan,
-              policyId: _policyId,
-              isConfirmed: true,
-            ),
+            key: const ValueKey('confirmed'),
+            plan: _plan,
+            policyId: _policyId,
+            isConfirmed: true,
+            fromOnboarding: _fromOnboarding,
+          ),
           _EmissionState.success => _SuccessView(
-              key: const ValueKey('success'),
-              plan: _plan,
-              policyId: _policyId,
-              isConfirmed: false,
-            ),
-          _EmissionState.observed =>
-            _ObservedView(key: const ValueKey('observed')),
+            key: const ValueKey('success'),
+            plan: _plan,
+            policyId: _policyId,
+            isConfirmed: false,
+            fromOnboarding: _fromOnboarding,
+          ),
+          _EmissionState.observed => _ObservedView(
+            key: const ValueKey('observed'),
+          ),
           _EmissionState.rejected => _RejectedView(
-              key: const ValueKey('rejected'),
-              errorMessage: _errorMessage,
-            ),
+            key: const ValueKey('rejected'),
+            errorMessage: _errorMessage,
+          ),
         },
       ),
     );
@@ -251,25 +314,22 @@ class _LoadingView extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              width: 96,
-              height: 96,
-              decoration: BoxDecoration(
-                color: RSColors.primary.withValues(alpha: 0.08),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.description_outlined,
-                color: RSColors.primary,
-                size: 44,
-              ),
-            )
+                  width: 96,
+                  height: 96,
+                  decoration: BoxDecoration(
+                    color: RSColors.primary.withValues(alpha: 0.08),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.description_outlined,
+                    color: RSColors.primary,
+                    size: 44,
+                  ),
+                )
                 .animate(onPlay: (c) => c.repeat(reverse: true))
                 .fadeIn(duration: 600.ms)
                 .then()
-                .scaleXY(
-                    end: 1.08,
-                    duration: 800.ms,
-                    curve: Curves.easeInOut),
+                .scaleXY(end: 1.08, duration: 800.ms, curve: Curves.easeInOut),
 
             const SizedBox(height: RSSpacing.xl),
 
@@ -300,13 +360,12 @@ class _LoadingView extends StatelessWidget {
               'Registrando póliza provisional',
               'Guardando referencia de pago',
               'Contactando a la aseguradora...',
-            ]
-                .asMap()
-                .entries
-                .map((e) => _StepRow(
-                      label: e.value,
-                      delay: Duration(milliseconds: 600 + e.key * 400),
-                    ))),
+            ].asMap().entries.map(
+              (e) => _StepRow(
+                label: e.value,
+                delay: Duration(milliseconds: 600 + e.key * 400),
+              ),
+            )),
           ],
         ),
       ),
@@ -337,8 +396,9 @@ class _StepRow extends StatelessWidget {
           const SizedBox(width: RSSpacing.sm),
           Text(
             label,
-            style:
-                RSTypography.bodyMedium.copyWith(color: RSColors.textSecondary),
+            style: RSTypography.bodyMedium.copyWith(
+              color: RSColors.textSecondary,
+            ),
           ),
         ],
       ),
@@ -353,10 +413,26 @@ class _SuccessView extends StatelessWidget {
     required this.plan,
     required this.policyId,
     this.isConfirmed = false,
+    this.fromOnboarding = false,
   });
   final InsurancePlan plan;
   final String? policyId;
   final bool isConfirmed;
+  final bool fromOnboarding;
+
+  void _share(BuildContext context) {
+    final text =
+        '''
+🛡️ ¡Acabo de contratar mi póliza RCV con RuedaSeguro!
+
+Plan: ${plan.name}
+Prima: \$${plan.priceUsd.toStringAsFixed(2)} USD / año
+Aseguradora: ${plan.carrierName ?? 'Seguros Pirámide'}
+
+Protegido en la calle con cobertura inmediata.
+''';
+    SharePlus.instance.share(ShareParams(text: text));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -367,26 +443,29 @@ class _SuccessView extends StatelessWidget {
           const SizedBox(height: RSSpacing.xl),
 
           Container(
-            width: 96,
-            height: 96,
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF1B5E20), Color(0xFF2E7D32)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF2E7D32).withValues(alpha: 0.3),
-                  blurRadius: 20,
-                  offset: const Offset(0, 6),
+                width: 96,
+                height: 96,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF1B5E20), Color(0xFF2E7D32)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF2E7D32).withValues(alpha: 0.3),
+                      blurRadius: 20,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-            child: const Icon(Icons.verified_rounded,
-                color: Colors.white, size: 48),
-          )
+                child: const Icon(
+                  Icons.verified_rounded,
+                  color: Colors.white,
+                  size: 48,
+                ),
+              )
               .animate()
               .scale(
                 begin: const Offset(0.5, 0.5),
@@ -398,7 +477,11 @@ class _SuccessView extends StatelessWidget {
           const SizedBox(height: RSSpacing.lg),
 
           Text(
-            isConfirmed ? '¡Póliza confirmada!' : '¡Solicitud registrada!',
+            fromOnboarding
+                ? '¡Bienvenido a RuedaSeguro!'
+                : isConfirmed
+                ? '¡Póliza confirmada!'
+                : '¡Solicitud registrada!',
             style: RSTypography.displayLarge.copyWith(
               color: RSColors.textPrimary,
               fontWeight: FontWeight.w800,
@@ -409,7 +492,9 @@ class _SuccessView extends StatelessWidget {
           const SizedBox(height: RSSpacing.sm),
 
           Text(
-            isConfirmed
+            fromOnboarding
+                ? 'Tu póliza ${plan.name} ha sido registrada.\nVerificaremos tu pago y activaremos tu cobertura en menos de 24 horas.'
+                : isConfirmed
                 ? 'Tu póliza fue registrada y confirmada por la aseguradora.\nYa tienes cobertura RCV activa.'
                 : 'Tu póliza provisional está registrada.\nVerificaremos tu pago en menos de 24 horas y la activaremos.',
             style: RSTypography.bodyLarge.copyWith(
@@ -421,10 +506,9 @@ class _SuccessView extends StatelessWidget {
 
           const SizedBox(height: RSSpacing.xl),
 
-          _PolicyPreviewCard(plan: plan)
-              .animate(delay: 500.ms)
-              .fadeIn(duration: 500.ms)
-              .slideY(begin: 0.1),
+          _PolicyPreviewCard(
+            plan: plan,
+          ).animate(delay: 500.ms).fadeIn(duration: 500.ms).slideY(begin: 0.1),
 
           const SizedBox(height: RSSpacing.xl),
 
@@ -441,11 +525,28 @@ class _SuccessView extends StatelessWidget {
 
           const SizedBox(height: RSSpacing.md),
 
+          if (policyId != null)
+            RSButton(
+              label: 'Ver Carnet Digital (QR)',
+              variant: RSButtonVariant.secondary,
+              onPressed: () => context.push('/policy/$policyId/carnet'),
+            ).animate(delay: 750.ms).fadeIn(duration: 400.ms),
+
+          if (policyId != null) const SizedBox(height: RSSpacing.md),
+
+          RSButton(
+            label: 'Compartir mi póliza',
+            variant: RSButtonVariant.secondary,
+            onPressed: () => _share(context),
+          ).animate(delay: 800.ms).fadeIn(duration: 400.ms),
+
+          const SizedBox(height: RSSpacing.md),
+
           RSButton(
             label: 'Ir al inicio',
             variant: RSButtonVariant.secondary,
             onPressed: () => context.go('/home'),
-          ).animate(delay: 800.ms).fadeIn(duration: 400.ms),
+          ).animate(delay: 850.ms).fadeIn(duration: 400.ms),
 
           const SizedBox(height: RSSpacing.xxl),
         ],
@@ -480,8 +581,10 @@ class _PolicyPreviewCard extends StatelessWidget {
           Row(
             children: [
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFFFFB300),
                   borderRadius: BorderRadius.circular(20),
@@ -489,8 +592,11 @@ class _PolicyPreviewCard extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.hourglass_top_rounded,
-                        color: Colors.white, size: 12),
+                    const Icon(
+                      Icons.hourglass_top_rounded,
+                      color: Colors.white,
+                      size: 12,
+                    ),
                     const SizedBox(width: 4),
                     Text(
                       'PROVISIONAL',
@@ -568,27 +674,32 @@ class _ObservedView extends StatelessWidget {
               color: const Color(0xFFFFB300).withValues(alpha: 0.12),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.warning_amber_rounded,
-                color: Color(0xFFFFB300), size: 48),
+            child: const Icon(
+              Icons.warning_amber_rounded,
+              color: Color(0xFFFFB300),
+              size: 48,
+            ),
           ).animate().scale(
-                begin: const Offset(0.5, 0.5),
-                duration: 500.ms,
-                curve: Curves.elasticOut,
-              ),
+            begin: const Offset(0.5, 0.5),
+            duration: 500.ms,
+            curve: Curves.elasticOut,
+          ),
           const SizedBox(height: RSSpacing.lg),
-          Text('Póliza observada',
-                  style: RSTypography.displayMedium.copyWith(
-                    color: RSColors.textPrimary,
-                    fontWeight: FontWeight.w700,
-                  ),
-                  textAlign: TextAlign.center)
-              .animate(delay: 200.ms)
-              .fadeIn(),
+          Text(
+            'Póliza observada',
+            style: RSTypography.displayMedium.copyWith(
+              color: RSColors.textPrimary,
+              fontWeight: FontWeight.w700,
+            ),
+            textAlign: TextAlign.center,
+          ).animate(delay: 200.ms).fadeIn(),
           const SizedBox(height: RSSpacing.sm),
           Text(
             'La aseguradora requiere información adicional para completar la emisión.',
             style: RSTypography.bodyLarge.copyWith(
-                color: RSColors.textSecondary, height: 1.5),
+              color: RSColors.textSecondary,
+              height: 1.5,
+            ),
             textAlign: TextAlign.center,
           ).animate(delay: 300.ms).fadeIn(),
           const SizedBox(height: RSSpacing.xl),
@@ -624,25 +735,27 @@ class _RejectedView extends StatelessWidget {
             ),
             child: Icon(Icons.cancel_rounded, color: RSColors.error, size: 48),
           ).animate().scale(
-                begin: const Offset(0.5, 0.5),
-                duration: 500.ms,
-                curve: Curves.elasticOut,
-              ),
+            begin: const Offset(0.5, 0.5),
+            duration: 500.ms,
+            curve: Curves.elasticOut,
+          ),
           const SizedBox(height: RSSpacing.lg),
-          Text('Error al registrar',
-                  style: RSTypography.displayMedium.copyWith(
-                    color: RSColors.textPrimary,
-                    fontWeight: FontWeight.w700,
-                  ),
-                  textAlign: TextAlign.center)
-              .animate(delay: 200.ms)
-              .fadeIn(),
+          Text(
+            'Error al registrar',
+            style: RSTypography.displayMedium.copyWith(
+              color: RSColors.textPrimary,
+              fontWeight: FontWeight.w700,
+            ),
+            textAlign: TextAlign.center,
+          ).animate(delay: 200.ms).fadeIn(),
           const SizedBox(height: RSSpacing.sm),
           Text(
             errorMessage ??
                 'No pudimos registrar tu solicitud. Por favor intenta nuevamente.',
             style: RSTypography.bodyLarge.copyWith(
-                color: RSColors.textSecondary, height: 1.5),
+              color: RSColors.textSecondary,
+              height: 1.5,
+            ),
             textAlign: TextAlign.center,
           ).animate(delay: 300.ms).fadeIn(),
           const SizedBox(height: RSSpacing.xxl),

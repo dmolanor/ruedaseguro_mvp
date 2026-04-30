@@ -103,7 +103,7 @@ void main() {
       expect(find.text('Requerido (mín. 2 letras)'), findsWidgets);
     });
 
-    testWidgets('valid form navigates to licencia screen', (tester) async {
+    testWidgets('valid form navigates to certificado screen', (tester) async {
       await tester.pumpWidget(
         buildTestableWidget(
           const CedulaConfirmScreen(),
@@ -114,7 +114,7 @@ void main() {
 
       await _tapContinuar(tester);
 
-      expect(find.text('NAVIGATED_TO_licencia'), findsOneWidget);
+      expect(find.text('NAVIGATED_TO_certificado'), findsOneWidget);
     });
 
     testWidgets('emergency contact section is collapsible', (tester) async {

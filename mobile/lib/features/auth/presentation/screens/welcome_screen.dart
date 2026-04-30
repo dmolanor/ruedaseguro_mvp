@@ -15,7 +15,8 @@ class WelcomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isLoggedIn = ref.watch(authProvider).status == AuthStatus.authenticated;
+    final isLoggedIn =
+        ref.watch(authProvider).status == AuthStatus.authenticated;
 
     return Scaffold(
       backgroundColor: RSColors.background,
@@ -25,37 +26,30 @@ class WelcomeScreen extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Spacer(flex: 2),
+              const Spacer(flex: 1),
 
-              // Brand mark
+              // Brand logo
               Center(
-                child: Container(
-                  width: 96,
-                  height: 96,
-                  decoration: BoxDecoration(
-                    color: RSColors.primary,
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  child: const Icon(
-                    Icons.shield_rounded,
-                    color: Colors.white,
-                    size: 56,
-                  ),
-                )
-                    .animate()
-                    .fadeIn(duration: 600.ms)
-                    .scale(begin: const Offset(0.8, 0.8)),
+                child:
+                    Image.asset(
+                          'assets/images/logo.png',
+                          width: 160,
+                          fit: BoxFit.contain,
+                        )
+                        .animate()
+                        .fadeIn(duration: 600.ms)
+                        .scale(begin: const Offset(0.85, 0.85)),
               ),
-              const SizedBox(height: RSSpacing.xl),
+              const SizedBox(height: RSSpacing.lg),
 
               // Headline
               Text(
-                'Asegura tu vehículo\nen minutos',
-                textAlign: TextAlign.center,
-                style: RSTypography.displayLarge.copyWith(
-                  color: RSColors.primary,
-                ),
-              )
+                    'Asegura tu vehículo\nen minutos',
+                    textAlign: TextAlign.center,
+                    style: RSTypography.displayLarge.copyWith(
+                      color: RSColors.primary,
+                    ),
+                  )
                   .animate(delay: 200.ms)
                   .fadeIn(duration: 500.ms)
                   .slideY(begin: 0.2, end: 0),
@@ -68,36 +62,46 @@ class WelcomeScreen extends ConsumerWidget {
                 style: RSTypography.titleMedium.copyWith(
                   color: RSColors.textSecondary,
                 ),
-              )
-                  .animate(delay: 350.ms)
-                  .fadeIn(duration: 500.ms),
+              ).animate(delay: 350.ms).fadeIn(duration: 500.ms),
 
               const Spacer(flex: 2),
 
               // Feature highlights
               _FeatureRow(
-                icon: Icons.flash_on_rounded,
-                text: 'Registro en 5 minutos con tu cédula',
-              ).animate(delay: 500.ms).fadeIn(duration: 400.ms).slideX(begin: -0.1),
+                    icon: Icons.flash_on_rounded,
+                    text: 'Registro en 5 minutos con tu cédula',
+                  )
+                  .animate(delay: 500.ms)
+                  .fadeIn(duration: 400.ms)
+                  .slideX(begin: -0.1),
               const SizedBox(height: RSSpacing.md),
               _FeatureRow(
-                icon: Icons.security_rounded,
-                text: 'RCV aprobado por SUDEASEG',
-              ).animate(delay: 600.ms).fadeIn(duration: 400.ms).slideX(begin: -0.1),
+                    icon: Icons.security_rounded,
+                    text: 'RCV aprobado por SUDEASEG',
+                  )
+                  .animate(delay: 600.ms)
+                  .fadeIn(duration: 400.ms)
+                  .slideX(begin: -0.1),
               const SizedBox(height: RSSpacing.md),
               _FeatureRow(
-                icon: Icons.payments_rounded,
-                text: 'Paga en bolívares o dólares',
-              ).animate(delay: 700.ms).fadeIn(duration: 400.ms).slideX(begin: -0.1),
+                    icon: Icons.payments_rounded,
+                    text: 'Paga en bolívares o dólares',
+                  )
+                  .animate(delay: 700.ms)
+                  .fadeIn(duration: 400.ms)
+                  .slideX(begin: -0.1),
 
               const Spacer(flex: 1),
 
               // CTAs
               if (isLoggedIn) ...[
                 RSButton(
-                  label: 'Continuar registro',
-                  onPressed: () => context.push('/onboarding/cedula'),
-                ).animate(delay: 800.ms).fadeIn(duration: 400.ms).slideY(begin: 0.2),
+                      label: 'Continuar registro',
+                      onPressed: () => context.push('/onboarding/cedula'),
+                    )
+                    .animate(delay: 800.ms)
+                    .fadeIn(duration: 400.ms)
+                    .slideY(begin: 0.2),
 
                 const SizedBox(height: RSSpacing.md),
 
@@ -114,9 +118,12 @@ class WelcomeScreen extends ConsumerWidget {
                 ).animate(delay: 900.ms).fadeIn(duration: 400.ms),
               ] else ...[
                 RSButton(
-                  label: 'Crear cuenta',
-                  onPressed: () => context.push('/login'),
-                ).animate(delay: 800.ms).fadeIn(duration: 400.ms).slideY(begin: 0.2),
+                      label: 'Crear cuenta',
+                      onPressed: () => context.push('/login'),
+                    )
+                    .animate(delay: 800.ms)
+                    .fadeIn(duration: 400.ms)
+                    .slideY(begin: 0.2),
 
                 const SizedBox(height: RSSpacing.md),
 
@@ -144,7 +151,10 @@ class WelcomeScreen extends ConsumerWidget {
                       ref.read(authProvider.notifier).enterDemoMode();
                       context.go('/home');
                     },
-                    icon: const Icon(Icons.play_circle_filled_rounded, size: 18),
+                    icon: const Icon(
+                      Icons.play_circle_filled_rounded,
+                      size: 18,
+                    ),
                     label: Text(
                       'Ver demo completo',
                       style: RSTypography.caption.copyWith(

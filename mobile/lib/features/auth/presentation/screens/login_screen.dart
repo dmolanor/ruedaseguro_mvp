@@ -13,6 +13,7 @@ import 'package:ruedaseguro/core/theme/colors.dart';
 import 'package:ruedaseguro/core/theme/spacing.dart';
 import 'package:ruedaseguro/core/theme/typography.dart';
 import 'package:ruedaseguro/features/auth/data/auth_repository.dart';
+import 'package:ruedaseguro/shared/providers/auth_provider.dart';
 import 'package:ruedaseguro/shared/widgets/rs_button.dart';
 
 // ---------------------------------------------------------------------------
@@ -87,7 +88,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     if (!_isValid || _isLoading) return;
     // If Turnstile is enabled but hasn't resolved yet, ask the user to wait.
     if (EnvConfig.turnstileSiteKey.isNotEmpty && _captchaToken == null) {
-      setState(() => _errorMessage = 'Verificación de seguridad en curso. Intenta de nuevo en un momento.');
+      setState(
+        () => _errorMessage =
+            'Verificación de seguridad en curso. Intenta de nuevo en un momento.',
+      );
       return;
     }
     setState(() {
@@ -105,7 +109,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       final msg = e.toString().toLowerCase();
       String userMsg;
       if (msg.contains('rate') || msg.contains('limit')) {
-        userMsg = 'Has excedido el límite de intentos. Intenta en unos minutos.';
+        userMsg =
+            'Has excedido el límite de intentos. Intenta en unos minutos.';
       } else if (msg.contains('network') || msg.contains('socket')) {
         userMsg = 'Sin conexión a internet. Verifica tu conexión.';
       } else if (msg.contains('captcha') || msg.contains('turnstile')) {
@@ -122,10 +127,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           _turnstileController.refreshToken();
         }
       } catch (_) {}
-      if (mounted) setState(() {
-        _errorMessage = userMsg;
-        _captchaToken = null;
-      });
+      if (mounted)
+        setState(() {
+          _errorMessage = userMsg;
+          _captchaToken = null;
+        });
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -143,8 +149,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             const SizedBox(height: RSSpacing.md),
-            Text('Selecciona tu país',
-                style: RSTypography.titleLarge.copyWith(color: RSColors.textPrimary)),
+            Text(
+              'Selecciona tu país',
+              style: RSTypography.titleLarge.copyWith(
+                color: RSColors.textPrimary,
+              ),
+            ),
             const SizedBox(height: RSSpacing.md),
             for (final c in _countries)
               ListTile(
@@ -177,7 +187,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: RSColors.primary),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: RSColors.primary,
+          ),
           onPressed: () => context.pop(),
         ),
       ),
@@ -187,15 +200,26 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              Center(
+                child: Image.asset(
+                  'assets/images/isotipo.png',
+                  height: 64,
+                  fit: BoxFit.contain,
+                ),
+              ),
               const SizedBox(height: RSSpacing.xl),
               Text(
                 'Ingresa tu número\nde teléfono',
-                style: RSTypography.displayMedium.copyWith(color: RSColors.primary),
+                style: RSTypography.displayMedium.copyWith(
+                  color: RSColors.primary,
+                ),
               ),
               const SizedBox(height: RSSpacing.sm),
               Text(
                 'Te enviaremos un código de verificación por SMS',
-                style: RSTypography.bodyLarge.copyWith(color: RSColors.textSecondary),
+                style: RSTypography.bodyLarge.copyWith(
+                  color: RSColors.textSecondary,
+                ),
               ),
               const SizedBox(height: RSSpacing.xl),
 
@@ -208,8 +232,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     color: _errorMessage != null
                         ? RSColors.error
                         : _focusNode.hasFocus
-                            ? RSColors.borderFocus
-                            : RSColors.border,
+                        ? RSColors.borderFocus
+                        : RSColors.border,
                     width: _focusNode.hasFocus ? 2 : 1,
                   ),
                 ),
@@ -232,8 +256,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ),
                         child: Row(
                           children: [
-                            Text(_country.flag,
-                                style: const TextStyle(fontSize: 20)),
+                            Text(
+                              _country.flag,
+                              style: const TextStyle(fontSize: 20),
+                            ),
                             const SizedBox(width: 4),
                             Text(
                               _country.dialCode,
@@ -243,8 +269,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               ),
                             ),
                             const SizedBox(width: 2),
-                            const Icon(Icons.arrow_drop_down,
-                                color: RSColors.textSecondary, size: 18),
+                            const Icon(
+                              Icons.arrow_drop_down,
+                              color: RSColors.textSecondary,
+                              size: 18,
+                            ),
                           ],
                         ),
                       ),
@@ -284,7 +313,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 const SizedBox(height: RSSpacing.sm),
                 Text(
                   _errorMessage!,
-                  style: RSTypography.bodyMedium.copyWith(color: RSColors.error),
+                  style: RSTypography.bodyMedium.copyWith(
+                    color: RSColors.error,
+                  ),
                 ),
               ],
 
@@ -347,13 +378,15 @@ class _DevBypassButtonState extends ConsumerState<_DevBypassButton> {
     if (_busy || widget.isLoading) return;
     setState(() => _busy = true);
     try {
-      await AuthRepository.instance.signInAnonymously();
-      // Router redirect will automatically send authenticated user to /onboarding/cedula
+      // Cloudflare Turnstile blocks anonymous sign-in from emulators.
+      // We bypass Supabase entirely and force the router to onboarding mode.
+      ref.read(authProvider.notifier).enterOnboardingDemoMode();
+      if (mounted) context.go('/onboarding/plan');
     } on Exception catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('[dev] ${e.toString()}')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('[dev] ${e.toString()}')));
       }
     } finally {
       if (mounted) setState(() => _busy = false);

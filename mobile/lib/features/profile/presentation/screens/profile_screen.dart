@@ -8,6 +8,8 @@ import 'package:ruedaseguro/core/theme/colors.dart';
 import 'package:ruedaseguro/core/theme/spacing.dart';
 import 'package:ruedaseguro/core/theme/typography.dart';
 import 'package:ruedaseguro/core/data/mock_data.dart';
+import 'package:ruedaseguro/features/emergency/data/emergency_contact_repository.dart';
+import 'package:ruedaseguro/features/emergency/presentation/screens/emergency_contacts_screen.dart';
 import 'package:ruedaseguro/features/policy/providers/policy_providers.dart';
 import 'package:ruedaseguro/shared/providers/auth_provider.dart';
 import 'package:ruedaseguro/shared/providers/profile_provider.dart';
@@ -30,10 +32,9 @@ class ProfileScreen extends ConsumerWidget {
           children: [
             const SizedBox(height: RSSpacing.sm),
 
-            _ProfileHeader(profile: profile)
-                .animate()
-                .fadeIn(duration: 500.ms)
-                .slideY(begin: -0.05),
+            _ProfileHeader(
+              profile: profile,
+            ).animate().fadeIn(duration: 500.ms).slideY(begin: -0.05),
 
             const SizedBox(height: RSSpacing.lg),
 
@@ -45,23 +46,23 @@ class ProfileScreen extends ConsumerWidget {
 
             _SectionHeader(title: 'Datos personales'),
             const SizedBox(height: RSSpacing.sm),
-            _PersonalInfoSection(profile: profile)
-                .animate(delay: 200.ms)
-                .fadeIn(duration: 400.ms),
+            _PersonalInfoSection(
+              profile: profile,
+            ).animate(delay: 200.ms).fadeIn(duration: 400.ms),
 
             const SizedBox(height: RSSpacing.lg),
 
             _SectionHeader(title: 'Mi vehículo'),
             const SizedBox(height: RSSpacing.sm),
-            _VehicleSection(vehicle: vehicle)
-                .animate(delay: 300.ms)
-                .fadeIn(duration: 400.ms),
+            _VehicleSection(
+              vehicle: vehicle,
+            ).animate(delay: 300.ms).fadeIn(duration: 400.ms),
 
             const SizedBox(height: RSSpacing.lg),
 
-            _SectionHeader(title: 'Contacto de emergencia'),
+            _SectionHeader(title: 'Contactos de emergencia'),
             const SizedBox(height: RSSpacing.sm),
-            _EmergencySection(profile: profile)
+            _EmergencyContactsSection()
                 .animate(delay: 400.ms)
                 .fadeIn(duration: 400.ms),
 
@@ -69,31 +70,28 @@ class ProfileScreen extends ConsumerWidget {
 
             _SectionHeader(title: 'Historial de pagos'),
             const SizedBox(height: RSSpacing.sm),
-            _PaymentHistory()
-                .animate(delay: 500.ms)
-                .fadeIn(duration: 400.ms),
+            _PaymentHistory().animate(delay: 500.ms).fadeIn(duration: 400.ms),
 
             const SizedBox(height: RSSpacing.lg),
 
             _SectionHeader(title: 'Configuración'),
             const SizedBox(height: RSSpacing.sm),
-            _SettingsSection()
-                .animate(delay: 600.ms)
-                .fadeIn(duration: 400.ms),
+            _SettingsSection().animate(delay: 600.ms).fadeIn(duration: 400.ms),
 
             const SizedBox(height: RSSpacing.xl),
 
-            _SignOutButton(ref: ref)
-                .animate(delay: 700.ms)
-                .fadeIn(duration: 400.ms),
+            _SignOutButton(
+              ref: ref,
+            ).animate(delay: 700.ms).fadeIn(duration: 400.ms),
 
             const SizedBox(height: RSSpacing.md),
 
             Center(
               child: Text(
                 'RuedaSeguro v1.0.0 · SUDEASEG Certificado',
-                style: RSTypography.caption
-                    .copyWith(color: RSColors.textSecondary),
+                style: RSTypography.caption.copyWith(
+                  color: RSColors.textSecondary,
+                ),
               ),
             ),
 
@@ -158,8 +156,11 @@ class _ProfileHeader extends StatelessWidget {
                   color: RSColors.success,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.check_rounded,
-                    color: Colors.white, size: 12),
+                child: const Icon(
+                  Icons.check_rounded,
+                  color: Colors.white,
+                  size: 12,
+                ),
               ),
             ),
           ],
@@ -169,20 +170,26 @@ class _ProfileHeader extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(fullName,
-                  style: RSTypography.displayMedium.copyWith(
-                    color: RSColors.textPrimary,
-                    fontWeight: FontWeight.w700,
-                  )),
+              Text(
+                fullName,
+                style: RSTypography.displayMedium.copyWith(
+                  color: RSColors.textPrimary,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
               if (phone.isNotEmpty)
-                Text(phone,
-                    style: RSTypography.bodyMedium.copyWith(
-                      color: RSColors.textSecondary,
-                    )),
+                Text(
+                  phone,
+                  style: RSTypography.bodyMedium.copyWith(
+                    color: RSColors.textSecondary,
+                  ),
+                ),
               const SizedBox(height: 6),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 3,
+                ),
                 decoration: BoxDecoration(
                   color: RSColors.success.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
@@ -199,11 +206,13 @@ class _ProfileHeader extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 5),
-                    Text('Asegurado activo',
-                        style: RSTypography.caption.copyWith(
-                          color: RSColors.success,
-                          fontWeight: FontWeight.w600,
-                        )),
+                    Text(
+                      'Asegurado activo',
+                      style: RSTypography.caption.copyWith(
+                        color: RSColors.success,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -248,29 +257,34 @@ class _ActivePolicySummary extends ConsumerWidget {
       ),
       child: Row(
         children: [
-          const Icon(Icons.verified_user_rounded,
-              color: RSColors.primary, size: 24),
+          const Icon(
+            Icons.verified_user_rounded,
+            color: RSColors.primary,
+            size: 24,
+          ),
           const SizedBox(width: RSSpacing.md),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(planName,
-                    style: RSTypography.titleMedium.copyWith(
-                      color: RSColors.primary,
-                      fontWeight: FontWeight.w700,
-                    )),
+                Text(
+                  planName,
+                  style: RSTypography.titleMedium.copyWith(
+                    color: RSColors.primary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
                 Text(
                   '$displayNumber · Vence $expiryLabel',
-                  style: RSTypography.caption
-                      .copyWith(color: RSColors.textSecondary),
+                  style: RSTypography.caption.copyWith(
+                    color: RSColors.textSecondary,
+                  ),
                 ),
               ],
             ),
           ),
           Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
               color: RSColors.success,
               borderRadius: BorderRadius.circular(12),
@@ -310,22 +324,33 @@ class _PersonalInfoSection extends StatelessWidget {
     final p = profile;
     return _InfoSection(
       items: [
-        _InfoItem(Icons.person_rounded, 'Nombre',
-            p?.fullName ?? MockRider.fullName),
-        _InfoItem(Icons.badge_rounded, 'Cédula',
-            p != null
-                ? '${p.idType}-${p.idNumber}'
-                : '${MockRider.idType}-${MockRider.idNumber}'),
-        _InfoItem(Icons.phone_rounded, 'Teléfono',
-            p?.phone ?? MockRider.phone),
-        _InfoItem(Icons.cake_rounded, 'Nacimiento',
-            p?.dateOfBirth != null
-                ? _formatDob(p!.dateOfBirth)
-                : '${MockRider.dateOfBirth} (${MockRider.age} años)'),
-        _InfoItem(Icons.location_on_rounded, 'Ciudad',
-            p?.ciudad != null
-                ? '${p!.ciudad}${p.estado != null ? ', ${p.estado}' : ''}'
-                : '${MockRider.city}, ${MockRider.state}'),
+        _InfoItem(
+          Icons.person_rounded,
+          'Nombre',
+          p?.fullName ?? MockRider.fullName,
+        ),
+        _InfoItem(
+          Icons.badge_rounded,
+          'Cédula',
+          p != null
+              ? '${p.idType}-${p.idNumber}'
+              : '${MockRider.idType}-${MockRider.idNumber}',
+        ),
+        _InfoItem(Icons.phone_rounded, 'Teléfono', p?.phone ?? MockRider.phone),
+        _InfoItem(
+          Icons.cake_rounded,
+          'Nacimiento',
+          p?.dateOfBirth != null
+              ? _formatDob(p!.dateOfBirth)
+              : '${MockRider.dateOfBirth} (${MockRider.age} años)',
+        ),
+        _InfoItem(
+          Icons.location_on_rounded,
+          'Ciudad',
+          p?.ciudad != null
+              ? '${p!.ciudad}${p.estado != null ? ', ${p.estado}' : ''}'
+              : '${MockRider.city}, ${MockRider.state}',
+        ),
       ],
     );
   }
@@ -341,40 +366,233 @@ class _VehicleSection extends StatelessWidget {
     final v = vehicle;
     return _InfoSection(
       items: [
-        _InfoItem(Icons.two_wheeler_rounded, 'Marca / Modelo',
-            v != null
-                ? '${v.brand} ${v.model}'
-                : '${MockVehicle.brand} ${MockVehicle.model}'),
-        _InfoItem(Icons.calendar_today_rounded, 'Año',
-            v != null ? '${v.year}' : '${MockVehicle.year}'),
-        _InfoItem(Icons.pin_rounded, 'Placa',
-            v?.plate ?? MockVehicle.plate),
-        _InfoItem(Icons.color_lens_rounded, 'Color',
-            v?.color ?? MockVehicle.color),
-        _InfoItem(Icons.confirmation_number_rounded, 'N° Motor',
-            v?.serialMotor ?? MockVehicle.serialMotor),
+        _InfoItem(
+          Icons.two_wheeler_rounded,
+          'Marca / Modelo',
+          v != null
+              ? '${v.brand} ${v.model}'
+              : '${MockVehicle.brand} ${MockVehicle.model}',
+        ),
+        _InfoItem(
+          Icons.calendar_today_rounded,
+          'Año',
+          v != null ? '${v.year}' : '${MockVehicle.year}',
+        ),
+        _InfoItem(Icons.pin_rounded, 'Placa', v?.plate ?? MockVehicle.plate),
+        _InfoItem(
+          Icons.color_lens_rounded,
+          'Color',
+          v?.color ?? MockVehicle.color,
+        ),
+        _InfoItem(
+          Icons.confirmation_number_rounded,
+          'N° Motor',
+          v?.serialMotor ?? MockVehicle.serialMotor,
+        ),
       ],
     );
   }
 }
 
-// ─── Emergency Section ───────────────────────────────────────────
-class _EmergencySection extends StatelessWidget {
-  const _EmergencySection({required this.profile});
-  final ProfileSummary? profile;
+// ─── Emergency Contacts Section (RS-103) ─────────────────────────
+class _EmergencyContactsSection extends ConsumerWidget {
+  const _EmergencyContactsSection();
 
   @override
-  Widget build(BuildContext context) {
-    final p = profile;
-    return _InfoSection(
-      items: [
-        _InfoItem(Icons.people_rounded, 'Nombre',
-            p?.emergencyName ?? MockRider.emergencyContact),
-        _InfoItem(Icons.phone_rounded, 'Teléfono',
-            p?.emergencyPhone ?? MockRider.emergencyPhone),
-        _InfoItem(Icons.family_restroom_rounded, 'Relación',
-            p?.emergencyRelation ?? MockRider.emergencyRelation),
-      ],
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isDemoMode = ref.watch(authProvider).user == null;
+
+    if (isDemoMode) {
+      return _InfoSection(
+        items: [
+          _InfoItem(Icons.people_rounded, 'Nombre', MockRider.emergencyContact),
+          _InfoItem(Icons.phone_rounded, 'Teléfono', MockRider.emergencyPhone),
+          _InfoItem(
+            Icons.family_restroom_rounded,
+            'Relación',
+            MockRider.emergencyRelation,
+          ),
+        ],
+      );
+    }
+
+    final asyncContacts = ref.watch(emergencyContactsProvider);
+
+    return asyncContacts.when(
+      loading: () => const SizedBox(
+        height: 60,
+        child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+      ),
+      error: (_, __) => Container(
+        padding: const EdgeInsets.all(RSSpacing.md),
+        decoration: BoxDecoration(
+          color: RSColors.surface,
+          borderRadius: BorderRadius.circular(RSRadius.md),
+          border: Border.all(color: RSColors.border, width: 0.5),
+        ),
+        child: Text(
+          'Error al cargar contactos',
+          style: RSTypography.bodyMedium.copyWith(
+            color: RSColors.textSecondary,
+          ),
+        ),
+      ),
+      data: (contacts) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (contacts.isEmpty)
+            Container(
+              padding: const EdgeInsets.all(RSSpacing.md),
+              decoration: BoxDecoration(
+                color: RSColors.warning.withValues(alpha: 0.06),
+                borderRadius: BorderRadius.circular(RSRadius.md),
+                border: Border.all(
+                  color: RSColors.warning.withValues(alpha: 0.3),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.warning_amber_rounded,
+                    color: RSColors.warning,
+                    size: 18,
+                  ),
+                  const SizedBox(width: RSSpacing.sm),
+                  Expanded(
+                    child: Text(
+                      'Sin contactos de emergencia. Agrégalos para activar la protección.',
+                      style: RSTypography.bodyMedium.copyWith(
+                        color: RSColors.warning,
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            )
+          else
+            Container(
+              decoration: BoxDecoration(
+                color: RSColors.surface,
+                borderRadius: BorderRadius.circular(RSRadius.md),
+                border: Border.all(color: RSColors.border, width: 0.5),
+              ),
+              child: Column(
+                children: contacts.asMap().entries.map((e) {
+                  final c = e.value;
+                  final isLast = e.key == contacts.length - 1;
+                  return Column(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: RSSpacing.md,
+                          vertical: 12,
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 36,
+                              height: 36,
+                              decoration: BoxDecoration(
+                                color: RSColors.primary.withValues(alpha: 0.1),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Center(
+                                child: Text(
+                                  c.fullName.isNotEmpty
+                                      ? c.fullName[0].toUpperCase()
+                                      : '?',
+                                  style: RSTypography.titleMedium.copyWith(
+                                    color: RSColors.primary,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: RSSpacing.md),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Flexible(
+                                        child: Text(
+                                          c.fullName,
+                                          style: RSTypography.bodyMedium
+                                              .copyWith(
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                      if (c.isPrimary) ...[
+                                        const SizedBox(width: 6),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 6,
+                                            vertical: 1,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: RSColors.primary,
+                                            borderRadius: BorderRadius.circular(
+                                              4,
+                                            ),
+                                          ),
+                                          child: Text(
+                                            'Principal',
+                                            style: RSTypography.caption
+                                                .copyWith(
+                                                  color: Colors.white,
+                                                  fontSize: 9,
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                          ),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                  Text(
+                                    '${c.phone}  ·  ${c.relationLabel}',
+                                    style: RSTypography.caption.copyWith(
+                                      color: RSColors.textSecondary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (!isLast) const Divider(height: 1, indent: 64),
+                    ],
+                  );
+                }).toList(),
+              ),
+            ),
+          const SizedBox(height: RSSpacing.sm),
+          TextButton.icon(
+            onPressed: () => context.push('/profile/emergency-contacts'),
+            icon: const Icon(
+              Icons.edit_outlined,
+              color: RSColors.primary,
+              size: 18,
+            ),
+            label: Text(
+              contacts.isEmpty
+                  ? 'Agregar contactos de emergencia'
+                  : 'Gestionar contactos',
+              style: RSTypography.bodyMedium.copyWith(color: RSColors.primary),
+            ),
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 0,
+                vertical: RSSpacing.xs,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -386,8 +604,10 @@ class _SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text(title,
-        style: RSTypography.titleLarge.copyWith(color: RSColors.textPrimary));
+    return Text(
+      title,
+      style: RSTypography.titleLarge.copyWith(color: RSColors.textPrimary),
+    );
   }
 }
 
@@ -419,7 +639,9 @@ class _InfoSection extends StatelessWidget {
             children: [
               Padding(
                 padding: const EdgeInsets.symmetric(
-                    horizontal: RSSpacing.md, vertical: 12),
+                  horizontal: RSSpacing.md,
+                  vertical: 12,
+                ),
                 child: Row(
                   children: [
                     Icon(item.icon, color: RSColors.primary, size: 18),
@@ -428,14 +650,18 @@ class _InfoSection extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(item.label,
-                              style: RSTypography.caption.copyWith(
-                                color: RSColors.textSecondary,
-                              )),
-                          Text(item.value,
-                              style: RSTypography.bodyMedium.copyWith(
-                                fontWeight: FontWeight.w600,
-                              )),
+                          Text(
+                            item.label,
+                            style: RSTypography.caption.copyWith(
+                              color: RSColors.textSecondary,
+                            ),
+                          ),
+                          Text(
+                            item.value,
+                            style: RSTypography.bodyMedium.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -474,12 +700,18 @@ class _PaymentHistory extends ConsumerWidget {
       ),
       child: Column(
         children: [
-          const Icon(Icons.receipt_long_outlined,
-              color: RSColors.textSecondary, size: 32),
+          const Icon(
+            Icons.receipt_long_outlined,
+            color: RSColors.textSecondary,
+            size: 32,
+          ),
           const SizedBox(height: RSSpacing.sm),
-          Text('Sin pagos registrados',
-              style: RSTypography.bodyMedium
-                  .copyWith(color: RSColors.textSecondary)),
+          Text(
+            'Sin pagos registrados',
+            style: RSTypography.bodyMedium.copyWith(
+              color: RSColors.textSecondary,
+            ),
+          ),
         ],
       ),
     );
@@ -506,7 +738,9 @@ class _PaymentHistoryList extends StatelessWidget {
             children: [
               Padding(
                 padding: const EdgeInsets.symmetric(
-                    horizontal: RSSpacing.md, vertical: 12),
+                  horizontal: RSSpacing.md,
+                  vertical: 12,
+                ),
                 child: Row(
                   children: [
                     Container(
@@ -516,22 +750,29 @@ class _PaymentHistoryList extends StatelessWidget {
                         color: RSColors.success.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: const Icon(Icons.check_circle_rounded,
-                          color: RSColors.success, size: 18),
+                      child: const Icon(
+                        Icons.check_circle_rounded,
+                        color: RSColors.success,
+                        size: 18,
+                      ),
                     ),
                     const SizedBox(width: RSSpacing.md),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(payment.method,
-                              style: RSTypography.bodyMedium.copyWith(
-                                fontWeight: FontWeight.w600,
-                              )),
-                          Text('${payment.reference} · ${payment.date}',
-                              style: RSTypography.caption.copyWith(
-                                color: RSColors.textSecondary,
-                              )),
+                          Text(
+                            payment.method,
+                            style: RSTypography.bodyMedium.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          Text(
+                            '${payment.reference} · ${payment.date}',
+                            style: RSTypography.caption.copyWith(
+                              color: RSColors.textSecondary,
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -627,8 +868,10 @@ class _SwitchItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding:
-          const EdgeInsets.symmetric(horizontal: RSSpacing.md, vertical: 10),
+      padding: const EdgeInsets.symmetric(
+        horizontal: RSSpacing.md,
+        vertical: 10,
+      ),
       child: Row(
         children: [
           Icon(icon, color: RSColors.primary, size: 18),
@@ -637,12 +880,18 @@ class _SwitchItem extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label,
-                    style: RSTypography.bodyMedium
-                        .copyWith(fontWeight: FontWeight.w600)),
-                Text(subtitle,
-                    style: RSTypography.caption
-                        .copyWith(color: RSColors.textSecondary)),
+                Text(
+                  label,
+                  style: RSTypography.bodyMedium.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                Text(
+                  subtitle,
+                  style: RSTypography.caption.copyWith(
+                    color: RSColors.textSecondary,
+                  ),
+                ),
               ],
             ),
           ),
@@ -658,8 +907,11 @@ class _SwitchItem extends StatelessWidget {
 }
 
 class _TapItem extends StatelessWidget {
-  const _TapItem(
-      {required this.icon, required this.label, required this.onTap});
+  const _TapItem({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
   final IconData icon;
   final String label;
   final VoidCallback onTap;
@@ -670,18 +922,26 @@ class _TapItem extends StatelessWidget {
       onTap: onTap,
       child: Padding(
         padding: const EdgeInsets.symmetric(
-            horizontal: RSSpacing.md, vertical: 14),
+          horizontal: RSSpacing.md,
+          vertical: 14,
+        ),
         child: Row(
           children: [
             Icon(icon, color: RSColors.primary, size: 18),
             const SizedBox(width: RSSpacing.md),
             Expanded(
-              child: Text(label,
-                  style: RSTypography.bodyMedium
-                      .copyWith(fontWeight: FontWeight.w600)),
+              child: Text(
+                label,
+                style: RSTypography.bodyMedium.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ),
-            const Icon(Icons.chevron_right_rounded,
-                color: RSColors.textSecondary, size: 20),
+            const Icon(
+              Icons.chevron_right_rounded,
+              color: RSColors.textSecondary,
+              size: 20,
+            ),
           ],
         ),
       ),
@@ -713,8 +973,10 @@ class _SignOutButton extends StatelessWidget {
               ),
               TextButton(
                 onPressed: () => Navigator.pop(context, true),
-                child: Text('Cerrar sesión',
-                    style: TextStyle(color: RSColors.error)),
+                child: Text(
+                  'Cerrar sesión',
+                  style: TextStyle(color: RSColors.error),
+                ),
               ),
             ],
           ),
@@ -737,11 +999,13 @@ class _SignOutButton extends StatelessWidget {
           children: [
             Icon(Icons.logout_rounded, color: RSColors.error, size: 20),
             const SizedBox(width: RSSpacing.sm),
-            Text('Cerrar sesión',
-                style: RSTypography.titleMedium.copyWith(
-                  color: RSColors.error,
-                  fontWeight: FontWeight.w600,
-                )),
+            Text(
+              'Cerrar sesión',
+              style: RSTypography.titleMedium.copyWith(
+                color: RSColors.error,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ],
         ),
       ),

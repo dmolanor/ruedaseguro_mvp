@@ -16,11 +16,14 @@ import 'package:ruedaseguro/shared/providers/auth_provider.dart';
 import 'package:ruedaseguro/shared/widgets/rs_button.dart';
 
 class PolicyDetailScreen extends ConsumerWidget {
-  final String policyId;
+  final String? policyId;
   final bool isTab;
 
-  const PolicyDetailScreen(
-      {super.key, required this.policyId, this.isTab = false});
+  const PolicyDetailScreen({
+    super.key,
+    required this.policyId,
+    this.isTab = false,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -30,28 +33,31 @@ class PolicyDetailScreen extends ConsumerWidget {
     if (isDemoMode) {
       return _PolicyDetailBody(
         policy: null,
-        policyId: policyId,
+        policyId: 'demo',
         isTab: isTab,
         isDemoMode: true,
       );
     }
 
-    final policyAsync = ref.watch(policyDetailProvider(policyId));
+    // Real user with no policy yet
+    if (policyId == null) {
+      return _NoPolicyScreen(isTab: isTab);
+    }
+
+    final policyAsync = ref.watch(policyDetailProvider(policyId!));
 
     return policyAsync.when(
       loading: () => _LoadingScaffold(isTab: isTab),
-      error: (_, __) => _PolicyDetailBody(
-        policy: null,
-        policyId: policyId,
-        isTab: isTab,
-        isDemoMode: true, // fallback to mock on error
-      ),
-      data: (policy) => _PolicyDetailBody(
-        policy: policy,
-        policyId: policyId,
-        isTab: isTab,
-        isDemoMode: false,
-      ),
+      error: (_, __) => _NoPolicyScreen(isTab: isTab),
+      data: (policy) {
+        if (policy == null) return _NoPolicyScreen(isTab: isTab);
+        return _PolicyDetailBody(
+          policy: policy,
+          policyId: policyId!,
+          isTab: isTab,
+          isDemoMode: false,
+        );
+      },
     );
   }
 }
@@ -74,26 +80,76 @@ class _LoadingScaffold extends StatelessWidget {
           child: Column(
             children: [
               Container(
-                  height: 300,
-                  decoration: BoxDecoration(
-                    color: RSColors.surface,
-                    borderRadius: BorderRadius.circular(RSRadius.xl),
-                  )),
+                height: 300,
+                decoration: BoxDecoration(
+                  color: RSColors.surface,
+                  borderRadius: BorderRadius.circular(RSRadius.xl),
+                ),
+              ),
               const SizedBox(height: RSSpacing.lg),
               ...List.generate(
-                  3,
-                  (_) => Padding(
-                        padding:
-                            const EdgeInsets.only(bottom: RSSpacing.md),
-                        child: Container(
-                          height: 120,
-                          decoration: BoxDecoration(
-                            color: RSColors.surface,
-                            borderRadius:
-                                BorderRadius.circular(RSRadius.md),
-                          ),
-                        ),
-                      )),
+                3,
+                (_) => Padding(
+                  padding: const EdgeInsets.only(bottom: RSSpacing.md),
+                  child: Container(
+                    height: 120,
+                    decoration: BoxDecoration(
+                      color: RSColors.surface,
+                      borderRadius: BorderRadius.circular(RSRadius.md),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─── No-policy state (real user, no active policy) ────────────────
+class _NoPolicyScreen extends StatelessWidget {
+  const _NoPolicyScreen({required this.isTab});
+  final bool isTab;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: RSColors.background,
+      appBar: _buildAppBar(context, isTab),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(RSSpacing.lg),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.shield_outlined,
+                color: RSColors.textSecondary,
+                size: 64,
+              ),
+              const SizedBox(height: RSSpacing.lg),
+              Text(
+                'No tienes una póliza activa',
+                style: RSTypography.titleLarge.copyWith(
+                  color: RSColors.textPrimary,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: RSSpacing.md),
+              Text(
+                'Cotiza tu primera póliza RCV y queda cubierto en minutos.',
+                style: RSTypography.bodyMedium.copyWith(
+                  color: RSColors.textSecondary,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: RSSpacing.xl),
+              RSButton(
+                label: 'Cotizar ahora',
+                onPressed: () => context.push('/policy/select'),
+              ),
             ],
           ),
         ),
@@ -109,13 +165,17 @@ AppBar _buildAppBar(BuildContext context, bool isTab) {
     leading: isTab
         ? null
         : IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new_rounded,
-                color: RSColors.primary),
+            icon: const Icon(
+              Icons.arrow_back_ios_new_rounded,
+              color: RSColors.primary,
+            ),
             onPressed: () => context.pop(),
           ),
     automaticallyImplyLeading: !isTab,
-    title: Text('Mi Póliza',
-        style: RSTypography.titleLarge.copyWith(color: RSColors.primary)),
+    title: Text(
+      'Mi Póliza',
+      style: RSTypography.titleLarge.copyWith(color: RSColors.primary),
+    ),
     actions: [
       IconButton(
         icon: const Icon(Icons.share_rounded, color: RSColors.primary),
@@ -154,10 +214,9 @@ class _PolicyDetailBody extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (policy != null && policy!.isProvisional)
-              _ProvisionalBanner(policyId: policy!.id)
-                  .animate()
-                  .fadeIn(duration: 400.ms)
-                  .slideY(begin: -0.1),
+              _ProvisionalBanner(
+                policyId: policy!.id,
+              ).animate().fadeIn(duration: 400.ms).slideY(begin: -0.1),
 
             if (policy != null && policy!.isProvisional)
               const SizedBox(height: RSSpacing.md),
@@ -169,9 +228,9 @@ class _PolicyDetailBody extends StatelessWidget {
 
             const SizedBox(height: RSSpacing.lg),
 
-            _CoverageChips(tier: policy?.tier ?? MockPolicy.tier)
-                .animate(delay: 200.ms)
-                .fadeIn(duration: 400.ms),
+            _CoverageChips(
+              tier: policy?.tier ?? MockPolicy.tier,
+            ).animate(delay: 200.ms).fadeIn(duration: 400.ms),
 
             const SizedBox(height: RSSpacing.lg),
 
@@ -180,22 +239,26 @@ class _PolicyDetailBody extends StatelessWidget {
               icon: Icons.two_wheeler_rounded,
               children: [
                 _DetailRow(
-                    label: 'Marca / Modelo',
-                    value: policy != null
-                        ? '${policy!.vehicleBrand} ${policy!.vehicleModel}'
-                        : '${MockVehicle.brand} ${MockVehicle.model}'),
+                  label: 'Marca / Modelo',
+                  value: policy != null
+                      ? '${policy!.vehicleBrand} ${policy!.vehicleModel}'
+                      : '${MockVehicle.brand} ${MockVehicle.model}',
+                ),
                 _DetailRow(
-                    label: 'Año',
-                    value: '${policy?.vehicleYear ?? MockVehicle.year}'),
+                  label: 'Año',
+                  value: '${policy?.vehicleYear ?? MockVehicle.year}',
+                ),
                 _DetailRow(
-                    label: 'Placa',
-                    value: policy?.vehiclePlate ?? MockVehicle.plate,
-                    isMono: true),
+                  label: 'Placa',
+                  value: policy?.vehiclePlate ?? MockVehicle.plate,
+                  isMono: true,
+                ),
                 _DetailRow(
-                    label: 'Color',
-                    value: policy?.vehicleColor.isNotEmpty == true
-                        ? policy!.vehicleColor
-                        : MockVehicle.color),
+                  label: 'Color',
+                  value: policy?.vehicleColor.isNotEmpty == true
+                      ? policy!.vehicleColor
+                      : MockVehicle.color,
+                ),
               ],
             ).animate(delay: 300.ms).fadeIn(duration: 400.ms),
 
@@ -206,40 +269,54 @@ class _PolicyDetailBody extends StatelessWidget {
               icon: Icons.description_rounded,
               children: [
                 _DetailRow(
-                    label: 'N° de póliza',
-                    value: policy?.displayNumber ?? MockPolicy.number,
-                    isMono: true,
-                    isCopiable: true),
+                  label: 'N° de póliza',
+                  value: policy?.displayNumber ?? MockPolicy.number,
+                  isMono: true,
+                  isCopiable: true,
+                ),
                 _DetailRow(
-                    label: 'Aseguradora',
-                    value: policy?.carrierName ?? MockPolicy.carrier),
+                  label: 'Aseguradora',
+                  value: policy?.carrierName ?? MockPolicy.carrier,
+                ),
                 _DetailRow(
-                    label: 'Plan',
-                    value: policy?.planName ?? MockPolicy.type),
+                  label: 'Plan',
+                  value: policy?.planName ?? MockPolicy.type,
+                ),
                 _DetailRow(
-                    label: 'Vigencia desde',
-                    value: policy?.formattedStartDate ?? MockPolicy.issueDate),
+                  label: 'Vigencia desde',
+                  value: policy?.formattedStartDate ?? MockPolicy.issueDate,
+                ),
                 _DetailRow(
-                    label: 'Vigencia hasta',
-                    value: policy?.formattedEndDate ?? MockPolicy.expiryDate),
+                  label: 'Vigencia hasta',
+                  value: policy?.formattedEndDate ?? MockPolicy.expiryDate,
+                ),
                 _DetailRow(
-                    label: 'Prima anual',
-                    value:
-                        '\$ ${(policy?.premiumUsd ?? MockPolicy.premiumUsd).toStringAsFixed(2)} USD'),
+                  label: 'Prima anual',
+                  value:
+                      '\$ ${(policy?.premiumUsd ?? MockPolicy.premiumUsd).toStringAsFixed(2)} USD',
+                ),
               ],
             ).animate(delay: 400.ms).fadeIn(duration: 400.ms),
 
             const SizedBox(height: RSSpacing.md),
 
-            _HashCard(policyId: policy?.id ?? policyId)
-                .animate(delay: 500.ms)
-                .fadeIn(duration: 400.ms),
+            _HashCard(
+              policyId: policy?.id ?? policyId,
+            ).animate(delay: 500.ms).fadeIn(duration: 400.ms),
 
             const SizedBox(height: RSSpacing.xl),
 
-            _DownloadPdfButton(policy: policy)
-                .animate(delay: 600.ms)
-                .fadeIn(duration: 400.ms),
+            _DownloadPdfButton(
+              policy: policy,
+            ).animate(delay: 600.ms).fadeIn(duration: 400.ms),
+
+            const SizedBox(height: RSSpacing.md),
+
+            RSButton(
+              label: 'Ver Carnet Digital (QR)',
+              variant: RSButtonVariant.secondary,
+              onPressed: () => context.push('/policy/$policyId/carnet'),
+            ).animate(delay: 630.ms).fadeIn(duration: 400.ms),
 
             const SizedBox(height: RSSpacing.md),
 
@@ -248,6 +325,20 @@ class _PolicyDetailBody extends StatelessWidget {
               variant: RSButtonVariant.secondary,
               onPressed: () => context.push('/policy/select'),
             ).animate(delay: 650.ms).fadeIn(duration: 400.ms),
+
+            const SizedBox(height: RSSpacing.sm),
+
+            Center(
+              child: TextButton(
+                onPressed: () => context.push('/policy/select'),
+                child: Text(
+                  'Cambiar de plan',
+                  style: RSTypography.bodyMedium.copyWith(
+                    color: RSColors.primary,
+                  ),
+                ),
+              ),
+            ).animate(delay: 680.ms).fadeIn(duration: 400.ms),
 
             const SizedBox(height: RSSpacing.xxl),
           ],
@@ -275,9 +366,9 @@ class _DownloadPdfButtonState extends State<_DownloadPdfButton> {
       await PolicyPdfService.shareProvisionalPdf(widget.policy);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al generar PDF: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error al generar PDF: $e')));
       }
     } finally {
       if (mounted) setState(() => _generating = false);
@@ -317,7 +408,7 @@ class _DigitalPolicyCard extends StatelessWidget {
       width: double.infinity,
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF1A237E), Color(0xFF283593), Color(0xFF1565C0)],
+          colors: [Color(0xFF0A1B2A), Color(0xFF1A3A5C), Color(0xFF254F72)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           stops: [0.0, 0.5, 1.0],
@@ -376,15 +467,20 @@ class _DigitalPolicyCard extends StatelessWidget {
                             color: RSColors.accent,
                             borderRadius: BorderRadius.circular(10),
                           ),
-                          child: const Icon(Icons.shield_rounded,
-                              color: Colors.white, size: 20),
+                          child: const Icon(
+                            Icons.shield_rounded,
+                            color: Colors.white,
+                            size: 20,
+                          ),
                         ),
                         const SizedBox(width: RSSpacing.sm),
-                        Text('RuedaSeguro',
-                            style: RSTypography.titleMedium.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w700,
-                            )),
+                        Text(
+                          'RuedaSeguro',
+                          style: RSTypography.titleMedium.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                       ],
                     ),
                     _StatusBadge(
@@ -425,15 +521,20 @@ class _DigitalPolicyCard extends StatelessWidget {
 
                 Container(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: RSSpacing.md, vertical: RSSpacing.sm + 2),
+                    horizontal: RSSpacing.md,
+                    vertical: RSSpacing.sm + 2,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(RSRadius.sm),
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.two_wheeler_rounded,
-                          color: Colors.white, size: 18),
+                      const Icon(
+                        Icons.two_wheeler_rounded,
+                        color: Colors.white,
+                        size: 18,
+                      ),
                       const SizedBox(width: RSSpacing.sm),
                       Text(
                         '$vehicleBrand $vehicleModel $vehicleYear',
@@ -444,7 +545,9 @@ class _DigitalPolicyCard extends StatelessWidget {
                       const Spacer(),
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 2),
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.white.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(4),
@@ -470,12 +573,14 @@ class _DigitalPolicyCard extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('VIGENCIA',
-                              style: RSTypography.caption.copyWith(
-                                color: Colors.white.withValues(alpha: 0.5),
-                                letterSpacing: 1.5,
-                                fontSize: 10,
-                              )),
+                          Text(
+                            'VIGENCIA',
+                            style: RSTypography.caption.copyWith(
+                              color: Colors.white.withValues(alpha: 0.5),
+                              letterSpacing: 1.5,
+                              fontSize: 10,
+                            ),
+                          ),
                           const SizedBox(height: 4),
                           Text(
                             '$startDate – $endDate',
@@ -494,8 +599,11 @@ class _DigitalPolicyCard extends StatelessWidget {
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Icon(Icons.qr_code_2_rounded,
-                          color: RSColors.primary, size: 48),
+                      child: const Icon(
+                        Icons.qr_code_2_rounded,
+                        color: RSColors.primary,
+                        size: 48,
+                      ),
                     ),
                   ],
                 ),
@@ -564,11 +672,13 @@ class _StatusBadge extends StatelessWidget {
             decoration: BoxDecoration(color: dot, shape: BoxShape.circle),
           ),
           const SizedBox(width: 6),
-          Text(label,
-              style: RSTypography.caption.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.w700,
-              )),
+          Text(
+            label,
+            style: RSTypography.caption.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
         ],
       ),
     );
@@ -601,7 +711,9 @@ class _CoverageChips extends StatelessWidget {
           final (label, icon, color) = highlights[i];
           return Container(
             padding: const EdgeInsets.symmetric(
-                horizontal: RSSpacing.md, vertical: RSSpacing.sm),
+              horizontal: RSSpacing.md,
+              vertical: RSSpacing.sm,
+            ),
             decoration: BoxDecoration(
               color: RSColors.surface,
               borderRadius: BorderRadius.circular(RSRadius.md),
@@ -612,11 +724,13 @@ class _CoverageChips extends StatelessWidget {
               children: [
                 Icon(icon, color: color, size: 22),
                 const SizedBox(height: 4),
-                Text(label,
-                    style: RSTypography.caption.copyWith(
-                      color: RSColors.textPrimary,
-                      fontWeight: FontWeight.w500,
-                    )),
+                Text(
+                  label,
+                  style: RSTypography.caption.copyWith(
+                    color: RSColors.textPrimary,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
               ],
             ),
           );
@@ -651,16 +765,22 @@ class _SectionCard extends StatelessWidget {
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(
-                RSSpacing.md, RSSpacing.md, RSSpacing.md, 0),
+              RSSpacing.md,
+              RSSpacing.md,
+              RSSpacing.md,
+              0,
+            ),
             child: Row(
               children: [
                 Icon(icon, color: RSColors.primary, size: 18),
                 const SizedBox(width: RSSpacing.sm),
-                Text(title,
-                    style: RSTypography.titleMedium.copyWith(
-                      color: RSColors.primary,
-                      fontWeight: FontWeight.w700,
-                    )),
+                Text(
+                  title,
+                  style: RSTypography.titleMedium.copyWith(
+                    color: RSColors.primary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
               ],
             ),
           ),
@@ -669,11 +789,13 @@ class _SectionCard extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.all(RSSpacing.md),
             child: Column(
-              children: children
-                  .expand((child) =>
-                      [child, const Divider(height: RSSpacing.md)])
-                  .toList()
-                ..removeLast(),
+              children:
+                  children
+                      .expand(
+                        (child) => [child, const Divider(height: RSSpacing.md)],
+                      )
+                      .toList()
+                    ..removeLast(),
             ),
           ),
         ],
@@ -700,17 +822,22 @@ class _DetailRow extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label,
-            style: RSTypography.bodyMedium
-                .copyWith(color: RSColors.textSecondary)),
+        Text(
+          label,
+          style: RSTypography.bodyMedium.copyWith(
+            color: RSColors.textSecondary,
+          ),
+        ),
         Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
               value,
               style: isMono
-                  ? RSTypography.mono
-                      .copyWith(fontSize: 13, color: RSColors.textPrimary)
+                  ? RSTypography.mono.copyWith(
+                      fontSize: 13,
+                      color: RSColors.textPrimary,
+                    )
                   : RSTypography.bodyMedium.copyWith(
                       fontWeight: FontWeight.w600,
                       color: RSColors.textPrimary,
@@ -728,8 +855,11 @@ class _DetailRow extends StatelessWidget {
                     ),
                   );
                 },
-                child: const Icon(Icons.copy_rounded,
-                    size: 14, color: RSColors.textSecondary),
+                child: const Icon(
+                  Icons.copy_rounded,
+                  size: 14,
+                  color: RSColors.textSecondary,
+                ),
               ),
             ],
           ],
@@ -775,19 +905,24 @@ class _HashCard extends StatelessWidget {
               color: const Color(0xFF2E7D32).withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: const Icon(Icons.verified_rounded,
-                color: Color(0xFF2E7D32), size: 22),
+            child: const Icon(
+              Icons.verified_rounded,
+              color: Color(0xFF2E7D32),
+              size: 22,
+            ),
           ),
           const SizedBox(width: RSSpacing.md),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Integridad verificada',
-                    style: RSTypography.bodyMedium.copyWith(
-                      color: const Color(0xFF2E7D32),
-                      fontWeight: FontWeight.w700,
-                    )),
+                Text(
+                  'Integridad verificada',
+                  style: RSTypography.bodyMedium.copyWith(
+                    color: const Color(0xFF2E7D32),
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
                 const SizedBox(height: 2),
                 Text(
                   'SHA-256: $_shortHash',
@@ -815,7 +950,9 @@ class _ProvisionalBanner extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(
-          horizontal: RSSpacing.md, vertical: RSSpacing.sm + 2),
+        horizontal: RSSpacing.md,
+        vertical: RSSpacing.sm + 2,
+      ),
       decoration: BoxDecoration(
         color: const Color(0xFFFFF3E0),
         borderRadius: BorderRadius.circular(RSRadius.md),
@@ -826,8 +963,11 @@ class _ProvisionalBanner extends StatelessWidget {
         children: [
           const Padding(
             padding: EdgeInsets.only(top: 1),
-            child: Icon(Icons.hourglass_top_rounded,
-                color: Color(0xFFE65100), size: 18),
+            child: Icon(
+              Icons.hourglass_top_rounded,
+              color: Color(0xFFE65100),
+              size: 18,
+            ),
           ),
           const SizedBox(width: RSSpacing.sm),
           Expanded(

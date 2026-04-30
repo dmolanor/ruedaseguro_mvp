@@ -45,6 +45,18 @@ class ClaimRepository {
     return (claimId: claimId, claimNumber: claimNumber);
   }
 
+  /// Returns claims for the given profile, newest first.
+  Future<List<Map<String, dynamic>>> fetchClaims(String profileId) async {
+    final rows = await SupabaseService.client
+        .from(SupabaseConstants.claims)
+        .select(
+          'id, claim_number, incident_type, status, created_at, incident_description',
+        )
+        .eq('profile_id', profileId)
+        .order('created_at', ascending: false);
+    return List<Map<String, dynamic>>.from(rows as List);
+  }
+
   /// Uploads a photo file to Supabase Storage and inserts a claim_evidence row.
   /// Path: receipts/{userId}/claims/{claimId}/{index}.{ext}
   /// Matches the existing RLS policy that scopes by auth.uid() as first folder segment.
@@ -60,11 +72,7 @@ class ClaimRepository {
 
     await SupabaseService.client.storage
         .from(SupabaseConstants.bucketReceipts)
-        .upload(
-          storagePath,
-          photoFile,
-          fileOptions: FileOptions(upsert: true),
-        );
+        .upload(storagePath, photoFile, fileOptions: FileOptions(upsert: true));
 
     final publicUrl = SupabaseService.client.storage
         .from(SupabaseConstants.bucketReceipts)

@@ -35,17 +35,14 @@ async function callCarrierApi(
 }
 
 Deno.serve(async (req) => {
-  // Allow CRON_SECRET header verification when called by cron scheduler
+  // Auth is always required — either CRON_SECRET (scheduler) or service_role key (manual).
   const cronSecret = Deno.env.get("CRON_SECRET");
-  if (cronSecret) {
-    const authHeader = req.headers.get("Authorization");
-    if (authHeader !== `Bearer ${cronSecret}`) {
-      // Allow service_role bearer too (for manual invocation)
-      const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-      if (authHeader !== `Bearer ${serviceKey}`) {
-        return new Response("Unauthorized", { status: 401 });
-      }
-    }
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  const authHeader = req.headers.get("Authorization");
+  const validCron = cronSecret && authHeader === `Bearer ${cronSecret}`;
+  const validService = serviceKey && authHeader === `Bearer ${serviceKey}`;
+  if (!validCron && !validService) {
+    return new Response("Unauthorized", { status: 401 });
   }
 
   const fifteenMinsAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString();

@@ -3,10 +3,10 @@ name: Flutter CI
 on:
   push:
     branches: [main]
-    paths: ['mobile/**']
+    paths: ["mobile/**"]
   pull_request:
     branches: [main]
-    paths: ['mobile/**']
+    paths: ["mobile/**"]
 
 jobs:
   build:
@@ -18,10 +18,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: subosito/flutter-action@v2
+      - uses: subosito/flutter-action@f2c4f6686ee8db14e4af7c824fc17d7e5b72e7f9 # v2.16.0
         with:
-          flutter-version: '3.41.x'
-          channel: 'stable'
+          flutter-version: "3.41.x"
+          channel: "stable"
           cache: true
 
       - name: Install dependencies

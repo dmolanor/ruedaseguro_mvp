@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -71,8 +72,10 @@ class _CertificadoScanScreenState extends ConsumerState<CertificadoScanScreen> {
       if (!quality.overallPass) {
         if (mounted) {
           setState(() => _isProcessing = false);
-          _showError(quality.failureReason ??
-              'La foto no es legible. Asegúrate de buena iluminación y sin reflejos.');
+          _showError(
+            quality.failureReason ??
+                'La foto no es legible. Asegúrate de buena iluminación y sin reflejos.',
+          );
         }
         return;
       }
@@ -85,14 +88,17 @@ class _CertificadoScanScreenState extends ConsumerState<CertificadoScanScreen> {
       if (mounted) {
         setState(() => _isProcessing = false);
         _showError(
-            'No pudimos leer el certificado. Intenta con mejor iluminación o sube un archivo.');
+          'No pudimos leer el certificado. Intenta con mejor iluminación o sube un archivo.',
+        );
       }
       return;
     }
 
     // 3. Parse
-    final parsed =
-        CertificadoCirculacionParser.parse(ocr.rawText, ocr.textBlocks);
+    final parsed = CertificadoCirculacionParser.parse(
+      ocr.rawText,
+      ocr.textBlocks,
+    );
 
     // 4. Cross-validate with cédula
     final cedulaData = ref.read(onboardingProvider).cedulaOcr;
@@ -104,7 +110,9 @@ class _CertificadoScanScreenState extends ConsumerState<CertificadoScanScreen> {
     // 5. Update state
     ref.read(onboardingProvider.notifier).updateCertificado(parsed, file);
     if (crossResult != null) {
-      ref.read(onboardingProvider.notifier).confirmVehicle(
+      ref
+          .read(onboardingProvider.notifier)
+          .confirmVehicle(
             plate: parsed.plate ?? '',
             brand: parsed.brand ?? '',
             model: parsed.model ?? '',
@@ -172,21 +180,24 @@ class _CertificadoScanScreenState extends ConsumerState<CertificadoScanScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Icon(Icons.warning_amber_rounded,
-                color: RSColors.warning, size: 48),
+            const Icon(
+              Icons.warning_amber_rounded,
+              color: RSColors.warning,
+              size: 48,
+            ),
             const SizedBox(height: RSSpacing.md),
             Text(
               'Lectura poco clara',
-              style: RSTypography.titleLarge
-                  .copyWith(color: RSColors.primary),
+              style: RSTypography.titleLarge.copyWith(color: RSColors.primary),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: RSSpacing.sm),
             Text(
               'El certificado se leyó con ${(confidence * 100).toStringAsFixed(0)}% de confianza. '
               'Puede haber errores. Te recomendamos volver a intentarlo.',
-              style: RSTypography.bodyMedium
-                  .copyWith(color: RSColors.textSecondary),
+              style: RSTypography.bodyMedium.copyWith(
+                color: RSColors.textSecondary,
+              ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: RSSpacing.lg),
@@ -215,7 +226,8 @@ class _CertificadoScanScreenState extends ConsumerState<CertificadoScanScreen> {
                     onPressed: () {
                       Navigator.of(ctx).pop();
                       unawaited(
-                          context.push('/onboarding/certificado/confirm'));
+                        context.push('/onboarding/certificado/confirm'),
+                      );
                     },
                     child: const Text('Continuar igual'),
                   ),
@@ -224,7 +236,8 @@ class _CertificadoScanScreenState extends ConsumerState<CertificadoScanScreen> {
                 Expanded(
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                        backgroundColor: RSColors.primary),
+                      backgroundColor: RSColors.primary,
+                    ),
                     onPressed: () => Navigator.of(ctx).pop(),
                     child: const Text('Intentar de nuevo'),
                   ),
@@ -292,14 +305,18 @@ class _CertificadoScanScreenState extends ConsumerState<CertificadoScanScreen> {
                   Shimmer.fromColors(
                     baseColor: Colors.white24,
                     highlightColor: Colors.white54,
-                    child: const Icon(Icons.document_scanner,
-                        color: Colors.white, size: 64),
+                    child: const Icon(
+                      Icons.document_scanner,
+                      color: Colors.white,
+                      size: 64,
+                    ),
                   ),
                   const SizedBox(height: RSSpacing.lg),
                   Text(
                     'Leyendo certificado...',
-                    style:
-                        RSTypography.titleMedium.copyWith(color: Colors.white),
+                    style: RSTypography.titleMedium.copyWith(
+                      color: Colors.white,
+                    ),
                   ),
                 ],
               ),
@@ -327,12 +344,37 @@ class _CertificadoScanScreenState extends ConsumerState<CertificadoScanScreen> {
                     Expanded(
                       child: Text(
                         _errorMessage!,
-                        style: RSTypography.bodyMedium
-                            .copyWith(color: Colors.white),
+                        style: RSTypography.bodyMedium.copyWith(
+                          color: Colors.white,
+                        ),
                       ),
                     ),
                     const Icon(Icons.close, color: Colors.white70, size: 18),
                   ],
+                ),
+              ),
+            ),
+          ),
+
+        // DEV Skip Button
+        if (kDebugMode && !_isProcessing)
+          Positioned(
+            top: 48,
+            right: 16,
+            child: GestureDetector(
+              onTap: () => context.push('/onboarding/certificado/confirm'),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.3),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  'omitir',
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.5),
+                    fontSize: 12,
+                  ),
                 ),
               ),
             ),
@@ -360,7 +402,9 @@ class _StepIndicator extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(
-          horizontal: RSSpacing.md, vertical: RSSpacing.sm),
+        horizontal: RSSpacing.md,
+        vertical: RSSpacing.sm,
+      ),
       decoration: BoxDecoration(
         color: Colors.black54,
         borderRadius: BorderRadius.circular(RSRadius.xl),
@@ -381,8 +425,10 @@ class _StepIndicator extends StatelessWidget {
             );
           }),
           const SizedBox(width: 8),
-          Text('$currentStep/$totalSteps — $label',
-              style: RSTypography.caption.copyWith(color: Colors.white)),
+          Text(
+            '$currentStep/$totalSteps — $label',
+            style: RSTypography.caption.copyWith(color: Colors.white),
+          ),
         ],
       ),
     );
@@ -391,10 +437,7 @@ class _StepIndicator extends StatelessWidget {
 
 /// RS-080: Two upload alternatives: gallery photo or file.
 class _UploadOptions extends StatelessWidget {
-  const _UploadOptions({
-    required this.onGallery,
-    required this.onFile,
-  });
+  const _UploadOptions({required this.onGallery, required this.onFile});
 
   final VoidCallback onGallery;
   final VoidCallback onFile;
@@ -437,7 +480,9 @@ class _UploadChip extends StatelessWidget {
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(
-            horizontal: RSSpacing.md, vertical: RSSpacing.sm),
+          horizontal: RSSpacing.md,
+          vertical: RSSpacing.sm,
+        ),
         decoration: BoxDecoration(
           color: Colors.black54,
           borderRadius: BorderRadius.circular(RSRadius.xl),
@@ -448,9 +493,10 @@ class _UploadChip extends StatelessWidget {
           children: [
             Icon(icon, color: Colors.white, size: 18),
             const SizedBox(width: 6),
-            Text(label,
-                style:
-                    RSTypography.bodyMedium.copyWith(color: Colors.white)),
+            Text(
+              label,
+              style: RSTypography.bodyMedium.copyWith(color: Colors.white),
+            ),
           ],
         ),
       ),
@@ -473,9 +519,12 @@ class _TipItem extends StatelessWidget {
           Icon(icon, color: RSColors.primary, size: 20),
           const SizedBox(width: RSSpacing.sm),
           Expanded(
-            child: Text(text,
-                style: RSTypography.bodyMedium
-                    .copyWith(color: RSColors.textSecondary)),
+            child: Text(
+              text,
+              style: RSTypography.bodyMedium.copyWith(
+                color: RSColors.textSecondary,
+              ),
+            ),
           ),
         ],
       ),

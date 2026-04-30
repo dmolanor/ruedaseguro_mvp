@@ -1,9 +1,14 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:ruedaseguro/features/policy/domain/policy_detail_model.dart';
 import 'package:ruedaseguro/features/policy/services/policy_pdf_service.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+
+  setUpAll(() async {
+    await initializeDateFormatting('es', null);
+  });
 
   group('PolicyPdfService.generateBytes', () {
     test('generates non-empty bytes for demo mode (null policy)', () async {
@@ -31,8 +36,7 @@ void main() {
 
     test('demo PDF and real PDF are different', () async {
       final demoBytes = await PolicyPdfService.generateBytes(null);
-      final realBytes =
-          await PolicyPdfService.generateBytes(_makePolicy());
+      final realBytes = await PolicyPdfService.generateBytes(_makePolicy());
       expect(demoBytes, isNot(equals(realBytes)));
     });
   });
