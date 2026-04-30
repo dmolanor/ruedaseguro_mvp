@@ -32,19 +32,19 @@ This document defines the **MVP architecture** — a production-ready first vers
 
 ### 2.2 What "MVP" Means for RuedaSeguro
 
-| Category | In MVP | Phase 1.5 (Near-Term) | Phase 2+ (Deferred) |
-|---|---|---|---|
-| **Onboarding** | 8-step flow: OCR scan of Cédula + Carnet + Vehicle rear photo | Factura de Compra OCR (cascaded strategy) | Biometric identity verification |
-| **Policy Issuance** | Multi-tier RCV digital policy with PDF + SHA-256 hash | NFT minting on Polygon (ERC-721) | AI-driven underwriting |
-| **Payments** | Pago Móvil P2P + Bank transfer (receipt upload) | GUIA PAY C2P pull-based API | Tokenized card, Domiciliación |
-| **Claims** | Manual claims submission with photo evidence | Crash detection + Emergency Mode + SLI | Full oracle-validated autonomous claims |
-| **Telemetry** | None | Accelerometer/gyroscope background monitoring | Full IoT with Butterworth filtering |
-| **Medical Network** | None (data model ready) | Venemergencia Urgent Care integration | Full PAS protocol + Red ALTEHA triage |
-| **Blockchain** | SHA-256 hash of policy stored in DB | ERC-721 NFT on Polygon; 25% Cash-Out smart contract | Full smart contract liquidation |
-| **AI** | None | None | LLM liability analysis (Phase 3) |
-| **B2B Portal** | Multi-tenant dashboard: carriers, brokers, promoters | Commission calculation, quota tracking | Grafana-level analytics |
-| **Sales Network** | Broker/promoter/POS hierarchy in DB + basic admin views | Referral codes, real-time quota dashboards | Geo-based promoter routing |
-| **Infrastructure** | Supabase free tier (dev/testing) | Local Venezuelan server + GCP backup | Scaled local infra + enterprise DR |
+| Category            | In MVP                                                        | Phase 1.5 (Near-Term)                               | Phase 2+ (Deferred)                     |
+| ------------------- | ------------------------------------------------------------- | --------------------------------------------------- | --------------------------------------- |
+| **Onboarding**      | 8-step flow: OCR scan of Cédula + Carnet + Vehicle rear photo | Factura de Compra OCR (cascaded strategy)           | Biometric identity verification         |
+| **Policy Issuance** | Multi-tier RCV digital policy with PDF + SHA-256 hash         | NFT minting on Polygon (ERC-721)                    | AI-driven underwriting                  |
+| **Payments**        | Pago Móvil P2P + Bank transfer (receipt upload)               | GUIA PAY C2P pull-based API                         | Tokenized card, Domiciliación           |
+| **Claims**          | Manual claims submission with photo evidence                  | Crash detection + Emergency Mode + SLI              | Full oracle-validated autonomous claims |
+| **Telemetry**       | None                                                          | Accelerometer/gyroscope background monitoring       | Full IoT with Butterworth filtering     |
+| **Medical Network** | None (data model ready)                                       | Venemergencia Urgent Care integration               | Full PAS protocol + Red ALTEHA triage   |
+| **Blockchain**      | SHA-256 hash of policy stored in DB                           | ERC-721 NFT on Polygon; 25% Cash-Out smart contract | Full smart contract liquidation         |
+| **AI**              | None                                                          | None                                                | LLM liability analysis (Phase 3)        |
+| **B2B Portal**      | Multi-tenant dashboard: carriers, brokers, promoters          | Commission calculation, quota tracking              | Grafana-level analytics                 |
+| **Sales Network**   | Broker/promoter/POS hierarchy in DB + basic admin views       | Referral codes, real-time quota dashboards          | Geo-based promoter routing              |
+| **Infrastructure**  | Supabase free tier (dev/testing)                              | Local Venezuelan server + GCP backup                | Scaled local infra + enterprise DR      |
 
 ---
 
@@ -63,6 +63,7 @@ The 8 architect research documents and the new strategic directives from project
 - **IBM Power9 remains a long-term option** if transactional volumes ever justify the investment (150k+ policies). For realistic MVP and growth stages, standard PostgreSQL on local servers handles the load.
 
 **Migration path:**
+
 ```
 Phase 0 (Now):     Supabase free tier → Build, test, validate product
 Phase 1.5 (~3mo):  Local VZ server (PostgreSQL 16) + GCP Cloud SQL replica
@@ -216,71 +217,72 @@ Phase 3 (if ever): IBM Power9 evaluation (only if Aurora/PostgreSQL bottlenecks)
 
 ### 4.2 Component Selection
 
-| Component | MVP Choice | Cost (MVP) | Upgrade Path | Rationale |
-|---|---|---|---|---|
-| **Mobile App** | Flutter 3.x | Free | Same | Cross-platform, single codebase |
-| **State Management** | Riverpod | Free | Same | Compile-safe, testable, scales well |
-| **Local DB** | SQLite (sqflite) | Free | Same | ACID-compliant, Store & Forward ready |
-| **OCR** | Google ML Kit | Free | PaddleOCR → Textract | On-device, zero API cost, offline |
-| **Backend (Dev/Test)** | Supabase | Free tier | Local VZ Server + GCP | PostgreSQL-based, auth + storage included |
-| **Backend (Production)** | Local Venezuelan PostgreSQL 16 | Server cost | Scaled local infra | Data sovereignty compliance |
-| **Cloud Backup/DR** | GCP Cloud SQL | Free tier* | Scaled GCP | Authorized cloud backup |
-| **Database** | PostgreSQL 16 | Free (Supabase) | Same engine locally | RLS, JSONB, consistent across environments |
-| **Auth** | Supabase Auth (GoTrue) | Free (50k MAU) | Retained as edge auth | Phone OTP, JWT-based |
-| **File Storage** | Supabase Storage | Free (1GB) | Local storage + GCP | S3-compatible API |
-| **Edge Functions** | Supabase Edge Functions (Deno) | Free (500k inv) | Same or Cloud Functions | BCV rate, payment webhooks |
-| **Admin Portal** | Next.js 15 + shadcn/ui | Free | Same | Fast to build dashboards |
-| **Admin Hosting** | Vercel | Free tier | Same | Zero-config deploys |
-| **PDF Generation** | Flutter `pdf` package | Free | Server-side (Deno) | Client-side generation |
-| **Push Notifications** | Firebase Cloud Messaging | Free | Same | Industry standard |
-| **SMS/WhatsApp** | Supabase Auth (OTP) | Free | Twilio (Phase 1.5) | Sufficient for auth OTP |
-| **Exchange Rate** | BCV scraping (Edge Function) | Free | Dedicated API | Community libraries exist |
-| **CI/CD** | GitHub Actions | Free (2000 min) | Same | Standard, well-supported |
-| **Monitoring** | Supabase Dashboard + Sentry | Free | Datadog/Grafana | Sufficient for MVP |
+| Component                | MVP Choice                     | Cost (MVP)      | Upgrade Path            | Rationale                                  |
+| ------------------------ | ------------------------------ | --------------- | ----------------------- | ------------------------------------------ |
+| **Mobile App**           | Flutter 3.x                    | Free            | Same                    | Cross-platform, single codebase            |
+| **State Management**     | Riverpod                       | Free            | Same                    | Compile-safe, testable, scales well        |
+| **Local DB**             | SQLite (sqflite)               | Free            | Same                    | ACID-compliant, Store & Forward ready      |
+| **OCR**                  | Google ML Kit                  | Free            | PaddleOCR → Textract    | On-device, zero API cost, offline          |
+| **Backend (Dev/Test)**   | Supabase                       | Free tier       | Local VZ Server + GCP   | PostgreSQL-based, auth + storage included  |
+| **Backend (Production)** | Local Venezuelan PostgreSQL 16 | Server cost     | Scaled local infra      | Data sovereignty compliance                |
+| **Cloud Backup/DR**      | GCP Cloud SQL                  | Free tier\*     | Scaled GCP              | Authorized cloud backup                    |
+| **Database**             | PostgreSQL 16                  | Free (Supabase) | Same engine locally     | RLS, JSONB, consistent across environments |
+| **Auth**                 | Supabase Auth (GoTrue)         | Free (50k MAU)  | Retained as edge auth   | Phone OTP, JWT-based                       |
+| **File Storage**         | Supabase Storage               | Free (1GB)      | Local storage + GCP     | S3-compatible API                          |
+| **Edge Functions**       | Supabase Edge Functions (Deno) | Free (500k inv) | Same or Cloud Functions | BCV rate, payment webhooks                 |
+| **Admin Portal**         | Next.js 15 + shadcn/ui         | Free            | Same                    | Fast to build dashboards                   |
+| **Admin Hosting**        | Vercel                         | Free tier       | Same                    | Zero-config deploys                        |
+| **PDF Generation**       | Flutter `pdf` package          | Free            | Server-side (Deno)      | Client-side generation                     |
+| **Push Notifications**   | Firebase Cloud Messaging       | Free            | Same                    | Industry standard                          |
+| **SMS/WhatsApp**         | Supabase Auth (OTP)            | Free            | Twilio (Phase 1.5)      | Sufficient for auth OTP                    |
+| **Exchange Rate**        | BCV scraping (Edge Function)   | Free            | Dedicated API           | Community libraries exist                  |
+| **CI/CD**                | GitHub Actions                 | Free (2000 min) | Same                    | Standard, well-supported                   |
+| **Monitoring**           | Supabase Dashboard + Sentry    | Free            | Datadog/Grafana         | Sufficient for MVP                         |
 
 ### 4.3 Key Flutter Packages
 
 ```yaml
 dependencies:
   # Core
-  flutter_riverpod: ^2.x          # State management
-  go_router: ^14.x                # Navigation/routing
-  supabase_flutter: ^2.x          # Supabase SDK (auth, db, storage, realtime)
+  flutter_riverpod: ^2.x # State management
+  go_router: ^14.x # Navigation/routing
+  supabase_flutter: ^2.x # Supabase SDK (auth, db, storage, realtime)
 
   # OCR & Camera
-  google_mlkit_text_recognition: ^0.x  # On-device OCR (free)
-  camera: ^0.x                    # Camera access
-  image_picker: ^1.x              # Photo selection
+  google_mlkit_text_recognition: ^0.x # On-device OCR (free)
+  camera: ^0.x # Camera access
+  image_picker: ^1.x # Photo selection
 
   # Local Storage
-  sqflite: ^2.x                   # SQLite for offline data
-  shared_preferences: ^2.x       # Simple key-value storage
-  hive: ^2.x                     # Fast local cache (exchange rates, user prefs)
+  sqflite: ^2.x # SQLite for offline data
+  shared_preferences: ^2.x # Simple key-value storage
+  hive: ^2.x # Fast local cache (exchange rates, user prefs)
 
   # Security
-  local_auth: ^2.x               # Fingerprint/FaceID
-  flutter_secure_storage: ^9.x   # Encrypted storage for tokens
-  crypto: ^3.x                   # SHA-256 hashing
+  local_auth: ^2.x # Fingerprint/FaceID
+  flutter_secure_storage: ^9.x # Encrypted storage for tokens
+  crypto: ^3.x # SHA-256 hashing
 
   # Connectivity & Network
-  connectivity_plus: ^6.x        # Network state monitoring
-  dio: ^5.x                      # HTTP client with interceptors
+  connectivity_plus: ^6.x # Network state monitoring
+  dio: ^5.x # HTTP client with interceptors
 
   # PDF & Documents
-  pdf: ^3.x                      # PDF generation
-  printing: ^5.x                 # PDF preview/share
-  share_plus: ^9.x               # Share policy card
+  pdf: ^3.x # PDF generation
+  printing: ^5.x # PDF preview/share
+  share_plus: ^9.x # Share policy card
 
   # UI
-  flutter_animate: ^4.x          # Micro-interactions
-  shimmer: ^3.x                  # Loading skeletons
-  cached_network_image: ^3.x     # Image caching
-  fl_chart: ^0.x                 # Charts (safety score, etc.)
+  flutter_animate: ^4.x # Micro-interactions
+  shimmer: ^3.x # Loading skeletons
+  cached_network_image: ^3.x # Image caching
+  fl_chart: ^0.x # Charts (safety score, etc.)
 
   # Utils
-  intl: ^0.x                     # i18n, date/number formatting
-  uuid: ^4.x                     # UUID generation for idempotency
-  permission_handler: ^11.x      # Runtime permissions
+  intl: ^0.x # i18n, date/number formatting
+  uuid: ^4.x # UUID generation for idempotency
+  permission_handler: ^11.x # Runtime permissions
+
 
   # Phase 1.5 (prepared but not activated in MVP)
   # sensors_plus: ^4.x           # Accelerometer/gyroscope
@@ -1012,6 +1014,7 @@ Step 8c          Step 8b          Step 8a          Step 5
 5. **Product Selection (Cotización)** — Two product cards: "Solo RCV" and "RCV + Grúa". Each shows annual premium in USD and VES. Info icon with conditions (monthly only with domiciliación; 12-month validity). CTA: [Continuar].
 
 6. **Document Upload (OCR)** — Three upload blocks:
+
    - Cédula de Identidad (upload / take photo)
    - Carnet de Circulación / Título de Propiedad (upload / take photo)
    - Rear vehicle photo with plate visible (upload / take photo)
@@ -1020,6 +1023,7 @@ Step 8c          Step 8b          Step 8a          Step 5
    - Validations: JPG/PNG/PDF, ≤10MB, OCR ≥90% readability, anti-fraud sharpness check
 
 7. **Data Review & Consent** — Auto-populated fields from OCR: names, CI, DOB, nationality, plate, type/use, make, model, year, color, serials. Validation: name/CI must match between Cédula and Carnet. If mismatch: red banner with [Subir nueva cédula] / [Soy representante legal]. Incomplete fields marked in amber. Manual fields: urbanización/sector, ciudad, municipio, código postal. Mandatory checkboxes:
+
    - ☐ Acepto las Condiciones Generales del RCV (link to PDF)
    - ☐ Declaro la veracidad de los datos suministrados
    - ☐ Autorizo la consulta y verificación antifraude
@@ -1129,6 +1133,7 @@ Enters reference number                Uploads receipt (PDF/image)
 ```
 
 **Future GUIA PAY Flow (Phase 1.5):**
+
 ```
 User taps "Pagar" → GUIA PAY C2P pull request →
 Bank debits account instantly → Payment verified automatically →
@@ -1161,6 +1166,7 @@ Rider notified of decision
 ```
 
 **Future Crash Detection + SLI Flow (Phase 1.5):**
+
 ```
 Accelerometer detects 9G+ impact → Emergency Mode activated →
 10-second countdown → Rider doesn't cancel → System assumes incapacity →
@@ -1340,23 +1346,24 @@ lib/
 
 ### 7.2 Offline Strategy
 
-| Feature | Offline Behavior |
-|---|---|
-| **View active policy** | Cached locally in SQLite. Always available. |
-| **View policy card** | Cached. Can be shown to traffic officers offline. |
-| **View RCV certificate** | Cached PDF. Always available. |
-| **View profile/vehicle** | Cached locally. |
-| **Submit claim** | Queued in SQLite. Synced when online (Store & Forward). |
-| **Scan documents (OCR)** | Fully offline (Google ML Kit is on-device). |
-| **Make payment** | Requires internet (external bank transfer). |
-| **Purchase policy** | Requires internet. |
-| **View BCV rate** | Last known rate cached with timestamp. |
+| Feature                  | Offline Behavior                                        |
+| ------------------------ | ------------------------------------------------------- |
+| **View active policy**   | Cached locally in SQLite. Always available.             |
+| **View policy card**     | Cached. Can be shown to traffic officers offline.       |
+| **View RCV certificate** | Cached PDF. Always available.                           |
+| **View profile/vehicle** | Cached locally.                                         |
+| **Submit claim**         | Queued in SQLite. Synced when online (Store & Forward). |
+| **Scan documents (OCR)** | Fully offline (Google ML Kit is on-device).             |
+| **Make payment**         | Requires internet (external bank transfer).             |
+| **Purchase policy**      | Requires internet.                                      |
+| **View BCV rate**        | Last known rate cached with timestamp.                  |
 
 ### 7.3 UI Design System
 
 Following the UI/UX Architecture Guide and the Agentes Digitales branding:
 
 **Color Palette:**
+
 - Primary: Navy Blue (#1A237E) — protection, trust
 - Accent: Orange (#FF6D00) — alert, urgency, action
 - Success: Green (#2E7D32)
@@ -1366,11 +1373,13 @@ Following the UI/UX Architecture Guide and the Agentes Digitales branding:
 - Surface: Off-black (#212121) — high contrast for outdoor readability
 
 **Typography:**
+
 - Headings: **Montserrat** Bold — immediately perceivable while moving
 - Body: **Lato** Medium, 16sp minimum — readable under vibration (stress-readable)
 - Numbers: Monospace for reference numbers, amounts, and policy numbers
 
 **Ergonomics:**
+
 - All primary actions in the bottom third of screen ("Easy Zone" for thumb)
 - Minimum tap target: 48x48dp (glove-friendly)
 - High-contrast mode support
@@ -1380,6 +1389,7 @@ Following the UI/UX Architecture Guide and the Agentes Digitales branding:
 **Brand Promise:** "Si te caes, no estás solo" ("If you fall, you are not alone")
 
 **Emergency Mode UI (Phase 1.5):**
+
 - Red/flashing high-contrast dashboard
 - Large countdown timer (10 seconds)
 - Single large [ESTOY BIEN] cancel button
@@ -1433,17 +1443,17 @@ Following the UI/UX Architecture Guide and the Agentes Digitales branding:
 
 ### 8.3 Admin API (Supabase Edge Functions)
 
-| Function | Method | Purpose |
-|---|---|---|
-| `/functions/v1/admin/verify-payment` | POST | Verify a pending payment, activate policy |
-| `/functions/v1/admin/reject-payment` | POST | Reject a payment with reason |
-| `/functions/v1/admin/review-claim` | POST | Approve/reject a claim |
-| `/functions/v1/admin/carrier-stats` | GET | Aggregate stats for carrier dashboard |
-| `/functions/v1/admin/broker-stats` | GET | Broker performance + quota tracking |
-| `/functions/v1/admin/promoter-stats` | GET | Promoter sales + referral tracking |
-| `/functions/v1/admin/tier-distribution` | GET | Policy mix by tier (Básica/Plus/Ampliada %) |
-| `/functions/v1/bcv-rate` | GET | Fetch and cache latest BCV rate (cron) |
-| `/functions/v1/generate-policy-pdf` | POST | Generate policy PDF + RCV certificate |
+| Function                                | Method | Purpose                                     |
+| --------------------------------------- | ------ | ------------------------------------------- |
+| `/functions/v1/admin/verify-payment`    | POST   | Verify a pending payment, activate policy   |
+| `/functions/v1/admin/reject-payment`    | POST   | Reject a payment with reason                |
+| `/functions/v1/admin/review-claim`      | POST   | Approve/reject a claim                      |
+| `/functions/v1/admin/carrier-stats`     | GET    | Aggregate stats for carrier dashboard       |
+| `/functions/v1/admin/broker-stats`      | GET    | Broker performance + quota tracking         |
+| `/functions/v1/admin/promoter-stats`    | GET    | Promoter sales + referral tracking          |
+| `/functions/v1/admin/tier-distribution` | GET    | Policy mix by tier (Básica/Plus/Ampliada %) |
+| `/functions/v1/bcv-rate`                | GET    | Fetch and cache latest BCV rate (cron)      |
+| `/functions/v1/generate-policy-pdf`     | POST   | Generate policy PDF + RCV certificate       |
 
 ---
 
@@ -1460,11 +1470,13 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 Deno.serve(async () => {
   const supabase = createClient(
     Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
   );
 
   // Fetch BCV rate (use community API or direct scrape)
-  const response = await fetch("https://pydolarve.org/api/v2/dollar?monitor=bcv");
+  const response = await fetch(
+    "https://pydolarve.org/api/v2/dollar?monitor=bcv",
+  );
   const data = await response.json();
   const rate = data?.monitors?.usd?.price;
 
@@ -1499,7 +1511,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 Deno.serve(async (req) => {
   const supabase = createClient(
     Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
   );
 
   const { payment_id, verified_by } = await req.json();
@@ -1516,7 +1528,8 @@ Deno.serve(async (req) => {
     .select("policy_id")
     .single();
 
-  if (payError) return new Response(JSON.stringify({ error: payError }), { status: 400 });
+  if (payError)
+    return new Response(JSON.stringify({ error: payError }), { status: 400 });
 
   // 2. Activate the policy
   const now = new Date();
@@ -1527,7 +1540,9 @@ Deno.serve(async (req) => {
     .single();
 
   const durationDays = policyType?.policy_types?.duration_days || 365;
-  const coverageEnd = new Date(now.getTime() + durationDays * 24 * 60 * 60 * 1000);
+  const coverageEnd = new Date(
+    now.getTime() + durationDays * 24 * 60 * 60 * 1000,
+  );
 
   await supabase
     .from("policies")
@@ -1561,39 +1576,40 @@ Deno.serve(async (req) => {
 
 ### 10.1 Authentication
 
-| Layer | Mechanism |
-|---|---|
-| **Rider App** | Phone OTP via Supabase Auth → JWT (access + refresh tokens) |
-| **Admin Portal** | Email + password via Supabase Auth → JWT + role verification (carrier_user/broker) |
-| **Broker Portal** | Email + password → JWT + broker_id verification |
-| **API** | JWT verification on every request (Supabase handles this) |
-| **Local** | Biometric unlock (local_auth) for app re-entry; tokens in flutter_secure_storage |
+| Layer             | Mechanism                                                                          |
+| ----------------- | ---------------------------------------------------------------------------------- |
+| **Rider App**     | Phone OTP via Supabase Auth → JWT (access + refresh tokens)                        |
+| **Admin Portal**  | Email + password via Supabase Auth → JWT + role verification (carrier_user/broker) |
+| **Broker Portal** | Email + password → JWT + broker_id verification                                    |
+| **API**           | JWT verification on every request (Supabase handles this)                          |
+| **Local**         | Biometric unlock (local_auth) for app re-entry; tokens in flutter_secure_storage   |
 
 ### 10.2 Data Protection
 
-| Concern | Implementation |
-|---|---|
-| **Data in transit** | TLS 1.3 (Supabase default) |
-| **Data at rest** | Supabase encrypts at rest (AES-256); local server: LUKS encryption |
-| **Local data** | flutter_secure_storage for tokens; SQLite for non-sensitive cache |
-| **Document hashes** | SHA-256 of every policy PDF stored alongside the document |
-| **PII handling** | Minimal PII collection. OCR raw data stored for audit only. |
-| **Multi-tenancy** | Row Level Security (RLS) isolates data per user, per carrier, per broker |
+| Concern              | Implementation                                                           |
+| -------------------- | ------------------------------------------------------------------------ |
+| **Data in transit**  | TLS 1.3 (Supabase default)                                               |
+| **Data at rest**     | Supabase encrypts at rest (AES-256); local server: LUKS encryption       |
+| **Local data**       | flutter_secure_storage for tokens; SQLite for non-sensitive cache        |
+| **Document hashes**  | SHA-256 of every policy PDF stored alongside the document                |
+| **PII handling**     | Minimal PII collection. OCR raw data stored for audit only.              |
+| **Multi-tenancy**    | Row Level Security (RLS) isolates data per user, per carrier, per broker |
 | **Data sovereignty** | Primary data on Venezuelan servers (Phase 1.5); GCP as authorized backup |
 
 ### 10.3 Anti-Fraud (Document Upload)
 
-| Check | Implementation |
-|---|---|
-| **Image sharpness** | Laplacian variance calculation; reject blurry images |
-| **Screen-photo detection** | Moiré pattern analysis to reject photos of digital screens |
-| **OCR confidence threshold** | ≥90% readability required; below triggers guided retake |
-| **CI/Name cross-validation** | Cédula name must match Carnet de Circulación owner |
-| **Duplicate detection** | SHA-256 hash of uploaded images checked against existing documents |
+| Check                        | Implementation                                                     |
+| ---------------------------- | ------------------------------------------------------------------ |
+| **Image sharpness**          | Laplacian variance calculation; reject blurry images               |
+| **Screen-photo detection**   | Moiré pattern analysis to reject photos of digital screens         |
+| **OCR confidence threshold** | ≥90% readability required; below triggers guided retake            |
+| **CI/Name cross-validation** | Cédula name must match Carnet de Circulación owner                 |
+| **Duplicate detection**      | SHA-256 hash of uploaded images checked against existing documents |
 
 ### 10.4 Idempotency
 
 Every payment and policy creation uses a client-generated **UUID v4 idempotency key**:
+
 - Generated in Flutter before the request
 - Stored as a UNIQUE column in the `payments` table
 - If a duplicate key is received, the server returns the existing record instead of creating a new one
@@ -1605,30 +1621,33 @@ Every payment and policy creation uses a client-generated **UUID v4 idempotency 
 
 ### 11.1 Infrastructure
 
-| Component | Platform | Free Tier Limits |
-|---|---|---|
-| **Database + Auth + Storage** | Supabase (dev/testing) | 500MB DB, 1GB storage, 50k MAU |
-| **Edge Functions** | Supabase | 500k invocations/month |
-| **Admin Portal** | Vercel | 100GB bandwidth, serverless functions |
-| **Push Notifications** | Firebase Cloud Messaging | Unlimited |
-| **Error Tracking** | Sentry | 5k events/month |
-| **CI/CD** | GitHub Actions | 2000 min/month |
-| **Cloud Backup (Phase 1.5)** | GCP Cloud SQL | Free tier (1 f1-micro instance) |
-| **Local Server (Phase 1.5)** | Venezuelan data center | TBD based on provider |
+| Component                     | Platform                 | Free Tier Limits                      |
+| ----------------------------- | ------------------------ | ------------------------------------- |
+| **Database + Auth + Storage** | Supabase (dev/testing)   | 500MB DB, 1GB storage, 50k MAU        |
+| **Edge Functions**            | Supabase                 | 500k invocations/month                |
+| **Admin Portal**              | Vercel                   | 100GB bandwidth, serverless functions |
+| **Push Notifications**        | Firebase Cloud Messaging | Unlimited                             |
+| **Error Tracking**            | Sentry                   | 5k events/month                       |
+| **CI/CD**                     | GitHub Actions           | 2000 min/month                        |
+| **Cloud Backup (Phase 1.5)**  | GCP Cloud SQL            | Free tier (1 f1-micro instance)       |
+| **Local Server (Phase 1.5)**  | Venezuelan data center   | TBD based on provider                 |
 
 ### 11.2 App Distribution
 
 **Phase 0 (First 2 weeks):** Direct APK distribution
+
 - Build signed APK via `flutter build apk --release`
 - Distribute via WhatsApp / direct download link
 - Fastest path to real users for testing
 
 **Phase 1 (Week 3+):** Google Play Store
+
 - Create Play Console listing ($25 one-time fee)
 - Internal testing track first, then production
 - Play Store provides auto-updates and trust
 
 **iOS:** Deferred to after Android validation. When ready:
+
 - TestFlight for beta users
 - App Store submission
 
@@ -1649,7 +1668,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.x'
+          flutter-version: "3.x"
       - run: flutter pub get
       - run: flutter test
       - run: flutter build apk --release
@@ -1676,41 +1695,41 @@ jobs:
 
 ### Phase 1.5 — Local Server + Key Integrations (~3 months post-MVP)
 
-| Component | Change | Trigger |
-|---|---|---|
-| **Infrastructure** | Deploy PostgreSQL 16 on local Venezuelan server; configure GCP Cloud SQL as replica | Regulatory compliance deadline |
-| **Data Migration** | Migrate Supabase PostgreSQL data to local server; retain Supabase for Auth edge + Edge Functions | When local server is provisioned |
-| **Payments** | Integrate GUIA PAY C2P API (replaces manual Pago Móvil verification) | When manual verification becomes bottleneck |
-| **Crash Detection** | Activate accelerometer/gyroscope in Flutter; implement Emergency Mode + 10-second countdown | Core differentiator — immediate post-MVP |
-| **Telemetry** | Implement Store & Forward (SQLite anomaly_queue); create telemetry_events table | Paired with crash detection |
-| **Blockchain** | Deploy ERC-721 smart contract on Polygon testnet; mint policies as NFTs | When pitching trust/transparency |
-| **OCR Upgrade** | Add PaddleOCR server-side fallback for low-confidence scans and Factura de Compra | When carriers require Factura |
-| **Medical Network** | Integrate Venemergencia Urgent Care API; affiliate enrollment data export | When contractual agreement is formalized |
-| **Notifications** | Add Twilio SMS/WhatsApp for emergency contact notifications (PAS protocol) | Required for crash detection flow |
-| **Database** | Upgrade Supabase plan (Pro: $25/month) or transition primary workload to local server | When approaching free tier limits |
+| Component           | Change                                                                                           | Trigger                                     |
+| ------------------- | ------------------------------------------------------------------------------------------------ | ------------------------------------------- |
+| **Infrastructure**  | Deploy PostgreSQL 16 on local Venezuelan server; configure GCP Cloud SQL as replica              | Regulatory compliance deadline              |
+| **Data Migration**  | Migrate Supabase PostgreSQL data to local server; retain Supabase for Auth edge + Edge Functions | When local server is provisioned            |
+| **Payments**        | Integrate GUIA PAY C2P API (replaces manual Pago Móvil verification)                             | When manual verification becomes bottleneck |
+| **Crash Detection** | Activate accelerometer/gyroscope in Flutter; implement Emergency Mode + 10-second countdown      | Core differentiator — immediate post-MVP    |
+| **Telemetry**       | Implement Store & Forward (SQLite anomaly_queue); create telemetry_events table                  | Paired with crash detection                 |
+| **Blockchain**      | Deploy ERC-721 smart contract on Polygon testnet; mint policies as NFTs                          | When pitching trust/transparency            |
+| **OCR Upgrade**     | Add PaddleOCR server-side fallback for low-confidence scans and Factura de Compra                | When carriers require Factura               |
+| **Medical Network** | Integrate Venemergencia Urgent Care API; affiliate enrollment data export                        | When contractual agreement is formalized    |
+| **Notifications**   | Add Twilio SMS/WhatsApp for emergency contact notifications (PAS protocol)                       | Required for crash detection flow           |
+| **Database**        | Upgrade Supabase plan (Pro: $25/month) or transition primary workload to local server            | When approaching free tier limits           |
 
 ### Phase 2 — Scale + Full SLI (~6-12 months)
 
-| Component | Change | Trigger |
-|---|---|---|
-| **SLI** | Implement Smart Liquidation System: crash detection → oracle validation → 25% Cash-Out → GUIA PAY payout | Core product differentiator |
-| **Oracle Integration** | Full bi-directional webhooks with Venemergencia, Nueve Once, Angeles de las Autopistas | Required for SLI |
-| **Triage System** | Implement medical triage routing (Emergencia/Urgencia/Leve) with Red ALTEHA clinic integration | When oracle validation is live |
-| **Time-Series DB** | Add TimescaleDB extension for telemetry optimization | When telemetry volume requires it |
-| **Payments** | Add tokenized card (PCI-DSS), domiciliación (monthly plans) | When bank agreements are signed |
-| **Admin Portal** | Commission calculation engine, real-time broker quota dashboards, materialized views | When sales network scales |
-| **DR** | Full GCP DR with automated failover from local server | When SLA commitments require it |
+| Component              | Change                                                                                                   | Trigger                           |
+| ---------------------- | -------------------------------------------------------------------------------------------------------- | --------------------------------- |
+| **SLI**                | Implement Smart Liquidation System: crash detection → oracle validation → 25% Cash-Out → GUIA PAY payout | Core product differentiator       |
+| **Oracle Integration** | Full bi-directional webhooks with Venemergencia, Nueve Once, Angeles de las Autopistas                   | Required for SLI                  |
+| **Triage System**      | Implement medical triage routing (Emergencia/Urgencia/Leve) with Red ALTEHA clinic integration           | When oracle validation is live    |
+| **Time-Series DB**     | Add TimescaleDB extension for telemetry optimization                                                     | When telemetry volume requires it |
+| **Payments**           | Add tokenized card (PCI-DSS), domiciliación (monthly plans)                                              | When bank agreements are signed   |
+| **Admin Portal**       | Commission calculation engine, real-time broker quota dashboards, materialized views                     | When sales network scales         |
+| **DR**                 | Full GCP DR with automated failover from local server                                                    | When SLA commitments require it   |
 
 ### Phase 3 — Enterprise (~12-24 months)
 
-| Component | Change | Trigger |
-|---|---|---|
-| **AI** | LLM-based liability determination; accident narrative analysis | When claims volume justifies it |
-| **Hybrid Payouts** | Parametric + Indemnity two-layer model | When product sophistication demands it |
-| **Infrastructure** | Evaluate IBM PowerVS for transactional core (if PostgreSQL bottlenecks) | Likely unnecessary at projected scale |
-| **Post-Hospitalization** | Venefarmacia/Farmahogar medication delivery; MMI tracking; rehabilitation coordination | When medical oracle is mature |
-| **Compliance** | Full ACORD Next-Gen API standards for B2B interoperability | When integrating with international reinsurers |
-| **AIOps** | AI-driven monitoring, anomaly detection, capacity planning | When system complexity demands it |
+| Component                | Change                                                                                 | Trigger                                        |
+| ------------------------ | -------------------------------------------------------------------------------------- | ---------------------------------------------- |
+| **AI**                   | LLM-based liability determination; accident narrative analysis                         | When claims volume justifies it                |
+| **Hybrid Payouts**       | Parametric + Indemnity two-layer model                                                 | When product sophistication demands it         |
+| **Infrastructure**       | Evaluate IBM PowerVS for transactional core (if PostgreSQL bottlenecks)                | Likely unnecessary at projected scale          |
+| **Post-Hospitalization** | Venefarmacia/Farmahogar medication delivery; MMI tracking; rehabilitation coordination | When medical oracle is mature                  |
+| **Compliance**           | Full ACORD Next-Gen API standards for B2B interoperability                             | When integrating with international reinsurers |
+| **AIOps**                | AI-driven monitoring, anomaly detection, capacity planning                             | When system complexity demands it              |
 
 ---
 
@@ -1718,48 +1737,49 @@ jobs:
 
 ### 13.1 Month 0-3 (MVP Development & Testing)
 
-| Item | Cost |
-|---|---|
-| Supabase (free tier) | $0 |
-| Vercel (free tier) | $0 |
-| Firebase FCM | $0 |
-| Google ML Kit | $0 |
-| GitHub Actions | $0 |
-| Sentry (free tier) | $0 |
-| Google Play Console | $25 (one-time) |
-| Domain name (ruedaseguro.com) | ~$12/year |
-| **Total** | **~$37 one-time + $1/month** |
+| Item                          | Cost                         |
+| ----------------------------- | ---------------------------- |
+| Supabase (free tier)          | $0                           |
+| Vercel (free tier)            | $0                           |
+| Firebase FCM                  | $0                           |
+| Google ML Kit                 | $0                           |
+| GitHub Actions                | $0                           |
+| Sentry (free tier)            | $0                           |
+| Google Play Console           | $25 (one-time)               |
+| Domain name (ruedaseguro.com) | ~$12/year                    |
+| **Total**                     | **~$37 one-time + $1/month** |
 
 ### 13.2 Month 4-8 (Growth + Local Server Transition)
 
-| Item | Cost |
-|---|---|
-| Supabase Pro (retained for auth/edge) | $25/month |
-| Local Venezuelan server (PostgreSQL) | ~$100-300/month (TBD by provider) |
-| GCP Cloud SQL (backup/DR, e2-micro) | $0-30/month |
-| Vercel Pro (if needed) | $20/month |
-| SMS OTP costs (~1000 users) | ~$10/month |
-| Twilio (emergency notifications) | ~$20/month |
-| Polygon gas fees (~1000 NFTs) | ~$1/month |
-| **Total** | **~$176-406/month** |
+| Item                                  | Cost                              |
+| ------------------------------------- | --------------------------------- |
+| Supabase Pro (retained for auth/edge) | $25/month                         |
+| Local Venezuelan server (PostgreSQL)  | ~$100-300/month (TBD by provider) |
+| GCP Cloud SQL (backup/DR, e2-micro)   | $0-30/month                       |
+| Vercel Pro (if needed)                | $20/month                         |
+| SMS OTP costs (~1000 users)           | ~$10/month                        |
+| Twilio (emergency notifications)      | ~$20/month                        |
+| Polygon gas fees (~1000 NFTs)         | ~$1/month                         |
+| **Total**                             | **~$176-406/month**               |
 
 ### 13.3 Year 2+ (Scale + Full SLI)
 
-| Item | Cost |
-|---|---|
-| Local server infrastructure (scaled) | ~$500-1000/month |
-| GCP Cloud SQL (full DR) | ~$100/month |
-| GUIA PAY transaction fees | Variable (per-transaction) |
-| Venemergencia ($2.75/person/month) | Variable (per-policy, Plus/Ampliada tiers only) |
-| Dedicated SMS/WhatsApp provider | ~$50/month |
-| Monitoring (Datadog/Grafana) | ~$50/month |
-| **Total** | **~$700-1200/month + variable** |
+| Item                                 | Cost                                            |
+| ------------------------------------ | ----------------------------------------------- |
+| Local server infrastructure (scaled) | ~$500-1000/month                                |
+| GCP Cloud SQL (full DR)              | ~$100/month                                     |
+| GUIA PAY transaction fees            | Variable (per-transaction)                      |
+| Venemergencia ($2.75/person/month)   | Variable (per-policy, Plus/Ampliada tiers only) |
+| Dedicated SMS/WhatsApp provider      | ~$50/month                                      |
+| Monitoring (Datadog/Grafana)         | ~$50/month                                      |
+| **Total**                            | **~$700-1200/month + variable**                 |
 
 ---
 
 ## 14. Development Phases & Timeline
 
 ### Sprint 0 — Project Setup (Days 1-3)
+
 - [ ] Initialize Flutter project with folder structure
 - [ ] Initialize Next.js admin portal with B2B2C routing
 - [ ] Create Supabase project; apply database migrations (all tables including brokers, promoters, POS)
@@ -1770,6 +1790,7 @@ jobs:
 - [ ] Seed initial data (carrier, policy types, test broker/promoter)
 
 ### Sprint 1 — Authentication & Onboarding (Days 4-10)
+
 - [ ] Welcome screen (Step 1) + registration form (Step 2)
 - [ ] Phone OTP login/register flow (Step 3)
 - [ ] Home screen with hero card (Step 4)
@@ -1784,6 +1805,7 @@ jobs:
 - [ ] Document image upload to Supabase Storage
 
 ### Sprint 2 — Policy & Payment (Days 11-17)
+
 - [ ] Product selection screen with configurable tiers (Step 5)
 - [ ] BCV exchange rate Edge Function + cron
 - [ ] Quote summary with coverage breakdown + upsells (Step 7.5)
@@ -1796,6 +1818,7 @@ jobs:
 - [ ] Payment status tracking (pending → verified)
 
 ### Sprint 3 — Policy Card, Claims & Admin (Days 18-24)
+
 - [ ] Policy PDF generation + RCV certificate (Flutter `pdf` package)
 - [ ] SHA-256 hash calculation and storage
 - [ ] Digital policy card (shareable widget)
@@ -1807,6 +1830,7 @@ jobs:
 - [ ] Offline: cache active policy + certificate for offline viewing
 
 ### Sprint 4 — Sales Network, Admin Portal & Polish (Days 25-30)
+
 - [ ] Admin dashboard with key metrics + tier distribution chart
 - [ ] Broker management (list, detail, quota progress)
 - [ ] Promoter management (list, referral codes)
@@ -1819,6 +1843,7 @@ jobs:
 - [ ] Build signed APK for distribution
 
 ### Post-Launch Continuous
+
 - [ ] User feedback collection and iteration
 - [ ] Carrier onboarding workflow
 - [ ] Payment reconciliation tools
@@ -1908,54 +1933,54 @@ RuedaSeguro/
 
 ## 16. Key Metrics for MVP Success
 
-| Metric | Target | Measurement |
-|---|---|---|
-| **Onboarding completion rate** | >70% | Users who complete all 8 steps to policy issuance |
-| **Time to policy** | <6 minutes | From app open to policy emitted (excl. payment verification) |
-| **OCR accuracy** | >90% auto-fill | Fields correctly extracted without manual correction |
-| **Image quality pass rate** | >85% | First-attempt photos passing sharpness/fraud checks |
-| **Payment verification time** | <2 hours | Admin verifies Pago Móvil reference or transfer receipt |
-| **Active policies** | 100 in first month | Actual policies issued |
-| **Tier distribution** | 70/30 Básica/Plus | Alignment with target product mix |
-| **Carrier partners** | 1-2 signed | Insurance companies using the platform |
-| **Broker activation** | 5+ active brokers | Brokers with at least 1 policy sold |
-| **App crash rate** | <1% | Sentry error monitoring |
-| **Offline resilience** | 100% policy viewing | Policy card + certificate always accessible offline |
+| Metric                         | Target              | Measurement                                                  |
+| ------------------------------ | ------------------- | ------------------------------------------------------------ |
+| **Onboarding completion rate** | >70%                | Users who complete all 8 steps to policy issuance            |
+| **Time to policy**             | <6 minutes          | From app open to policy emitted (excl. payment verification) |
+| **OCR accuracy**               | >90% auto-fill      | Fields correctly extracted without manual correction         |
+| **Image quality pass rate**    | >85%                | First-attempt photos passing sharpness/fraud checks          |
+| **Payment verification time**  | <2 hours            | Admin verifies Pago Móvil reference or transfer receipt      |
+| **Active policies**            | 100 in first month  | Actual policies issued                                       |
+| **Tier distribution**          | 70/30 Básica/Plus   | Alignment with target product mix                            |
+| **Carrier partners**           | 1-2 signed          | Insurance companies using the platform                       |
+| **Broker activation**          | 5+ active brokers   | Brokers with at least 1 policy sold                          |
+| **App crash rate**             | <1%                 | Sentry error monitoring                                      |
+| **Offline resilience**         | 100% policy viewing | Policy card + certificate always accessible offline          |
 
 ---
 
 ## 17. Regulatory Compliance (MVP)
 
-| Requirement | Implementation |
-|---|---|
-| **SUDEASEG Gaceta 6.835 — Simplified Contracts** | Policy PDFs use clear, non-technical Spanish. No legal jargon. |
-| **"Alternative Channels" (Circular SAA-07-0491-2024)** | RuedaSeguro operates as a digital alternative channel for licensed carriers. |
-| **Data Sovereignty** | MVP uses Supabase (cloud) for dev/testing; production migrates to local Venezuelan server (Phase 1.5). GCP authorized as backup. |
-| **SUDEASEG Identification Requirements** | Full policyholder and vehicle identification via OCR + manual verification. |
-| **Consent & Evidence Conservation** | 4 mandatory consent checkboxes (terms, data truthfulness, anti-fraud, privacy). Timestamps stored. |
-| **Audit Trail** | Every state change logged in `audit_log` table. SHA-256 hashes for documents. |
-| **Data Privacy** | Minimal PII collection. OCR raw data stored for audit only. No GPS tracking in MVP. |
-| **Anti-Fraud** | Image sharpness validation, screen-photo detection, CI/name cross-validation. |
-| **PCI-DSS** | No card data stored in MVP (manual payment methods only). PCI compliance deferred to Phase 2 tokenized card. |
+| Requirement                                            | Implementation                                                                                                                   |
+| ------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------- |
+| **SUDEASEG Gaceta 6.835 — Simplified Contracts**       | Policy PDFs use clear, non-technical Spanish. No legal jargon.                                                                   |
+| **"Alternative Channels" (Circular SAA-07-0491-2024)** | RuedaSeguro operates as a digital alternative channel for licensed carriers.                                                     |
+| **Data Sovereignty**                                   | MVP uses Supabase (cloud) for dev/testing; production migrates to local Venezuelan server (Phase 1.5). GCP authorized as backup. |
+| **SUDEASEG Identification Requirements**               | Full policyholder and vehicle identification via OCR + manual verification.                                                      |
+| **Consent & Evidence Conservation**                    | 4 mandatory consent checkboxes (terms, data truthfulness, anti-fraud, privacy). Timestamps stored.                               |
+| **Audit Trail**                                        | Every state change logged in `audit_log` table. SHA-256 hashes for documents.                                                    |
+| **Data Privacy**                                       | Minimal PII collection. OCR raw data stored for audit only. No GPS tracking in MVP.                                              |
+| **Anti-Fraud**                                         | Image sharpness validation, screen-photo detection, CI/name cross-validation.                                                    |
+| **PCI-DSS**                                            | No card data stored in MVP (manual payment methods only). PCI compliance deferred to Phase 2 tokenized card.                     |
 
 ---
 
 ## 18. Risk Register
 
-| Risk | Impact | Mitigation |
-|---|---|---|
-| OCR accuracy too low for Venezuelan documents | Users abandon onboarding | Manual entry fallback; iterative regex improvement; PaddleOCR server fallback (Phase 1.5) |
-| Pago Móvil reference verification too slow | Users wait hours for policy activation | Hire dedicated payment verifier; prioritize GUIA PAY integration |
-| Supabase free tier limits reached early | Service degradation | Monitor usage; upgrade to Pro ($25/month) when at 80% capacity |
-| Local server procurement delays | Cannot meet data sovereignty deadline | Continue on Supabase (authorized for dev/testing); accelerate procurement in parallel |
-| Carrier partners slow to sign | No policies to sell | Start with Seguros Pirámide (strategic partner); use MVP demo to accelerate others |
-| Regulatory pushback on cloud-based dev/testing | Cannot operate legally | Leverage explicit authorization for dev/testing phase; accelerate local server timeline |
-| Venemergencia contract not finalized | Cannot launch Plus/Ampliada tiers with medical coverage | Launch with Solo RCV and RCV + Grúa first; add medical tiers when contract is signed |
-| Network intermittency breaks critical flows | Data loss, failed payments | Offline-first design; Store & Forward; idempotency keys |
-| Venezuelan banking API changes | Payment integration breaks | Abstract payment layer behind interface; support multiple methods |
-| Factura de Compra OCR too complex for ML Kit | Onboarding friction for carriers that require it | Defer Factura to Phase 1.5 with server-side OCR; manual entry as fallback |
-| Sales network hierarchy adds admin complexity | Slower admin portal development | Start with basic broker/promoter views; commission engine in Phase 2 |
+| Risk                                           | Impact                                                  | Mitigation                                                                                |
+| ---------------------------------------------- | ------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| OCR accuracy too low for Venezuelan documents  | Users abandon onboarding                                | Manual entry fallback; iterative regex improvement; PaddleOCR server fallback (Phase 1.5) |
+| Pago Móvil reference verification too slow     | Users wait hours for policy activation                  | Hire dedicated payment verifier; prioritize GUIA PAY integration                          |
+| Supabase free tier limits reached early        | Service degradation                                     | Monitor usage; upgrade to Pro ($25/month) when at 80% capacity                            |
+| Local server procurement delays                | Cannot meet data sovereignty deadline                   | Continue on Supabase (authorized for dev/testing); accelerate procurement in parallel     |
+| Carrier partners slow to sign                  | No policies to sell                                     | Start with Seguros Pirámide (strategic partner); use MVP demo to accelerate others        |
+| Regulatory pushback on cloud-based dev/testing | Cannot operate legally                                  | Leverage explicit authorization for dev/testing phase; accelerate local server timeline   |
+| Venemergencia contract not finalized           | Cannot launch Plus/Ampliada tiers with medical coverage | Launch with Solo RCV and RCV + Grúa first; add medical tiers when contract is signed      |
+| Network intermittency breaks critical flows    | Data loss, failed payments                              | Offline-first design; Store & Forward; idempotency keys                                   |
+| Venezuelan banking API changes                 | Payment integration breaks                              | Abstract payment layer behind interface; support multiple methods                         |
+| Factura de Compra OCR too complex for ML Kit   | Onboarding friction for carriers that require it        | Defer Factura to Phase 1.5 with server-side OCR; manual entry as fallback                 |
+| Sales network hierarchy adds admin complexity  | Slower admin portal development                         | Start with basic broker/promoter views; commission engine in Phase 2                      |
 
 ---
 
-*This document is the single source of truth for MVP implementation. All architectural decisions, data models, and feature scopes are defined here. Implementation begins with Sprint 0. Version 2.0 incorporates strategic directives from project leadership regarding data sovereignty, B2B2C sales network, and accelerated Phase 1.5 roadmap.*
+_This document is the single source of truth for MVP implementation. All architectural decisions, data models, and feature scopes are defined here. Implementation begins with Sprint 0. Version 2.0 incorporates strategic directives from project leadership regarding data sovereignty, B2B2C sales network, and accelerated Phase 1.5 roadmap._

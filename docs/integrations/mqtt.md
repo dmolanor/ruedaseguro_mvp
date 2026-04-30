@@ -1,4 +1,5 @@
 # RS-059 — MQTT Integration Guide
+
 ## Meeting with Thony
 
 > Reference this document during the session.
@@ -13,22 +14,22 @@ Ask these questions in order — each answer unblocks the next implementation st
 
 ### 1.1 Broker connection
 
-| # | Question | Why we need it | Example answer |
-|---|----------|----------------|----------------|
-| A | **Broker URL + port** | Can't connect without it | `mqtt.gcp.ruedaseguro.com:8883` |
-| B | **Transport protocol** | Flutter web needs WebSocket; native needs TCP | `mqtts://` (TLS/TCP) or `wss://` (WebSocket) |
-| C | **Auth method** | Username/password or client certificates | `username + password` |
-| D | **Credentials** | The actual values | `user: rs_mobile / pass: xxxxxx` |
-| E | **TLS required?** | Affects which port and cert handling | Yes/No + CA cert if self-signed |
+| #   | Question               | Why we need it                                | Example answer                               |
+| --- | ---------------------- | --------------------------------------------- | -------------------------------------------- |
+| A   | **Broker URL + port**  | Can't connect without it                      | `mqtt.gcp.ruedaseguro.com:8883`              |
+| B   | **Transport protocol** | Flutter web needs WebSocket; native needs TCP | `mqtts://` (TLS/TCP) or `wss://` (WebSocket) |
+| C   | **Auth method**        | Username/password or client certificates      | `username + password`                        |
+| D   | **Credentials**        | The actual values                             | `user: rs_mobile / pass: xxxxxx`             |
+| E   | **TLS required?**      | Affects which port and cert handling          | Yes/No + CA cert if self-signed              |
 
 ### 1.2 Topic namespace
 
-| # | Question | Why we need it | Example |
-|---|----------|----------------|---------|
-| F | **Topic structure** | Must match what the GCP dashboard subscribes to | `rs/riders/{userId}/telemetry` |
-| G | **Separate topic for emergencies?** | Emergency events may need priority routing | `rs/riders/{userId}/emergency` |
-| H | **QoS level** | Affects delivery guarantees and battery usage | `QoS 1` (at least once) |
-| I | **Retained messages?** | Whether broker stores last value for new subscribers | Yes/No |
+| #   | Question                            | Why we need it                                       | Example                        |
+| --- | ----------------------------------- | ---------------------------------------------------- | ------------------------------ |
+| F   | **Topic structure**                 | Must match what the GCP dashboard subscribes to      | `rs/riders/{userId}/telemetry` |
+| G   | **Separate topic for emergencies?** | Emergency events may need priority routing           | `rs/riders/{userId}/emergency` |
+| H   | **QoS level**                       | Affects delivery guarantees and battery usage        | `QoS 1` (at least once)        |
+| I   | **Retained messages?**              | Whether broker stores last value for new subscribers | Yes/No                         |
 
 ### 1.3 Message format (most critical)
 
@@ -37,11 +38,11 @@ If none exists yet, propose the format in Section 3 and align on it.
 
 ### 1.4 GCP dashboard capabilities
 
-| # | Question | Why we need it |
-|---|----------|----------------|
-| J | **What does the dashboard display?** | So we publish the right fields |
-| K | **Does the dashboard publish back to the app?** | Determines if we need a subscribe loop |
-| L | **Is there a DB schema we should match?** | Supabase `telemetry_events` must align with GCP |
+| #   | Question                                        | Why we need it                                  |
+| --- | ----------------------------------------------- | ----------------------------------------------- |
+| J   | **What does the dashboard display?**            | So we publish the right fields                  |
+| K   | **Does the dashboard publish back to the app?** | Determines if we need a subscribe loop          |
+| L   | **Is there a DB schema we should match?**       | Supabase `telemetry_events` must align with GCP |
 
 ---
 
@@ -136,6 +137,7 @@ Step 5 — Add MQTT credentials to EnvConfig
 ### File that already exists and is ready to connect:
 
 `lib/features/telemetry/services/telemetry_buffer_service.dart`
+
 - `getWindow()` → returns the last 15 minutes of samples → goes into emergency payload
 - `insertSample()` → call this from the MQTT publish loop to keep the buffer warm
 
@@ -190,6 +192,7 @@ MQTT_PASSWORD=your-password
 ```
 
 And in `EnvConfig`:
+
 ```dart
 static const mqttBrokerUrl = String.fromEnvironment('MQTT_BROKER_URL', defaultValue: '');
 static const mqttPort = int.fromEnvironment('MQTT_PORT', defaultValue: 8883);
