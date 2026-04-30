@@ -50,10 +50,14 @@ class RSAuthState {
 
 class AuthNotifier extends Notifier<RSAuthState> {
   StreamSubscription<supa.AuthState>? _subscription;
+  Timer? _initTimeout;
 
   @override
   RSAuthState build() {
-    ref.onDispose(() => _subscription?.cancel());
+    ref.onDispose(() {
+      _subscription?.cancel();
+      _initTimeout?.cancel();
+    });
     _init();
     return const RSAuthState(status: AuthStatus.initial);
   }
@@ -63,8 +67,9 @@ class AuthNotifier extends Notifier<RSAuthState> {
     final repo = AuthRepository.instance;
 
     // Hard safety net — state can NEVER remain `initial` beyond this point.
-    // Runs in parallel; cancelled implicitly once the try block sets state first.
-    Future.delayed(const Duration(seconds: 12)).then((_) {
+    // Stored as a cancellable Timer so tests (and fast dispose) don't leave a
+    // pending future alive after the notifier is torn down.
+    _initTimeout = Timer(const Duration(seconds: 12), () {
       if (state.status == AuthStatus.initial) {
         debugPrint(
           '[AuthNotifier] hard timeout fired — forcing unauthenticated',
@@ -114,6 +119,7 @@ class AuthNotifier extends Notifier<RSAuthState> {
           : const RSAuthState(status: AuthStatus.unauthenticated);
     }
 
+    _initTimeout?.cancel();
     debugPrint('[AuthNotifier] state after init: ${state.status}');
 
     _subscription = repo.onAuthStateChange.listen((authState) async {

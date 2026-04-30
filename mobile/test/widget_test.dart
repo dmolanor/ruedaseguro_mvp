@@ -27,7 +27,10 @@ void main() {
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(const ProviderScope(child: App()));
-    await tester.pump();
+    // pumpAndSettle drains the fake-timer queue. The auth_provider 12-second
+    // safety-net timer is now a cancellable Timer cancelled once _init
+    // completes, so pumpAndSettle will settle quickly.
+    await tester.pumpAndSettle();
     expect(find.byType(App), findsOneWidget);
   });
 }
